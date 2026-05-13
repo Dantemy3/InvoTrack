@@ -1,41 +1,80 @@
-import { MOCK_CLIENTS } from '@/lib/mockData'
-
-let clients = [...MOCK_CLIENTS]
-
-function delay(ms = 300) {
-  return new Promise((r) => setTimeout(r, ms))
-}
+import { supabase } from '@/lib/supabase'
 
 export const clientService = {
+  /**
+   * List clients for the current user.
+   * @param {{ search?: string, page?: number, pageSize?: number }} opts
+   */
   async getAll({ search, page = 1, pageSize = 20 } = {}) {
-    await delay()
-    let filtered = [...clients]
-    if (search) filtered = filtered.filter((c) =>
-      c.name.toLowerCase().includes(search.toLowerCase())
-    )
-    return { data: filtered.slice((page - 1) * pageSize, page * pageSize), count: filtered.length }
+    let query = supabase
+      .from('clients')
+      .select('*', { count: 'exact' })
+      .order('name', { ascending: true })
+      .range((page - 1) * pageSize, page * pageSize - 1)
+
+    if (search) query = query.ilike('name', `%${search}%`)
+
+    const { data, error, count } = await query
+    if (error) throw error
+    return { data: data ?? [], count: count ?? 0 }
   },
 
+  /**
+   * Get a single client by id.
+   * @param {string} id
+   */
   async getById(id) {
-    await delay()
-    return clients.find((c) => c.id === id) || null
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data
   },
 
+  /**
+   * Create a new client.
+   * @param {object} client
+   */
   async create(client) {
-    await delay()
-    const newClient = { ...client, id: `c-${Date.now()}`, created_at: new Date().toISOString() }
-    clients = [newClient, ...clients]
-    return newClient
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('No autenticado')
+
+    const { data, error } = await supabase
+      .from('clients')
+      .insert({ ...client, user_id: user.id })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
+  /**
+   * Update a client.
+   * @param {string} id
+   * @param {object} updates
+   */
   async update(id, updates) {
-    await delay()
-    clients = clients.map((c) => c.id === id ? { ...c, ...updates } : c)
-    return clients.find((c) => c.id === id)
+    const { data, error } = await supabase
+      .from('clients')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
+  /**
+   * Delete a client.
+   * @param {string} id
+   */
   async delete(id) {
-    await delay()
-    clients = clients.filter((c) => c.id !== id)
+    const { error } = await supabase.from('clients').delete().eq('id', id)
+    if (error) throw error
   },
 }

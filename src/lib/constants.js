@@ -6,6 +6,37 @@ export const INVOICE_STATUS = {
   DRAFT: 'draft',
 }
 
+// receivable = cliente me paga | payable = yo pago al proveedor
+export const INVOICE_FLOW_TYPE = {
+  RECEIVABLE: 'receivable',
+  PAYABLE: 'payable',
+}
+
+export const INVOICE_FLOW_TYPE_LABELS = {
+  receivable: 'Cobrar (ingreso)',
+  payable: 'Pagar (gasto)',
+}
+
+export const PAYMENT_METHODS = {
+  TRANSFER: 'transfer',
+  CASH: 'cash',
+  CHECK: 'check',
+  CREDIT_CARD: 'credit_card',
+  DEBIT_CARD: 'debit_card',
+  CRYPTO: 'crypto',
+  OTHER: 'other',
+}
+
+export const PAYMENT_METHOD_LABELS = {
+  transfer: 'Transferencia',
+  cash: 'Efectivo',
+  check: 'Cheque',
+  credit_card: 'Tarjeta de crédito',
+  debit_card: 'Tarjeta de débito',
+  crypto: 'Cripto',
+  other: 'Otro',
+}
+
 export const INVOICE_STATUS_LABELS = {
   pending: 'Pendiente',
   paid: 'Pagada',

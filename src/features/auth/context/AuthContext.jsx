@@ -1,25 +1,36 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
-// Usuario demo hardcodeado para pruebas — sin Supabase
-const DEMO_USER = {
-  id: 'demo-user-001',
-  email: 'demo@invotrack.com',
-  user_metadata: {
-    full_name: 'Demo User',
-  },
-}
-
 export function AuthProvider({ children }) {
-  const [user] = useState(DEMO_USER)
-  const [session] = useState({ user: DEMO_USER })
+  const [user, setUser]       = useState(null)
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const value = {
     user,
     session,
-    loading: false,
-    isAuthenticated: true,
+    loading,
+    isAuthenticated: Boolean(user),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
