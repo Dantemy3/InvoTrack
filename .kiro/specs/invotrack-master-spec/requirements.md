@@ -6,7 +6,7 @@ InvoTrack es una plataforma SaaS moderna para gestión inteligente de facturas c
 
 Este documento es el **documento rector** del proyecto. Define la arquitectura oficial, las reglas del sistema, la estructura de base de datos, el flujo de autenticación, la arquitectura OCR, el roadmap por fases y la división de tareas para agentes especializados. Todo agente que trabaje en InvoTrack debe respetar las decisiones aquí documentadas.
 
-El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase. La migración a TypeScript estricto es parte del roadmap. El código existente sigue una arquitectura feature-based que este spec consolida y extiende.
+El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase. El código existente sigue una arquitectura feature-based que este spec consolida y extiende. El proyecto se mantiene en JavaScript (JSX/JS) sin migración a TypeScript.
 
 ---
 
@@ -14,7 +14,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 
 - **InvoTrack**: El sistema SaaS completo descrito en este documento.
 - **System**: El conjunto de frontend React + backend Supabase que compone InvoTrack.
-- **Frontend**: La aplicación React + Vite + TypeScript que corre en el navegador del usuario.
+- **Frontend**: La aplicación React + Vite + JavaScript (JSX) que corre en el navegador del usuario.
 - **Backend**: Los servicios de Supabase (Auth, Database PostgreSQL, Storage, Edge Functions).
 - **OCR_Pipeline**: El módulo de extracción automática de datos de facturas mediante reconocimiento óptico de caracteres.
 - **OCR_Adapter**: Clase que implementa `BaseOcrAdapter` y encapsula un proveedor OCR específico.
@@ -34,7 +34,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 - **Router**: React Router v7 que gestiona la navegación del Frontend.
 - **AuthContext**: Contexto React que expone el estado de autenticación del `User` actual.
 - **CompanyContext**: Contexto React que expone la `Company` activa y el `UserRole` del `User` actual.
-- **Service**: Módulo JavaScript/TypeScript que encapsula llamadas a Supabase. Agnóstico al contexto React.
+- **Service**: Módulo JavaScript que encapsula llamadas a Supabase. Agnóstico al contexto React.
 - **Hook**: Custom React hook que conecta un `Service` con TanStack Query para gestión de estado del servidor.
 - **Schema**: Definición Zod de validación de formularios.
 - **Feature**: Módulo funcional autocontenido bajo `src/features/{feature_name}/`.
@@ -58,11 +58,11 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 #### Acceptance Criteria
 
 1. THE System SHALL organizar todo el código fuente bajo `src/` siguiendo la estructura feature-based definida en este documento.
-2. THE System SHALL mantener separación estricta entre capas: UI (componentes/páginas), estado del servidor (hooks + TanStack Query), lógica de negocio (services), validación (schemas Zod) y tipos (TypeScript interfaces).
-3. THE Frontend SHALL usar TypeScript estricto (`strict: true` en `tsconfig.json`) en todos los archivos nuevos y migrados.
+2. THE System SHALL mantener separación estricta entre capas: UI (componentes/páginas), estado del servidor (hooks + TanStack Query), lógica de negocio (services), validación (schemas Zod).
+3. THE System SHALL mantener todo el código en JavaScript (JSX/JS). No se requiere migración a TypeScript.
 4. THE System SHALL prohibir que un `Service` importe o use directamente contextos React (`AuthContext`, `CompanyContext`). Los `company_id` y `user_id` deben pasarse como parámetros explícitos.
 5. THE System SHALL prohibir código duplicado: toda lógica reutilizable debe extraerse a `src/lib/` o al hook/service correspondiente.
-6. WHEN un agente crea un nuevo módulo, THE System SHALL requerir que siga la estructura de carpetas: `pages/`, `components/`, `hooks/`, `services/`, `schemas/`, `types/` dentro de `src/features/{feature_name}/`.
+6. WHEN un agente crea un nuevo módulo, THE System SHALL requerir que siga la estructura de carpetas: `pages/`, `components/`, `hooks/`, `services/`, `schemas/` dentro de `src/features/{feature_name}/`.
 7. THE Frontend SHALL usar alias de importación `@/` apuntando a `src/` en todos los archivos, sin rutas relativas que suban más de un nivel.
 
 ---
@@ -86,11 +86,10 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
    - `pages/` — Páginas/vistas del feature (lazy-loaded en el router)
    - `schemas/` — Schemas de validación Zod
    - `services/` — Servicios de acceso a datos (Supabase)
-   - `types/` — Interfaces y tipos TypeScript del feature
 3. THE System SHALL mantener los siguientes features como módulos independientes: `auth`, `companies`, `clients`, `providers`, `invoices`, `ocr`, `dashboard`, `reports`, `alerts`, `settings`.
-4. THE System SHALL ubicar todos los tipos de base de datos en `src/lib/database.types.ts` (migrado de `.js`).
-5. THE System SHALL ubicar el cliente Supabase en `src/lib/supabase.ts` como singleton exportado.
-6. THE System SHALL ubicar todas las constantes del dominio en `src/lib/constants.ts`.
+4. THE System SHALL ubicar las constantes de base de datos y shapes de objetos en `src/lib/database.js`.
+5. THE System SHALL ubicar el cliente Supabase en `src/lib/supabase.js` como singleton exportado.
+6. THE System SHALL ubicar todas las constantes del dominio en `src/lib/constants.js`.
 
 ---
 
@@ -123,7 +122,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 2. THE CompanyContext SHALL exponer: `company` (empresa activa), `companies` (lista completa), `role` (rol en empresa activa), `loading`, `switchCompany`, `isAdmin`, `isAccountant`, `canWrite`.
 3. WHEN un usuario cambia de empresa activa, THE CompanyContext SHALL persistir la selección en `localStorage` bajo la clave `invotrack_company_id`.
 4. THE System SHALL determinar el rol del usuario en una empresa mediante la tabla `user_roles`, con excepción del propietario (`owner_id`) que siempre tiene rol `admin`.
-5. THE RLS SHALL garantizar que todas las consultas a `invoices`, `clients`, `providers`, `categories`, `alerts` y `invoice_payments` estén filtradas por `company_id` del usuario autenticado.
+5. THE System SHALL garantizar que todas las consultas a `invoices`, `clients`, `providers`, `categories`, `alerts` y `invoice_payments` estén filtradas por `company_id` del usuario autenticado, independientemente del estado de RLS en la base de datos.
 6. WHEN un usuario con rol `viewer` intenta crear o modificar datos, THE Frontend SHALL deshabilitar los controles de escritura y THE Backend SHALL rechazar la operación mediante RLS.
 7. THE System SHALL soportar los roles: `admin` (acceso total), `accountant` (lectura + escritura, sin eliminar), `viewer` (solo lectura).
 8. IF un usuario no tiene ninguna empresa asociada, THEN THE System SHALL redirigir al usuario a un flujo de creación de empresa.
@@ -163,7 +162,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 1. THE OCR_Pipeline SHALL seguir el patrón Adapter: cada proveedor OCR implementa `BaseOcrAdapter` con el método `extractText(file): Promise<OcrRawResult>`.
 2. THE ocrService SHALL orquestar el pipeline en dos pasos: (1) extracción de texto crudo via `OCR_Adapter`, (2) parseo de campos estructurados via `OCR_Parser`.
 3. THE OCR_Parser SHALL extraer los siguientes campos de texto crudo: `invoice_number`, `invoice_type`, `issue_date`, `due_date`, `seller_name`, `seller_cuit`, `buyer_name`, `buyer_cuit`, `subtotal`, `total_iva`, `total_amount`, `items[]`.
-4. THE OCR_Parser SHALL retornar un objeto `confidence` con scores por campo (0.0 a 1.0) para que el usuario pueda identificar campos de baja confianza.
+4. THE OCR_Parser SHALL retornar un objeto `confidence` con scores por campo (0.0 a 1.0) para que el usuario pueda identificar campos de baja confianza. IF un proveedor OCR retorna scores fuera del rango 0.0–1.0, THE System SHALL clampear los valores al rango válido antes de retornarlos. THE Frontend SHALL mostrar siempre los resultados OCR con sus scores de confianza, permitiendo al usuario decidir en base a ellos.
 5. THE System SHALL incluir un `MockOcrAdapter` funcional para desarrollo y testing que simule la extracción de una factura argentina típica.
 6. WHEN el OCR extrae datos de una factura, THE Frontend SHALL pre-poblar el formulario de nueva factura con los datos extraídos, permitiendo al usuario corregir antes de guardar.
 7. THE System SHALL almacenar en la tabla `invoices` los campos: `ocr_provider`, `ocr_confidence` (JSONB), `ocr_raw_text` para trazabilidad.
@@ -185,9 +184,9 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 3. THE Dashboard SHALL mostrar un gráfico de evolución mensual de ingresos vs gastos para los últimos N meses (configurable, default 6).
 4. THE Dashboard SHALL mostrar las facturas más recientes con acceso directo al detalle.
 5. THE invoiceService SHALL calcular los KPIs del dashboard usando la vista `invoice_financial_summary` filtrada por `company_id` y mes actual.
-6. WHEN los datos del dashboard están cargando, THE Dashboard SHALL mostrar skeletons de carga en lugar de valores vacíos.
+6. WHEN los datos del dashboard están cargando, THE Dashboard SHALL mostrar skeletons de carga en lugar de valores vacíos, ocultando todo el contenido hasta que la carga se complete.
 7. THE Dashboard SHALL filtrar todos los datos por la `Company` activa en `CompanyContext`.
-8. WHEN el resultado neto es negativo, THE Dashboard SHALL mostrar el bloque de resultado neto con estilo visual de alerta (fondo rojo).
+8. WHEN el resultado neto es menor o igual a cero, THE Dashboard SHALL mostrar el bloque de resultado neto con estilo visual de alerta (fondo rojo).
 
 ---
 
@@ -215,7 +214,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 
 1. THE invoiceService SHALL soportar filtrado simultáneo por: `status`, `type` (receivable/payable), `search` (número de factura), `companyId`, `dateFrom`, `dateTo`.
 2. THE System SHALL implementar paginación server-side con `page` y `pageSize`, retornando el `count` total para calcular páginas.
-3. WHEN el usuario escribe en el campo de búsqueda, THE Frontend SHALL aplicar debounce de 300ms antes de ejecutar la consulta.
+3. WHEN el usuario escribe en el campo de búsqueda, THE Frontend SHALL aplicar debounce de 300ms y, una vez expirado el debounce, SHALL ejecutar la consulta de búsqueda de forma conjunta.
 4. THE System SHALL ordenar las facturas por `issue_date` descendente por defecto.
 5. THE Frontend SHALL mantener los filtros activos en la URL como query params para permitir compartir y navegar con el botón atrás.
 
@@ -244,7 +243,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 1. THE System SHALL proveer una vista `company_cash_flow` en PostgreSQL que agregue por empresa, tipo de flujo y moneda: `invoice_count`, `total_invoiced`, `total_collected`, `total_pending`, `total_overdue`.
 2. THE ReportsPage SHALL permitir filtrar por rango de fechas y tipo de flujo (receivable/payable).
 3. THE System SHALL soportar exportación de datos de reportes en formato CSV.
-4. THE System SHALL calcular el flujo de caja usando pagos reales de `invoice_payments`, no el campo `status` de la factura.
+4. THE System SHALL calcular el flujo de caja usando pagos reales de `invoice_payments`, no el campo `status` de la factura. IF los datos de pagos están incompletos o ausentes, THE System SHALL mostrar totales en cero o parciales sin recurrir a cálculos basados en estado.
 
 ---
 
@@ -283,38 +282,21 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 4. THE System SHALL implementar `audit_logs` para registrar operaciones críticas: creación, modificación y eliminación de facturas.
 5. THE Frontend SHALL sanitizar cualquier contenido renderizado desde datos externos (OCR, notas de facturas) para prevenir XSS.
 6. THE System SHALL usar HTTPS en todos los entornos de producción.
-7. WHEN un token de sesión expira, THE AuthContext SHALL detectar el evento `TOKEN_REFRESHED` o `SIGNED_OUT` de Supabase y actualizar el estado de autenticación.
+7. WHEN un token de sesión expira o se cierra la sesión, THE AuthContext SHALL detectar los eventos `TOKEN_REFRESHED` o `SIGNED_OUT` de Supabase y actualizar el estado de autenticación. Otros eventos de Supabase Auth (como cambios de perfil o permisos) no deben disparar actualizaciones de estado en `AuthContext`.
 
 ---
 
-### Requirement 14: Migración a TypeScript
-
-**User Story:** Como Arquitecto Principal, quiero migrar el proyecto de JSX a TSX con TypeScript estricto, para mejorar la seguridad de tipos, el autocompletado y la mantenibilidad del código.
-
-#### Acceptance Criteria
-
-1. THE System SHALL migrar todos los archivos `.jsx` a `.tsx` y `.js` a `.ts` de forma incremental, feature por feature.
-2. THE System SHALL configurar `tsconfig.json` con `strict: true`, `noImplicitAny: true`, `strictNullChecks: true`.
-3. THE System SHALL reemplazar los JSDoc `@typedef` de `src/lib/database.types.js` con interfaces TypeScript en `src/lib/database.types.ts`.
-4. THE System SHALL tipar todos los `Service` con los tipos de `database.types.ts`.
-5. THE System SHALL tipar todos los `Hook` con los tipos de retorno de TanStack Query (`UseQueryResult<T>`, `UseMutationResult<T>`).
-6. THE System SHALL tipar todos los `Schema` Zod con `z.infer<typeof schema>` para derivar tipos de formulario.
-7. WHEN se migra un feature a TypeScript, THE System SHALL eliminar los JSDoc equivalentes para evitar duplicación.
-
----
-
-### Requirement 15: Roadmap por Fases
+### Requirement 14: Roadmap por Fases
 
 **User Story:** Como Product Manager, quiero un roadmap claro por fases con objetivos definidos, para coordinar el trabajo de los agentes y entregar valor incremental.
 
 #### Acceptance Criteria
 
 1. THE System SHALL implementar la **Fase 1 — Fundación** con los siguientes entregables:
-   - Migración completa a TypeScript estricto
-   - `CompanyProvider` integrado en `App.tsx` (actualmente ausente)
+   - `CompanyProvider` integrado en `App.jsx` (actualmente ausente)
    - RLS policies actualizadas para filtrar por `company_id` (no solo `user_id`)
    - Flujo de onboarding: creación de empresa al primer login
-   - Tests unitarios para services y parsers críticos
+   - Setup de TanStack Query y Zod en el proyecto
 2. THE System SHALL implementar la **Fase 2 — Core Features** con los siguientes entregables:
    - OCR con proveedor real (Google Document AI o Gemini Vision)
    - Flujo completo de carga de factura con OCR → revisión → guardado
@@ -334,37 +316,35 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 
 ---
 
-### Requirement 16: División de Tareas para Agentes Especializados
+### Requirement 15: División de Tareas para Agentes Especializados
 
 **User Story:** Como Coordinador Técnico, quiero una división clara de responsabilidades entre agentes especializados, para que puedan trabajar en paralelo sin conflictos y con contexto suficiente.
 
 #### Acceptance Criteria
 
-1. THE System SHALL designar un **Agente de Migración TypeScript** responsable de: convertir todos los archivos `.jsx`/`.js` a `.tsx`/`.ts`, crear `tsconfig.json`, actualizar `vite.config.ts`, y tipar todos los módulos existentes.
-2. THE System SHALL designar un **Agente de Base de Datos** responsable de: actualizar las RLS policies para usar `company_id`, crear migraciones SQL incrementales en `supabase/migrations/`, y mantener `database.types.ts` sincronizado con el schema.
-3. THE System SHALL designar un **Agente de Feature Auth/Companies** responsable de: integrar `CompanyProvider` en `App.tsx`, implementar el flujo de onboarding de empresa, y actualizar `ProtectedLayout` para verificar empresa activa.
-4. THE System SHALL designar un **Agente de Feature Invoices** responsable de: completar el CRUD de facturas con TypeScript, implementar el registro de pagos parciales, y conectar el flujo OCR → formulario → guardado.
-5. THE System SHALL designar un **Agente de Feature OCR** responsable de: integrar un proveedor OCR real (Google Document AI o Gemini), mejorar el `invoiceParser` con IA, y implementar la UI de revisión post-OCR.
-6. THE System SHALL designar un **Agente de Dashboard/Reportes** responsable de: completar el dashboard con todos los KPIs, implementar el módulo de reportes con exportación, y optimizar las queries de analítica.
-7. THE System SHALL designar un **Agente de UI/UX** responsable de: mantener el design system con shadcn/ui + TailwindCSS v4, implementar componentes reutilizables, y garantizar accesibilidad WCAG 2.1 AA.
-8. WHEN un agente trabaja en un feature, THE Agent SHALL leer este documento rector antes de comenzar y respetar todas las decisiones arquitectónicas aquí definidas.
-9. WHEN un agente detecta una inconsistencia entre el código existente y este documento, THE Agent SHALL documentar la discrepancia y proponer una corrección antes de implementar.
+1. THE System SHALL designar un **Agente de Base de Datos** responsable de: actualizar las RLS policies para usar `company_id`, crear migraciones SQL incrementales en `supabase/migrations/`, y mantener `database.js` sincronizado con el schema.
+2. THE System SHALL designar un **Agente de Feature Auth/Companies** responsable de: integrar `CompanyProvider` en `App.jsx`, implementar el flujo de onboarding de empresa, y actualizar `ProtectedLayout` para verificar empresa activa.
+3. THE System SHALL designar un **Agente de Feature Invoices** responsable de: completar el CRUD de facturas, implementar el registro de pagos parciales, y conectar el flujo OCR → formulario → guardado.
+4. THE System SHALL designar un **Agente de Feature OCR** responsable de: integrar un proveedor OCR real (Google Document AI o Gemini), mejorar el `invoiceParser` con IA, y implementar la UI de revisión post-OCR.
+5. THE System SHALL designar un **Agente de Dashboard/Reportes** responsable de: completar el dashboard con todos los KPIs, implementar el módulo de reportes con exportación, y optimizar las queries de analítica.
+6. THE System SHALL designar un **Agente de UI/UX** responsable de: mantener el design system con shadcn/ui + TailwindCSS v4, implementar componentes reutilizables, y garantizar accesibilidad WCAG 2.1 AA.
+7. WHEN un agente trabaja en un feature, THE Agent SHALL leer este documento rector antes de comenzar y respetar todas las decisiones arquitectónicas aquí definidas.
+8. WHEN un agente detecta una inconsistencia entre el código existente y este documento, THE Agent SHALL documentar la discrepancia y proponer una corrección antes de implementar.
 
 ---
 
-### Requirement 17: Reglas del Proyecto (Non-Negotiable)
+### Requirement 16: Reglas del Proyecto (Non-Negotiable)
 
 **User Story:** Como CTO, quiero que existan reglas de proyecto no negociables documentadas, para que todos los agentes las respeten sin excepción.
 
 #### Acceptance Criteria
 
 1. THE System SHALL NUNCA desactivar RLS en ninguna tabla de Supabase, en ningún entorno.
-2. THE System SHALL NUNCA usar `any` en TypeScript sin justificación documentada en un comentario.
-3. THE System SHALL NUNCA hacer llamadas directas a Supabase desde componentes React. Toda interacción con Supabase debe pasar por un `Service`.
-4. THE System SHALL NUNCA hardcodear `company_id` o `user_id`. Estos valores deben provenir de `CompanyContext` o `AuthContext` respectivamente.
-5. THE System SHALL NUNCA commitear archivos `.env` con credenciales reales al repositorio.
-6. THE System SHALL SIEMPRE usar `NUMERIC(15, 2)` para campos monetarios en PostgreSQL.
-7. THE System SHALL SIEMPRE validar inputs con Zod antes de enviar datos a Supabase.
-8. THE System SHALL SIEMPRE usar lazy loading para páginas en el Router (`React.lazy` + `Suspense`).
-9. THE System SHALL SIEMPRE manejar estados de carga y error en los hooks de TanStack Query.
-10. THE System SHALL SIEMPRE pasar `company_id` como parámetro explícito a los services, nunca leerlo desde el contexto dentro del service.
+2. THE System SHALL NUNCA hacer llamadas directas a Supabase desde componentes React. Toda interacción con Supabase debe pasar por un `Service`.
+3. THE System SHALL NUNCA hardcodear `company_id` o `user_id`. Estos valores deben provenir de `CompanyContext` o `AuthContext` respectivamente.
+4. THE System SHALL NUNCA commitear archivos `.env` con credenciales reales al repositorio.
+5. THE System SHALL SIEMPRE usar `NUMERIC(15, 2)` para campos monetarios en PostgreSQL.
+6. THE System SHALL SIEMPRE validar inputs con Zod antes de enviar datos a Supabase.
+7. THE System SHALL SIEMPRE usar lazy loading para páginas en el Router (`React.lazy` + `Suspense`).
+8. THE System SHALL SIEMPRE manejar estados de carga y error en los hooks de TanStack Query.
+9. THE System SHALL SIEMPRE pasar `company_id` como parámetro explícito a los services, nunca leerlo desde el contexto dentro del service.
