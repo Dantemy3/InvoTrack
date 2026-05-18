@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency } from '@/lib/utils'
-import { INVOICE_TYPES, IVA_RATES, INVOICE_STATUS } from '@/lib/constants'
+import { INVOICE_TYPES, IVA_RATES, INVOICE_STATUS, INVOICE_FLOW_TYPE_LABELS } from '@/lib/constants'
 
 const defaultItem = { description: '', quantity: 1, unit_price: 0, iva_rate: 21, subtotal: 0 }
 
@@ -27,6 +27,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     defaultValues: defaultValues || {
       invoice_number: '',
       invoice_type: 'Factura B',
+      type: 'receivable',
       issue_date: new Date().toISOString().split('T')[0],
       due_date: '',
       status: 'pending',
@@ -38,6 +39,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
   const items = watch('items')
+  const flowType = watch('type')
 
   const subtotal = items?.reduce((acc, item) => {
     const qty = parseFloat(item.quantity) || 0

@@ -1,18 +1,26 @@
 import { supabase } from '@/lib/supabase'
 
+/**
+ * clientService — CRUD para clientes.
+ *
+ * company_id se recibe siempre como parámetro explícito.
+ * El servicio es agnóstico al contexto React — no lee CompanyContext.
+ * El RLS en Supabase garantiza aislamiento entre empresas.
+ */
 export const clientService = {
   /**
-   * List clients for the current user.
-   * @param {{ search?: string, page?: number, pageSize?: number }} opts
+   * List clients for a given company.
+   * @param {{ companyId: string, search?: string, page?: number, pageSize?: number }} opts
    */
-  async getAll({ search, page = 1, pageSize = 20 } = {}) {
+  async getAll({ companyId, search, page = 1, pageSize = 20 } = {}) {
     let query = supabase
       .from('clients')
       .select('*', { count: 'exact' })
       .order('name', { ascending: true })
       .range((page - 1) * pageSize, page * pageSize - 1)
 
-    if (search) query = query.ilike('name', `%${search}%`)
+    if (companyId) query = query.eq('company_id', companyId)
+    if (search)    query = query.ilike('name', `%${search}%`)
 
     const { data, error, count } = await query
     if (error) throw error
@@ -36,15 +44,16 @@ export const clientService = {
 
   /**
    * Create a new client.
-   * @param {object} client
+   * payload debe incluir company_id.
+   * @param {object} payload — debe incluir company_id
    */
-  async create(client) {
+  async create(payload) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('No autenticado')
 
     const { data, error } = await supabase
       .from('clients')
-      .insert({ ...client, user_id: user.id })
+      .insert({ ...payload, user_id: user.id })
       .select()
       .single()
 
@@ -54,6 +63,7 @@ export const clientService = {
 
   /**
    * Update a client.
+   * El RLS garantiza que solo miembros con rol admin/accountant pueden actualizar.
    * @param {string} id
    * @param {object} updates
    */
@@ -71,6 +81,7 @@ export const clientService = {
 
   /**
    * Delete a client.
+   * El RLS garantiza que solo rol admin puede eliminar.
    * @param {string} id
    */
   async delete(id) {

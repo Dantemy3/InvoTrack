@@ -3,12 +3,18 @@ import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
+// DEV BYPASS: set to true to skip login during development
+const DEV_BYPASS_AUTH = true
+const DEV_MOCK_USER = { id: 'dev-user', email: 'dev@localhost' }
+
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]       = useState(DEV_BYPASS_AUTH ? DEV_MOCK_USER : null)
+  const [session, setSession] = useState(DEV_BYPASS_AUTH ? { user: DEV_MOCK_USER } : null)
+  const [loading, setLoading] = useState(!DEV_BYPASS_AUTH)
 
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) return
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)

@@ -1,11 +1,18 @@
 import { supabase } from '@/lib/supabase'
 
+/**
+ * invoiceService — CRUD + analytics para facturas.
+ *
+ * company_id se recibe siempre como parámetro explícito.
+ * El servicio es agnóstico al contexto React — no lee CompanyContext.
+ * El RLS en Supabase garantiza aislamiento entre empresas.
+ */
 export const invoiceService = {
   /**
    * List invoices with optional filters.
-   * @param {{ page?: number, pageSize?: number, status?: string, type?: string, search?: string }} opts
+   * @param {{ page?: number, pageSize?: number, status?: string, type?: string, search?: string, companyId?: string }} opts
    */
-  async getAll({ page = 1, pageSize = 20, status, type, search } = {}) {
+  async getAll({ page = 1, pageSize = 20, status, type, search, companyId } = {}) {
     let query = supabase
       .from('invoices')
       .select(`
@@ -16,9 +23,10 @@ export const invoiceService = {
       .order('issue_date', { ascending: false })
       .range((page - 1) * pageSize, page * pageSize - 1)
 
-    if (status) query = query.eq('status', status)
-    if (type)   query = query.eq('type', type)
-    if (search) query = query.ilike('invoice_number', `%${search}%`)
+    if (companyId) query = query.eq('company_id', companyId)
+    if (status)    query = query.eq('status', status)
+    if (type)      query = query.eq('type', type)
+    if (search)    query = query.ilike('invoice_number', `%${search}%`)
 
     const { data, error, count } = await query
     if (error) throw error
@@ -48,7 +56,8 @@ export const invoiceService = {
 
   /**
    * Create a new invoice with its line items.
-   * @param {{ items: object[], ...invoiceFields }} payload
+   * payload debe incluir company_id.
+   * @param {{ items: object[], company_id: string, ...invoiceFields }} payload
    */
   async create({ items = [], ...invoice }) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -79,6 +88,7 @@ export const invoiceService = {
 
   /**
    * Update invoice fields (not items — handle separately).
+   * El RLS garantiza que solo miembros con rol admin/accountant pueden actualizar.
    * @param {string} id
    * @param {object} updates
    */
@@ -113,6 +123,7 @@ export const invoiceService = {
 
   /**
    * Delete an invoice (cascades to items and payments via FK).
+   * El RLS garantiza que solo rol admin puede eliminar.
    * @param {string} id
    */
   async delete(id) {
@@ -122,20 +133,20 @@ export const invoiceService = {
 
   /**
    * Dashboard stats — uses invoice_financial_summary view for real cash flow.
-   * Falls back to invoices table if view is not yet available.
+   * Filtra por company_id (no por user_id).
+   * @param {string} companyId
    */
-  async getDashboardStats() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No autenticado')
+  async getDashboardStats(companyId) {
+    if (!companyId) throw new Error('companyId requerido')
 
-    const now = new Date()
+    const now      = new Date()
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-    // Fetch financial summary for current month
+    // Fetch financial summary for current month, scoped to company
     const { data: summaries, error } = await supabase
       .from('invoice_financial_summary')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('company_id', companyId)
       .gte('issue_date', firstDay)
 
     if (error) throw error
@@ -143,11 +154,11 @@ export const invoiceService = {
     const receivable = summaries?.filter((s) => s.type === 'receivable') ?? []
     const payable    = summaries?.filter((s) => s.type === 'payable')    ?? []
 
-    const totalFacturado   = receivable.reduce((acc, s) => acc + Number(s.total_amount), 0)
-    const totalIngresado   = receivable.reduce((acc, s) => acc + Number(s.total_paid), 0)
-    const totalPendiente   = receivable.reduce((acc, s) => acc + Number(s.total_pending), 0)
-    const totalGastos      = payable.reduce((acc, s) => acc + Number(s.total_paid), 0)
-    const resultado        = totalIngresado - totalGastos
+    const totalFacturado = receivable.reduce((acc, s) => acc + Number(s.total_amount), 0)
+    const totalIngresado = receivable.reduce((acc, s) => acc + Number(s.total_paid), 0)
+    const totalPendiente = receivable.reduce((acc, s) => acc + Number(s.total_pending), 0)
+    const totalGastos    = payable.reduce((acc, s) => acc + Number(s.total_paid), 0)
+    const resultado      = totalIngresado - totalGastos
 
     const paid    = receivable.filter((s) => s.is_fully_paid).length
     const pending = receivable.filter((s) => !s.is_fully_paid && !s.is_overdue).length
@@ -169,11 +180,12 @@ export const invoiceService = {
 
   /**
    * Monthly chart data — last N months of receivable vs payable collected.
+   * Filtra por company_id (no por user_id).
+   * @param {string} companyId
    * @param {number} months
    */
-  async getMonthlyChart(months = 6) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No autenticado')
+  async getMonthlyChart(companyId, months = 6) {
+    if (!companyId) throw new Error('companyId requerido')
 
     const from = new Date()
     from.setMonth(from.getMonth() - months + 1)
@@ -183,7 +195,7 @@ export const invoiceService = {
     const { data, error } = await supabase
       .from('invoice_financial_summary')
       .select('issue_date, type, total_paid, total_amount')
-      .eq('user_id', user.id)
+      .eq('company_id', companyId)
       .gte('issue_date', fromStr)
       .order('issue_date', { ascending: true })
 

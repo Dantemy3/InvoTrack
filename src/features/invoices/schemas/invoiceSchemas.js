@@ -11,6 +11,8 @@ export const invoiceItemSchema = z.object({
 export const invoiceSchema = z.object({
   invoice_number: z.string().min(1, 'Número de factura requerido'),
   invoice_type: z.string().min(1, 'Tipo de factura requerido'),
+  // type: flujo financiero — receivable = cobrar (ingreso), payable = pagar (gasto)
+  type: z.enum(['receivable', 'payable']).default('receivable'),
   issue_date: z.string().min(1, 'Fecha de emisión requerida'),
   due_date: z.string().optional(),
   client_id: z.string().uuid('Cliente inválido').optional().nullable(),
