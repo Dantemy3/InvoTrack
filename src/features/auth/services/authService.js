@@ -3,20 +3,33 @@ import { supabase } from '@/lib/supabase'
 export const authService = {
   /**
    * Sign in with email + password.
+   * @param {string} email
+   * @param {string} password
+   * @returns {Promise<import('@supabase/supabase-js').AuthResponse['data']>}
    */
-  async signInWithEmail(email, password) {
+  async signIn(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   },
 
   /**
+   * Alias for signIn — kept for backward compatibility.
+   * @param {string} email
+   * @param {string} password
+   */
+  async signInWithEmail(email, password) {
+    return this.signIn(email, password)
+  },
+
+  /**
    * Register a new user.
    * @param {string} email
    * @param {string} password
-   * @param {{ full_name: string }} metadata
+   * @param {{ full_name: string }} [metadata]
+   * @returns {Promise<import('@supabase/supabase-js').AuthResponse['data']>}
    */
-  async signUpWithEmail(email, password, metadata = {}) {
+  async signUp(email, password, metadata = {}) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -24,6 +37,16 @@ export const authService = {
     })
     if (error) throw error
     return data
+  },
+
+  /**
+   * Alias for signUp — kept for backward compatibility.
+   * @param {string} email
+   * @param {string} password
+   * @param {{ full_name: string }} [metadata]
+   */
+  async signUpWithEmail(email, password, metadata = {}) {
+    return this.signUp(email, password, metadata)
   },
 
   /**

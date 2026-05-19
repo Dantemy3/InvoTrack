@@ -22,11 +22,15 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    // Listen for auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+    // Listen for auth state changes.
+    // Per Requirement 13.7: ONLY TOKEN_REFRESHED and SIGNED_OUT update state.
+    // All other Supabase Auth events (SIGNED_IN, USER_UPDATED, etc.) are ignored.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
     })
 
     return () => subscription.unsubscribe()

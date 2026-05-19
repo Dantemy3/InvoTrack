@@ -71,12 +71,23 @@ export const TAX_CONDITIONS = {
   NO_RESPONSABLE: 'No Responsable',
 }
 
+/**
+ * IVA rate options for UI selectors.
+ * Each entry has a human-readable label and the numeric value.
+ */
 export const IVA_RATES = [
   { label: '0%', value: 0 },
   { label: '10.5%', value: 10.5 },
   { label: '21%', value: 21 },
   { label: '27%', value: 27 },
 ]
+
+/**
+ * Valid IVA rate values as a plain numeric array.
+ * Use this in Zod schemas: z.number().refine(v => IVA_VALID_RATES.includes(v))
+ * Alícuotas válidas según AFIP: 0%, 10.5%, 21%, 27%.
+ */
+export const IVA_VALID_RATES = [0, 10.5, 21, 27]
 
 export const ROLES = {
   ADMIN: 'admin',
@@ -88,6 +99,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  ONBOARDING: '/onboarding',
   DASHBOARD: '/dashboard',
   INVOICES: '/invoices',
   INVOICE_NEW: '/invoices/new',
@@ -108,9 +120,12 @@ export const QUERY_KEYS = {
   CLIENT: 'client',
   PROVIDERS: 'providers',
   PROVIDER: 'provider',
+  COMPANIES: 'companies',
+  COMPANY: 'company',
   DASHBOARD_STATS: 'dashboard-stats',
   ALERTS: 'alerts',
   CATEGORIES: 'categories',
   PROFILE: 'profile',
-  COMPANY: 'company',
+  REPORTS: 'reports',
+  INVOICE_PAYMENTS: 'invoice-payments',
 }
