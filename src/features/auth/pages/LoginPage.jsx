@@ -10,6 +10,31 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 
+/**
+ * Maps Supabase Auth error messages to user-friendly Spanish messages.
+ * @param {Error} err
+ * @returns {string}
+ */
+function getAuthErrorMessage(err) {
+  const msg = err?.message ?? ''
+  if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+    return 'Email o contraseña incorrectos.'
+  }
+  if (msg.includes('Email not confirmed')) {
+    return 'Debés confirmar tu email antes de iniciar sesión. Revisá tu bandeja de entrada.'
+  }
+  if (msg.includes('Too many requests') || msg.includes('rate limit')) {
+    return 'Demasiados intentos. Esperá unos minutos antes de volver a intentarlo.'
+  }
+  if (msg.includes('User not found')) {
+    return 'No existe una cuenta con ese email.'
+  }
+  if (msg.includes('network') || msg.includes('fetch')) {
+    return 'Error de conexión. Verificá tu internet e intentá de nuevo.'
+  }
+  return msg || 'Ocurrió un error inesperado. Intentá de nuevo.'
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -27,7 +52,11 @@ export default function LoginPage() {
       await authService.signInWithEmail(data.email, data.password)
       navigate('/dashboard')
     } catch (err) {
-      toast({ title: 'Error al iniciar sesión', description: err.message, variant: 'error' })
+      toast({
+        title: 'Error al iniciar sesión',
+        description: getAuthErrorMessage(err),
+        variant: 'error',
+      })
     }
   }
 
@@ -35,8 +64,13 @@ export default function LoginPage() {
     setGoogleLoading(true)
     try {
       await authService.signInWithGoogle()
+      // OAuth redirects the browser — no navigate() needed here
     } catch (err) {
-      toast({ title: 'Error con Google', description: err.message, variant: 'error' })
+      toast({
+        title: 'Error con Google',
+        description: getAuthErrorMessage(err),
+        variant: 'error',
+      })
       setGoogleLoading(false)
     }
   }
@@ -120,6 +154,7 @@ export default function LoginPage() {
                   type="button"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

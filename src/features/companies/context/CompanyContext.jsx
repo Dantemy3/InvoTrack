@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { companyService } from '@/features/companies/services/companyService'
 import { useAuth } from '@/features/auth/context/AuthContext'
 
 const CompanyContext = createContext(null)
+
+const STORAGE_KEY = 'invotrack_company_id'
 
 export function CompanyProvider({ children }) {
   const { user, isAuthenticated } = useAuth()
@@ -12,78 +14,72 @@ export function CompanyProvider({ children }) {
   const [role, setRole]           = useState(null)
   const [loading, setLoading]     = useState(true)
 
+  /**
+   * Load all companies accessible to the current user via companyService.
+   * companyService.getAll() returns companies with a `role` field already resolved:
+   *   - 'admin' for owned companies (owner_id === userId)
+   *   - the user_roles.role value for member companies
+   */
+  const loadCompanies = useCallback(async () => {
+    if (!user?.id) return
+
+    setLoading(true)
+    try {
+      const allCompanies = await companyService.getAll(user.id)
+      setCompanies(allCompanies)
+
+      // Auto-select: restore from localStorage or fall back to first available
+      const savedId  = localStorage.getItem(STORAGE_KEY)
+      const selected = allCompanies.find((c) => c.id === savedId) ?? allCompanies[0] ?? null
+
+      setCompany(selected)
+      setRole(selected?.role ?? null)
+
+      // Persist the resolved selection
+      if (selected) {
+        localStorage.setItem(STORAGE_KEY, selected.id)
+      } else {
+        localStorage.removeItem(STORAGE_KEY)
+      }
+    } catch (err) {
+      console.error('CompanyContext: error loading companies', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [user?.id])
+
   useEffect(() => {
     if (!isAuthenticated || !user) {
+      // Clear state when user logs out
+      setCompany(null)
+      setCompanies([])
+      setRole(null)
       setLoading(false)
       return
     }
     loadCompanies()
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, loadCompanies])
 
-  async function loadCompanies() {
-    setLoading(true)
-    try {
-      // Fetch companies where user is owner
-      const { data: owned } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('owner_id', user.id)
-
-      // Fetch companies where user has a role
-      const { data: roleRows } = await supabase
-        .from('user_roles')
-        .select('*, companies(*)')
-        .eq('user_id', user.id)
-
-      const memberCompanies = roleRows?.map(r => r.companies).filter(Boolean) ?? []
-
-      const allCompanies = [
-        ...(owned ?? []),
-        ...memberCompanies.filter(c => !owned?.find(o => o.id === c.id)),
-      ]
-
-      setCompanies(allCompanies)
-
-      // Auto-select: persisted in localStorage or first available
-      const savedId  = localStorage.getItem('invotrack_company_id')
-      const selected = allCompanies.find(c => c.id === savedId) ?? allCompanies[0] ?? null
-      setCompany(selected)
-
-      // Set role for selected company
-      if (selected) {
-        const isOwner = selected.owner_id === user.id
-        if (isOwner) {
-          setRole('admin')
-        } else {
-          const roleRow = roleRows?.find(r => r.company_id === selected.id)
-          setRole(roleRow?.role ?? 'viewer')
-        }
-      }
-    } catch (err) {
-      console.error('CompanyContext error:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  /**
+   * Switch the active company.
+   * Persists the selection to localStorage and updates the role immediately
+   * using the role already embedded in the companies list (no extra network call).
+   *
+   * @param {string} companyId - UUID of the company to activate
+   */
   function switchCompany(companyId) {
-    const found = companies.find(c => c.id === companyId)
+    const found = companies.find((c) => c.id === companyId)
     if (!found) return
-    setCompany(found)
-    localStorage.setItem('invotrack_company_id', companyId)
 
-    // Recalculate role
-    const isOwner = found.owner_id === user?.id
-    if (isOwner) {
-      setRole('admin')
-    }
-    // role from user_roles will be set on next loadCompanies if needed
+    setCompany(found)
+    setRole(found.role ?? null)
+    localStorage.setItem(STORAGE_KEY, companyId)
   }
 
   const value = {
-    company,       // currently selected company object
-    companies,     // all accessible companies
-    role,          // 'admin' | 'accountant' | 'viewer'
+    company,          // currently active company object (includes `role` field)
+    companies,        // all accessible companies for the user
+    role,             // 'admin' | 'accountant' | 'viewer' | null
     loading,
     switchCompany,
     refetch: loadCompanies,

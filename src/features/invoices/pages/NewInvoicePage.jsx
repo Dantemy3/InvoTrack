@@ -4,20 +4,18 @@ import { Button } from '@/components/ui/button'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice } from '../hooks/useInvoices'
 
+/**
+ * Página de creación de nueva factura.
+ * Los totales fiscales los calcula InvoiceForm antes de llamar a onSubmit.
+ * Req 5.9, 5.10, 5.11, 5.12
+ */
 export default function NewInvoicePage() {
   const navigate = useNavigate()
   const createInvoice = useCreateInvoice()
 
   const handleSubmit = async (data) => {
-    const items = data.items.map((item) => ({
-      ...item,
-      subtotal: item.quantity * item.unit_price,
-    }))
-    const subtotal = items.reduce((acc, i) => acc + i.subtotal, 0)
-    const total_iva = items.reduce((acc, i) => acc + (i.subtotal * i.iva_rate) / 100, 0)
-    const total_amount = subtotal + total_iva
-
-    await createInvoice.mutateAsync({ ...data, items, subtotal, total_iva, total_amount })
+    // data ya viene con totales calculados por InvoiceForm (calculateInvoiceTotals)
+    await createInvoice.mutateAsync(data)
     navigate('/invoices')
   }
 
@@ -29,7 +27,7 @@ export default function NewInvoicePage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Nueva factura</h1>
-          <p className="text-sm text-gray-500">Completá los datos de la factura</p>
+          <p className="text-sm text-gray-500">Completá los datos del comprobante fiscal</p>
         </div>
       </div>
       <InvoiceForm onSubmit={handleSubmit} isLoading={createInvoice.isPending} />

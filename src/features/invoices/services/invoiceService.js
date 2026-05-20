@@ -9,24 +9,31 @@ import { supabase } from '@/lib/supabase'
  */
 export const invoiceService = {
   /**
-   * List invoices with optional filters.
-   * @param {{ page?: number, pageSize?: number, status?: string, type?: string, search?: string, companyId?: string }} opts
+   * List invoices with optional filters and pagination.
+   * Req 5.8, 9.1, 9.2, 9.4, 12.11
+   * @param {{ page?: number, pageSize?: number, status?: string, type?: string, search?: string, companyId?: string, dateFrom?: string, dateTo?: string }} opts
    */
-  async getAll({ page = 1, pageSize = 20, status, type, search, companyId } = {}) {
+  async getAll({ page = 1, pageSize = 20, status, type, search, companyId, dateFrom, dateTo } = {}) {
+    const safePage     = Math.max(1, page)
+    const safePageSize = Math.min(100, Math.max(1, pageSize))
+
     let query = supabase
       .from('invoices')
       .select(`
         *,
+        invoice_items(*),
         clients(id, name, email),
         providers(id, name, email)
       `, { count: 'exact' })
-      .order('issue_date', { ascending: false })
-      .range((page - 1) * pageSize, page * pageSize - 1)
+      .order('fecha_emision', { ascending: false })
+      .range((safePage - 1) * safePageSize, safePage * safePageSize - 1)
 
     if (companyId) query = query.eq('company_id', companyId)
     if (status)    query = query.eq('status', status)
     if (type)      query = query.eq('type', type)
     if (search)    query = query.ilike('invoice_number', `%${search}%`)
+    if (dateFrom)  query = query.gte('fecha_emision', dateFrom)
+    if (dateTo)    query = query.lte('fecha_emision', dateTo)
 
     const { data, error, count } = await query
     if (error) throw error
@@ -72,7 +79,7 @@ export const invoiceService = {
 
     if (invError) throw invError
 
-    // Insert line items if any
+    // Insert line items — rollback (delete invoice) if items fail (Req 5.3)
     if (items.length > 0) {
       const rows = items.map((item, idx) => ({
         ...item,
@@ -80,7 +87,11 @@ export const invoiceService = {
         sort_order: idx,
       }))
       const { error: itemsError } = await supabase.from('invoice_items').insert(rows)
-      if (itemsError) throw itemsError
+      if (itemsError) {
+        // Rollback: eliminar la factura para no dejar registros huérfanos
+        await supabase.from('invoices').delete().eq('id', newInvoice.id)
+        throw itemsError
+      }
     }
 
     return newInvoice

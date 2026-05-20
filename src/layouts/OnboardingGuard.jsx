@@ -3,11 +3,18 @@ import { useAuth } from '@/features/auth/context/AuthContext'
 import { useCompany } from '@/features/companies/context/CompanyContext'
 import { Loader2 } from 'lucide-react'
 
-export default function ProtectedLayout() {
+/**
+ * OnboardingGuard — wraps the /onboarding route.
+ *
+ * Rules:
+ * - Not authenticated → redirect to /login
+ * - Authenticated AND already has a company → redirect to /dashboard
+ * - Authenticated AND no company → render <Outlet /> (show OnboardingPage)
+ */
+export default function OnboardingGuard() {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { company, loading: companyLoading } = useCompany()
 
-  // Show loading spinner while auth or company state is resolving
   if (authLoading || companyLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -16,11 +23,8 @@ export default function ProtectedLayout() {
     )
   }
 
-  // Not authenticated → go to login
   if (!isAuthenticated) return <Navigate to="/login" replace />
-
-  // Authenticated but no company → go to onboarding
-  if (!company) return <Navigate to="/onboarding" replace />
+  if (company) return <Navigate to="/dashboard" replace />
 
   return <Outlet />
 }

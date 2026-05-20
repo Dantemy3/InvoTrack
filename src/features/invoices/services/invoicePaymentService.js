@@ -1,125 +1,147 @@
-import { supabase } from '../../../lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 /**
- * Fetch all payments for a given invoice.
+ * invoicePaymentService — pagos parciales de facturas.
  *
- * @param {string} invoiceId
- * @returns {Promise<import('../../../lib/database.types').InvoicePayment[]>}
+ * Req 5.4, 5.5, 5.6 — el estado 'paid'/'pending' se determina
+ * por la suma real de pagos, no por el campo status directamente.
  */
-export async function getPaymentsByInvoice(invoiceId) {
-  const { data, error } = await supabase
-    .from('invoice_payments')
-    .select('*')
-    .eq('invoice_id', invoiceId)
-    .order('payment_date', { ascending: false })
+export const invoicePaymentService = {
+  /**
+   * Registra un pago parcial o total para una factura.
+   * Luego recalcula la suma de pagos y actualiza el status de la factura:
+   *   - sum(payments) >= total_amount → 'paid'
+   *   - sum(payments) < total_amount  → 'pending'
+   *
+   * Req 5.4, 5.5, 5.6
+   *
+   * @param {string} invoiceId
+   * @param {string} companyId
+   * @param {{ amount: number, payment_method: string, payment_date: string, notes?: string }} payment
+   * @returns {Promise<object>} El pago creado
+   */
+  async registerPayment(invoiceId, companyId, payment) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('No autenticado')
 
-  if (error) throw error
-  return data
-}
+    // 1. Insertar el pago
+    const { data: newPayment, error: payError } = await supabase
+      .from('invoice_payments')
+      .insert({
+        invoice_id:     invoiceId,
+        company_id:     companyId,
+        user_id:        user.id,
+        amount:         payment.amount,
+        payment_method: payment.payment_method,
+        payment_date:   payment.payment_date,
+        notes:          payment.notes ?? null,
+      })
+      .select()
+      .single()
 
-/**
- * Register a new payment for an invoice.
- * Supports partial payments — amount can be less than invoice total.
- *
- * @param {Omit<import('../../../lib/database.types').InvoicePayment, 'id' | 'created_at'>} payload
- * @returns {Promise<import('../../../lib/database.types').InvoicePayment>}
- */
-export async function createPayment(payload) {
-  const { data, error } = await supabase
-    .from('invoice_payments')
-    .insert(payload)
-    .select()
-    .single()
+    if (payError) throw payError
 
-  if (error) throw error
-  return data
-}
+    // 2. Recalcular suma total de pagos para esta factura
+    const { data: payments, error: sumError } = await supabase
+      .from('invoice_payments')
+      .select('amount')
+      .eq('invoice_id', invoiceId)
 
-/**
- * Delete a payment record.
- *
- * @param {string} paymentId
- */
-export async function deletePayment(paymentId) {
-  const { error } = await supabase
-    .from('invoice_payments')
-    .delete()
-    .eq('id', paymentId)
+    if (sumError) throw sumError
 
-  if (error) throw error
-}
+    const totalPaid = (payments ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
 
-/**
- * Get the financial summary for a single invoice.
- * Uses the `invoice_financial_summary` view — calculates paid/pending
- * from real payment records, not just the status field.
- *
- * @param {string} invoiceId
- * @returns {Promise<import('../../../lib/database.types').InvoiceFinancialSummary>}
- */
-export async function getInvoiceFinancialSummary(invoiceId) {
-  const { data, error } = await supabase
-    .from('invoice_financial_summary')
-    .select('*')
-    .eq('invoice_id', invoiceId)
-    .single()
+    // 3. Obtener total_amount de la factura
+    const { data: invoice, error: invError } = await supabase
+      .from('invoices')
+      .select('total_amount')
+      .eq('id', invoiceId)
+      .single()
 
-  if (error) throw error
-  return data
-}
+    if (invError) throw invError
 
-/**
- * Get cash flow summary for a company.
- * Returns receivable vs payable totals with collected/pending breakdown.
- * Use this for dashboard KPIs and financial balance.
- *
- * @param {string} companyId
- * @param {string} [currency='ARS']
- * @returns {Promise<import('../../../lib/database.types').CompanyCashFlow[]>}
- */
-export async function getCompanyCashFlow(companyId, currency = 'ARS') {
-  const { data, error } = await supabase
-    .from('company_cash_flow')
-    .select('*')
-    .eq('company_id', companyId)
-    .eq('currency', currency)
+    // 4. Actualizar status según la regla de negocio (Req 5.4, 5.5, 5.6)
+    const newStatus = totalPaid >= Number(invoice.total_amount) ? 'paid' : 'pending'
 
-  if (error) throw error
-  return data
-}
+    const { error: updateError } = await supabase
+      .from('invoices')
+      .update({ status: newStatus })
+      .eq('id', invoiceId)
 
-/**
- * Calculate financial balance from cash flow rows.
- * surplus = total receivable collected - total payable collected
- *
- * @param {import('../../../lib/database.types').CompanyCashFlow[]} cashFlowRows
- * @returns {{
- *   totalIncome: number,
- *   totalExpenses: number,
- *   surplus: number,
- *   deficit: number,
- *   pendingReceivable: number,
- *   pendingPayable: number,
- *   overdueReceivable: number,
- *   overduePayable: number,
- * }}
- */
-export function calculateFinancialBalance(cashFlowRows) {
-  const receivable = cashFlowRows.find((r) => r.type === 'receivable') ?? {}
-  const payable    = cashFlowRows.find((r) => r.type === 'payable')    ?? {}
+    if (updateError) throw updateError
 
-  const totalIncome   = Number(receivable.total_collected ?? 0)
-  const totalExpenses = Number(payable.total_collected    ?? 0)
-  const net           = totalIncome - totalExpenses
+    return newPayment
+  },
 
-  return {
-    totalIncome,
-    totalExpenses,
-    surplus:            net > 0 ? net : 0,
-    deficit:            net < 0 ? Math.abs(net) : 0,
-    pendingReceivable:  Number(receivable.total_pending  ?? 0),
-    pendingPayable:     Number(payable.total_pending     ?? 0),
-    overdueReceivable:  Number(receivable.total_overdue  ?? 0),
-    overduePayable:     Number(payable.total_overdue     ?? 0),
-  }
+  /**
+   * Retorna todos los pagos de una factura, ordenados por fecha descendente.
+   * Req 5.4
+   *
+   * @param {string} invoiceId
+   * @param {string} companyId
+   * @returns {Promise<object[]>}
+   */
+  async getByInvoice(invoiceId, companyId) {
+    const { data, error } = await supabase
+      .from('invoice_payments')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .eq('company_id', companyId)
+      .order('payment_date', { ascending: false })
+
+    if (error) throw error
+    return data ?? []
+  },
+
+  /**
+   * Elimina un pago y recalcula el status de la factura.
+   *
+   * @param {string} paymentId
+   * @param {string} invoiceId
+   */
+  async deletePayment(paymentId, invoiceId) {
+    const { error } = await supabase
+      .from('invoice_payments')
+      .delete()
+      .eq('id', paymentId)
+
+    if (error) throw error
+
+    // Recalcular status tras eliminar
+    const { data: payments } = await supabase
+      .from('invoice_payments')
+      .select('amount')
+      .eq('invoice_id', invoiceId)
+
+    const totalPaid = (payments ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
+
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('total_amount')
+      .eq('id', invoiceId)
+      .single()
+
+    if (invoice) {
+      const newStatus = totalPaid >= Number(invoice.total_amount) ? 'paid' : 'pending'
+      await supabase.from('invoices').update({ status: newStatus }).eq('id', invoiceId)
+    }
+  },
+
+  /**
+   * Resumen financiero de una factura desde la vista invoice_financial_summary.
+   * Calcula total_paid, total_pending, is_fully_paid, is_overdue.
+   *
+   * @param {string} invoiceId
+   * @returns {Promise<object>}
+   */
+  async getFinancialSummary(invoiceId) {
+    const { data, error } = await supabase
+      .from('invoice_financial_summary')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .single()
+
+    if (error) throw error
+    return data
+  },
 }

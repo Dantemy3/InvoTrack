@@ -1,92 +1,81 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  getPaymentsByInvoice,
-  createPayment,
-  deletePayment,
-  getInvoiceFinancialSummary,
-  getCompanyCashFlow,
-  calculateFinancialBalance,
-} from '../services/invoicePaymentService'
-
-// ─── Query Keys ────────────────────────────────────────────────────────────────
-export const paymentKeys = {
-  all:             ['invoice_payments'],
-  byInvoice:       (invoiceId) => ['invoice_payments', 'invoice', invoiceId],
-  summary:         (invoiceId) => ['invoice_financial_summary', invoiceId],
-  cashFlow:        (companyId, currency) => ['company_cash_flow', companyId, currency],
-}
-
-// ─── Hooks ─────────────────────────────────────────────────────────────────────
+import { invoicePaymentService } from '../services/invoicePaymentService'
+import { useCompany } from '@/features/companies/context/CompanyContext'
+import { QUERY_KEYS } from '@/lib/constants'
+import { useToast } from '@/components/ui/toast'
 
 /**
- * List all payments for an invoice.
+ * Lista los pagos de una factura.
+ * Req 5.4
  */
 export function useInvoicePayments(invoiceId) {
+  const { company } = useCompany()
+
   return useQuery({
-    queryKey: paymentKeys.byInvoice(invoiceId),
-    queryFn:  () => getPaymentsByInvoice(invoiceId),
-    enabled:  Boolean(invoiceId),
+    queryKey: [QUERY_KEYS.INVOICE_PAYMENTS, invoiceId],
+    queryFn: () => invoicePaymentService.getByInvoice(invoiceId, company.id),
+    enabled: Boolean(invoiceId) && Boolean(company?.id),
   })
 }
 
 /**
- * Financial summary for a single invoice.
- * Returns total_paid, total_pending, is_fully_paid, is_overdue.
- * Source of truth: invoice_payments table, NOT the status field.
+ * Resumen financiero de una factura (total_paid, total_pending, is_overdue).
+ * Usa la vista invoice_financial_summary — basado en pagos reales.
  */
 export function useInvoiceFinancialSummary(invoiceId) {
   return useQuery({
-    queryKey: paymentKeys.summary(invoiceId),
-    queryFn:  () => getInvoiceFinancialSummary(invoiceId),
-    enabled:  Boolean(invoiceId),
+    queryKey: ['invoice_financial_summary', invoiceId],
+    queryFn: () => invoicePaymentService.getFinancialSummary(invoiceId),
+    enabled: Boolean(invoiceId),
   })
 }
 
 /**
- * Company-level cash flow.
- * Returns receivable vs payable breakdown with collected/pending/overdue.
+ * Registra un pago parcial o total.
+ * Actualiza automáticamente el status de la factura (paid/pending).
+ * Req 5.4, 5.5, 5.6
  */
-export function useCompanyCashFlow(companyId, currency = 'ARS') {
-  return useQuery({
-    queryKey: paymentKeys.cashFlow(companyId, currency),
-    queryFn:  async () => {
-      const rows    = await getCompanyCashFlow(companyId, currency)
-      const balance = calculateFinancialBalance(rows)
-      return { rows, balance }
-    },
-    enabled: Boolean(companyId),
-  })
-}
-
-/**
- * Register a new payment (supports partial amounts).
- * Invalidates the invoice summary and cash flow on success.
- */
-export function useCreatePayment() {
+export function useRegisterPayment(invoiceId) {
   const queryClient = useQueryClient()
+  const { company } = useCompany()
+  const { toast } = useToast()
 
   return useMutation({
-    mutationFn: createPayment,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.byInvoice(data.invoice_id) })
-      queryClient.invalidateQueries({ queryKey: paymentKeys.summary(data.invoice_id) })
-      queryClient.invalidateQueries({ queryKey: ['company_cash_flow', data.company_id] })
+    mutationFn: (payment) =>
+      invoicePaymentService.registerPayment(invoiceId, company.id, payment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICE_PAYMENTS, invoiceId] })
+      queryClient.invalidateQueries({ queryKey: ['invoice_financial_summary', invoiceId] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICE, invoiceId] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICES] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_STATS] })
+      toast({ title: 'Pago registrado', variant: 'success' })
+    },
+    onError: (err) => {
+      toast({ title: 'Error al registrar pago', description: err.message, variant: 'error' })
     },
   })
 }
 
 /**
- * Delete a payment record.
+ * Elimina un pago y recalcula el status de la factura.
  */
-export function useDeletePayment() {
+export function useDeletePayment(invoiceId) {
   const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   return useMutation({
-    mutationFn: ({ paymentId }) => deletePayment(paymentId),
-    onSuccess: (_data, { invoiceId, companyId }) => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.byInvoice(invoiceId) })
-      queryClient.invalidateQueries({ queryKey: paymentKeys.summary(invoiceId) })
-      queryClient.invalidateQueries({ queryKey: ['company_cash_flow', companyId] })
+    mutationFn: (paymentId) =>
+      invoicePaymentService.deletePayment(paymentId, invoiceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICE_PAYMENTS, invoiceId] })
+      queryClient.invalidateQueries({ queryKey: ['invoice_financial_summary', invoiceId] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICE, invoiceId] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICES] })
+      toast({ title: 'Pago eliminado', variant: 'success' })
+    },
+    onError: (err) => {
+      toast({ title: 'Error al eliminar pago', description: err.message, variant: 'error' })
     },
   })
 }

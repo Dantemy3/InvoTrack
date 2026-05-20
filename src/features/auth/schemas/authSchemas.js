@@ -1,5 +1,14 @@
 import { z } from 'zod'
 
+/**
+ * Validates Argentine CUIT format: XX-XXXXXXXX-X
+ * Requirement 8.6
+ */
+export const cuitSchema = z.string().regex(
+  /^\d{2}-\d{8}-\d$/,
+  'CUIT inválido. Formato esperado: XX-XXXXXXXX-X'
+)
+
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),

@@ -4,10 +4,12 @@ import { Loader2 } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
 import AuthLayout from '@/layouts/AuthLayout'
 import ProtectedLayout from '@/layouts/ProtectedLayout'
+import OnboardingGuard from '@/layouts/OnboardingGuard'
 
 // Lazy loaded pages
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
+const OnboardingPage = lazy(() => import('@/features/companies/pages/OnboardingPage'))
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
 const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage'))
 const NewInvoicePage = lazy(() => import('@/features/invoices/pages/NewInvoicePage'))
@@ -41,6 +43,13 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: withSuspense(LoginPage) },
       { path: '/register', element: withSuspense(RegisterPage) },
+    ],
+  },
+  {
+    // Onboarding: requires authentication but NOT a company (OnboardingGuard handles this)
+    element: <OnboardingGuard />,
+    children: [
+      { path: '/onboarding', element: withSuspense(OnboardingPage) },
     ],
   },
   {

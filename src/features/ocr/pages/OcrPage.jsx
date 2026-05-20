@@ -41,7 +41,7 @@ function DropZone({ onFile, disabled }) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,.pdf"
+        accept=".pdf,image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={(e) => e.target.files[0] && onFile(e.target.files[0])}
       />
@@ -191,8 +191,8 @@ export default function OcrPage() {
                     { label: 'Tipo', value: result.normalized.invoice_type, key: 'invoice_type' },
                     { label: 'Fecha emisión', value: result.normalized.issue_date, key: 'issue_date' },
                     { label: 'Vencimiento', value: result.normalized.due_date, key: 'due_date' },
-                    { label: 'CUIT Vendedor', value: result.normalized.seller_cuit, key: 'invoice_number' },
-                    { label: 'CUIT Comprador', value: result.normalized.buyer_cuit, key: 'invoice_number' },
+                    { label: 'CUIT Vendedor', value: result.normalized.seller_cuit, key: 'seller_cuit' },
+                    { label: 'CUIT Comprador', value: result.normalized.buyer_cuit, key: 'buyer_cuit' },
                   ].map(({ label, value, key }) => (
                     <div key={label} className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">{label}</span>
