@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Plus, Search, ScanLine } from 'lucide-react'
+import { Plus, Search, ScanLine, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import InvoiceTable from '../components/InvoiceTable'
@@ -12,22 +13,35 @@ import { useInvoices } from '../hooks/useInvoices'
  * Página de listado de facturas.
  * Req 9.3 — debounce 300ms en búsqueda
  * Req 9.5 — filtros en URL params para compartir y navegar con atrás
+ * Paginación server-side con pageSize=20
  */
 export default function InvoicesPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Leer filtros desde URL
-  const urlStatus = searchParams.get('status') ?? ''
-  const urlType   = searchParams.get('type') ?? ''
-  const urlSearch = searchParams.get('search') ?? ''
-  const urlPage   = parseInt(searchParams.get('page') ?? '1', 10)
+  const urlStatus   = searchParams.get('status')   ?? ''
+  const urlType     = searchParams.get('type')     ?? ''
+  const urlSearch   = searchParams.get('search')   ?? ''
+  const urlDateFrom = searchParams.get('dateFrom') ?? ''
+  const urlDateTo   = searchParams.get('dateTo')   ?? ''
+  const urlPage     = parseInt(searchParams.get('page') ?? '1', 10)
 
   // Estado local solo para el input de búsqueda (para el debounce)
   const [inputValue, setInputValue] = useState(urlSearch)
+  // Ref para evitar loop: no sincronizar cuando el cambio de URL viene del propio debounce
+  const isDebouncing = useRef(false)
+
+  // Sincronizar inputValue cuando la URL cambia externamente (ej: botón atrás del navegador)
+  useEffect(() => {
+    if (!isDebouncing.current) {
+      setInputValue(urlSearch)
+    }
+  }, [urlSearch])
 
   // Debounce 300ms: actualiza URL params solo después del delay (Req 9.3)
   useEffect(() => {
+    isDebouncing.current = true
     const timer = setTimeout(() => {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev)
@@ -36,20 +50,27 @@ export default function InvoicesPage() {
         next.set('page', '1')
         return next
       })
+      isDebouncing.current = false
     }, 300)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      isDebouncing.current = false
+    }
   }, [inputValue, setSearchParams])
 
+  const pageSize = 20
+
   const { data, count, isLoading } = useInvoices({
-    status:   urlStatus || undefined,
-    type:     urlType   || undefined,
-    search:   urlSearch || undefined,
+    status:   urlStatus   || undefined,
+    type:     urlType     || undefined,
+    search:   urlSearch   || undefined,
+    dateFrom: urlDateFrom || undefined,
+    dateTo:   urlDateTo   || undefined,
     page:     urlPage,
-    pageSize: 20,
+    pageSize,
   })
 
-  const pageSize = 20
-  const totalPages = Math.ceil(count / pageSize)
+  const totalPages = Math.max(1, Math.ceil(count / pageSize))
 
   const setFilter = (key, value) => {
     setSearchParams((prev) => {
@@ -68,6 +89,13 @@ export default function InvoicesPage() {
       return next
     })
   }
+
+  const clearFilters = () => {
+    setInputValue('')
+    setSearchParams({})
+  }
+
+  const hasActiveFilters = urlStatus || urlType || urlSearch || urlDateFrom || urlDateTo
 
   return (
     <div className="p-6 space-y-6">
@@ -91,7 +119,7 @@ export default function InvoicesPage() {
 
       {/* Filtros */}
       <Card>
-        <CardContent className="pt-4 pb-4">
+        <CardContent className="pt-4 pb-4 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Búsqueda con debounce */}
             <div className="relative flex-1">
@@ -136,6 +164,39 @@ export default function InvoicesPage() {
                 <SelectItem value="payable">Pagar (gasto)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filtros de fecha */}
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-500">Desde</Label>
+              <Input
+                type="date"
+                className="w-full sm:w-40"
+                value={urlDateFrom}
+                onChange={(e) => setFilter('dateFrom', e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-500">Hasta</Label>
+              <Input
+                type="date"
+                className="w-full sm:w-40"
+                value={urlDateTo}
+                onChange={(e) => setFilter('dateTo', e.target.value)}
+              />
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={clearFilters}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Limpiar filtros
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

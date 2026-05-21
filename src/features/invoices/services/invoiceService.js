@@ -70,10 +70,14 @@ export const invoiceService = {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('No autenticado')
 
+    // Generate invoice_number from punto_de_venta + numero_comprobante (AFIP format: XXXX-XXXXXXXX)
+    const invoiceNumber = invoice.invoice_number ||
+      `${String(invoice.punto_de_venta ?? 1).padStart(4, '0')}-${String(invoice.numero_comprobante ?? 1).padStart(8, '0')}`
+
     // Insert invoice
     const { data: newInvoice, error: invError } = await supabase
       .from('invoices')
-      .insert({ ...invoice, user_id: user.id })
+      .insert({ ...invoice, invoice_number: invoiceNumber, user_id: user.id })
       .select()
       .single()
 

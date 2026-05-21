@@ -130,42 +130,42 @@ El lenguaje de implementación es **JavaScript (JSX/JS)** en todo el proyecto. N
     - `InvoiceForm`: todos los campos fiscales argentinos del schema
     - `InvoiceTable`: columnas, paginación, acciones
     - _Requirements: 5.9, 5.10, 5.11, 5.12_
-  - [ ] 8.10 Completar páginas de facturas: `InvoicesPage.jsx`, `NewInvoicePage.jsx`, `InvoiceDetailPage.jsx`
+  - [x] 8.10 Completar páginas de facturas: `InvoicesPage.jsx`, `NewInvoicePage.jsx`, `InvoiceDetailPage.jsx`
     - `InvoicesPage`: filtros con URL params, debounce 300ms en búsqueda, paginación server-side
     - `NewInvoicePage`: formulario completo con todos los campos fiscales argentinos
     - _Requirements: 9.3, 9.5, 5.9, 5.10, 5.11, 5.12_
 
 - [ ] 9. Implementar registro de pagos parciales
-  - [~] 9.1 Completar `invoicePaymentService.js`
+  - [x] 9.1 Completar `invoicePaymentService.js`
     - Implementar `registerPayment(invoiceId, companyId, payment)`: insertar pago, recalcular suma, actualizar `status` a `paid` o `pending`
     - Implementar `getByInvoice(invoiceId, companyId)`: retornar lista de pagos
     - _Requirements: 5.4, 5.5, 5.6_
   - [ ]* 9.2 Escribir property test — Property 5: Determinación de estado por pagos
     - **Property 5: Para cualquier `total_amount` T y lista de pagos P: `sum(P) >= T` → `status = 'paid'`; `sum(P) < T` → `status = 'pending'`**
     - **Validates: Requirements 5.4, 5.5, 5.6**
-  - [~] 9.3 Completar `useInvoicePayments.js` e implementar UI de pagos en `InvoiceDetailPage.jsx`
+  - [ ] 9.3 Completar `useInvoicePayments.js` e implementar UI de pagos en `InvoiceDetailPage.jsx`
     - Formulario de registro de pago: `amount`, `payment_method`, `payment_date`, `notes`
     - Mostrar historial de pagos y saldo pendiente
     - _Requirements: 5.4_
 
 
 - [ ] 10. Implementar pipeline OCR con Google Document AI
-  - [~] 10.1 Crear `src/features/ocr/adapters/BaseOcrAdapter.js` con JSDoc
+  - [ ] 10.1 Crear `src/features/ocr/adapters/BaseOcrAdapter.js` con JSDoc
     - Definir clase abstracta `BaseOcrAdapter` con método `extractText(file)`
     - Documentar shapes: `OcrRawResult`, `OcrConfidenceScores`, `OcrNormalizedInvoice`, `OcrExtractedItem`
     - _Requirements: 6.1, 6.2_
-  - [~] 10.2 Completar `MockOcrAdapter.js`
+  - [ ] 10.2 Completar `MockOcrAdapter.js`
     - Simular extracción de factura argentina típica con datos realistas
     - _Requirements: 6.5_
-  - [~] 10.3 Crear `src/features/ocr/adapters/GoogleDocumentAiAdapter.js`
+  - [ ] 10.3 Crear `src/features/ocr/adapters/GoogleDocumentAiAdapter.js`
     - Implementar `extractText(file)` llamando a la Edge Function de Supabase
     - Manejar errores de red y respuestas vacías
     - _Requirements: 6.1, 6.8_
-  - [~] 10.4 Crear Edge Function `supabase/functions/ocr-google/index.ts`
+  - [ ] 10.4 Crear Edge Function `supabase/functions/ocr-google/index.ts`
     - Recibir archivo, llamar a Google Document AI API, retornar texto crudo
     - Leer credenciales desde variables de entorno de Supabase (nunca hardcodeadas)
     - _Requirements: 6.8, 13.1_
-  - [~] 10.5 Completar `invoiceParser.js`
+  - [ ] 10.5 Completar `invoiceParser.js`
     - Parsear campos: `invoice_number`, `invoice_type`, `issue_date`, `due_date`, `seller_name`, `seller_cuit`, `buyer_name`, `buyer_cuit`, `subtotal`, `total_iva`, `total_amount`, `items[]`
     - Convertir fechas `DD/MM/YYYY` → `YYYY-MM-DD`
     - Nunca lanzar excepciones: retornar campos `null` con confidence `0.1` si no parseable
@@ -176,36 +176,36 @@ El lenguaje de implementación es **JavaScript (JSX/JS)** en todo el proyecto. N
   - [ ]* 10.7 Escribir property test — Property 3: Round-trip del parser OCR
     - **Property 3: Para cualquier texto de factura argentina válido, parsear → formatear → parsear produce resultado estructuralmente equivalente**
     - **Validates: Requirements 6.11**
-  - [~] 10.8 Completar `ocrService.js` con `clampConfidenceScores`
+  - [ ] 10.8 Completar `ocrService.js` con `clampConfidenceScores`
     - Registrar adaptadores: `mock`, `google`, `gpt4v`, `gemini`
     - Clampear todos los scores al rango `[0.0, 1.0]` antes de retornar
     - _Requirements: 6.2, 6.4, 6.7, 6.8_
-  - [~] 10.9 Completar `OcrPage.jsx` con flujo OCR → revisión → guardado
+  - [ ] 10.9 Completar `OcrPage.jsx` con flujo OCR → revisión → guardado
     - Validar tipo de archivo (PDF, JPEG, PNG, WEBP) antes de iniciar pipeline
     - Pre-poblar `InvoiceForm` con datos extraídos; mostrar scores de confianza por campo
     - Al guardar: persistir `ocr_provider`, `ocr_confidence`, `ocr_raw_text` en la factura
     - _Requirements: 6.6, 6.7, 6.9_
 
 - [ ] 11. Implementar CRUD de clientes y proveedores
-  - [~] 11.1 Completar `src/features/clients/schemas/clientSchemas.js`
+  - [ ] 11.1 Completar `src/features/clients/schemas/clientSchemas.js`
     - Incluir validación de CUIT con `cuitSchema` (`XX-XXXXXXXX-X`)
     - _Requirements: 8.4, 8.6_
-  - [~] 11.2 Completar `clientService.js`
+  - [ ] 11.2 Completar `clientService.js`
     - Implementar `getAll(companyId, search?)`, `getById`, `create`, `update`, `delete`
     - Filtrar siempre por `company_id`; búsqueda por nombre con `ilike`
     - _Requirements: 8.1, 8.2, 8.3_
   - [ ]* 11.3 Escribir property test — Property 9: Búsqueda de clientes por nombre
     - **Property 9: Para cualquier lista de clientes y término de búsqueda no vacío, todos los clientes retornados contienen el término en `name` (case-insensitive)**
     - **Validates: Requirements 8.3**
-  - [~] 11.4 Completar `useClients.js` y `ClientsPage.jsx`
+  - [ ] 11.4 Completar `useClients.js` y `ClientsPage.jsx`
     - UI con tabla, formulario de creación/edición en modal, confirmación de eliminación
     - _Requirements: 8.1_
-  - [~] 11.5 Crear `src/features/providers/` con la misma estructura que `clients/`
+  - [ ] 11.5 Crear `src/features/providers/` con la misma estructura que `clients/`
     - `providerService.js` implementa el mismo contrato de interfaz que `clientService.js`
     - Crear `ProvidersPage.jsx` con UI equivalente a `ClientsPage.jsx`
     - _Requirements: 8.7, 2.3_
 
-- [~] 12. Checkpoint Fase 2 — Verificar core features
+- [ ] 12. Checkpoint Fase 2 — Verificar core features
   - Ejecutar `vitest --run` y verificar que todos los property tests pasan
   - Verificar flujo completo: subir factura → OCR → revisar → guardar → registrar pago → estado actualizado
   - Preguntar al usuario si hay dudas antes de continuar con Fase 3
@@ -216,56 +216,56 @@ El lenguaje de implementación es **JavaScript (JSX/JS)** en todo el proyecto. N
 ### Fase 3 — Analítica y Reportes
 
 - [ ] 13. Implementar dashboard financiero completo
-  - [~] 13.1 Crear `src/features/dashboard/hooks/useDashboard.js`
+  - [ ] 13.1 Crear `src/features/dashboard/hooks/useDashboard.js`
     - Calcular KPIs del mes actual usando `invoice_financial_summary`: total facturado, dinero ingresado, gastos del mes, resultado neto
     - Calcular contadores por estado: pagadas, pendientes, vencidas, total del mes
     - Filtrar por `company_id` de `CompanyContext`
     - _Requirements: 7.1, 7.2, 7.5, 7.7_
-  - [~] 13.2 Completar `KpiCard.jsx`, `RevenueChart.jsx`, `InvoiceStatusChart.jsx`, `RecentInvoices.jsx`
+  - [ ] 13.2 Completar `KpiCard.jsx`, `RevenueChart.jsx`, `InvoiceStatusChart.jsx`, `RecentInvoices.jsx`
     - `RevenueChart`: gráfico de evolución mensual ingresos vs gastos, últimos N meses (default 6, configurable)
     - `KpiCard`: mostrar resultado neto con fondo rojo cuando ≤ 0
     - Mostrar skeletons durante carga
     - _Requirements: 7.3, 7.4, 7.6, 7.8_
-  - [~] 13.3 Completar `DashboardPage.jsx` y conectar con `useDashboard`
+  - [ ] 13.3 Completar `DashboardPage.jsx` y conectar con `useDashboard`
     - Integrar todos los componentes del dashboard
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
 - [ ] 14. Implementar módulo de reportes con exportación CSV
-  - [~] 14.1 Crear `src/features/reports/services/reportService.js`
+  - [ ] 14.1 Crear `src/features/reports/services/reportService.js`
     - Consultar vista `company_cash_flow` filtrada por `company_id`, rango de fechas y tipo de flujo
     - Calcular totales usando pagos reales de `invoice_payments`, no el campo `status`
     - _Requirements: 11.1, 11.4_
   - [ ]* 14.2 Escribir property test — Property 10: Flujo de caja basado en pagos reales
     - **Property 10: Para cualquier conjunto de facturas con `status = 'paid'` pero sin registros en `invoice_payments`, `company_cash_flow` muestra `total_collected = 0`**
     - **Validates: Requirements 11.4**
-  - [~] 14.3 Crear `src/features/reports/pages/ReportsPage.jsx`
+  - [ ] 14.3 Crear `src/features/reports/pages/ReportsPage.jsx`
     - Filtros: rango de fechas y tipo de flujo (receivable/payable)
     - Tabla de resultados con totales: `invoice_count`, `total_invoiced`, `total_collected`, `total_pending`, `total_overdue`
     - Botón de exportación CSV que genera y descarga el archivo en el cliente
     - _Requirements: 11.2, 11.3_
 
 - [ ] 15. Implementar sistema de alertas automáticas
-  - [~] 15.1 Crear `src/features/alerts/services/alertService.js`
+  - [ ] 15.1 Crear `src/features/alerts/services/alertService.js`
     - Implementar `getAll(companyId)`: retornar alertas no leídas y leídas
     - Implementar `markAsRead(alertId)`: actualizar `is_read = true`
     - Filtrar siempre por `company_id`
     - _Requirements: 10.2, 10.3, 10.5_
-  - [~] 15.2 Crear `src/features/alerts/hooks/useAlerts.js`
+  - [ ] 15.2 Crear `src/features/alerts/hooks/useAlerts.js`
     - Exponer conteo de alertas no leídas para el badge del sidebar
     - _Requirements: 10.4_
-  - [~] 15.3 Completar `AlertsPage.jsx`
+  - [ ] 15.3 Completar `AlertsPage.jsx`
     - Mostrar lista de alertas con tipo, mensaje, factura asociada y estado de lectura
     - Acción de marcar como leída individual y masiva
     - _Requirements: 10.1, 10.3_
-  - [~] 15.4 Actualizar `AppLayout.jsx` para mostrar badge con contador de alertas no leídas en el sidebar
+  - [ ] 15.4 Actualizar `AppLayout.jsx` para mostrar badge con contador de alertas no leídas en el sidebar
     - _Requirements: 10.4_
-  - [~] 15.5 Crear Edge Function `supabase/functions/check-alerts/index.ts`
+  - [ ] 15.5 Crear Edge Function `supabase/functions/check-alerts/index.ts`
     - Detectar facturas vencidas (`overdue`) y próximas a vencer (`upcoming`) en los próximos 7 días
     - Insertar alertas en tabla `alerts` para la empresa correspondiente
     - Diseñada para ejecutarse como cron job (Supabase pg_cron o invocación manual)
     - _Requirements: 10.1, 10.2_
 
-- [~] 16. Checkpoint Fase 3 — Verificar analítica y reportes
+- [ ] 16. Checkpoint Fase 3 — Verificar analítica y reportes
   - Ejecutar `vitest --run` y verificar que todos los tests pasan
   - Verificar que el dashboard muestra KPIs correctos y el CSV se exporta correctamente
   - Preguntar al usuario si hay dudas antes de continuar con Fase 4
@@ -276,46 +276,46 @@ El lenguaje de implementación es **JavaScript (JSX/JS)** en todo el proyecto. N
 ### Fase 4 — Integraciones
 
 - [ ] 17. Integración AFIP para validación de CAE
-  - [~] 17.1 Crear `src/features/invoices/services/afipService.js`
+  - [ ] 17.1 Crear `src/features/invoices/services/afipService.js`
     - Implementar `validateCae(cae, caeVencimiento, cuit)`: retornar `{ isValid, status, message }`
     - _Requirements: 15.4_
-  - [~] 17.2 Crear Edge Function `supabase/functions/afip-validate/index.ts`
+  - [ ] 17.2 Crear Edge Function `supabase/functions/afip-validate/index.ts`
     - Llamar a la API de AFIP para verificar CAE
     - Actualizar campo `afip_status` en la factura correspondiente
     - Leer credenciales AFIP desde variables de entorno de Supabase
     - _Requirements: 15.4, 13.1_
-  - [~] 17.3 Integrar validación AFIP en `InvoiceDetailPage.jsx`
+  - [ ] 17.3 Integrar validación AFIP en `InvoiceDetailPage.jsx`
     - Mostrar estado AFIP (`afip_status`) con indicador visual
     - Botón "Validar CAE" que invoca `afipService.validateCae()`
     - _Requirements: 15.4_
 
 - [ ] 18. Notificaciones por email con Supabase Edge Functions + Resend
-  - [~] 18.1 Crear Edge Function `supabase/functions/send-notification/index.ts`
+  - [ ] 18.1 Crear Edge Function `supabase/functions/send-notification/index.ts`
     - Integrar con Resend API para envío de emails
     - Soportar plantillas: factura vencida, próxima a vencer, resumen semanal
     - Leer `RESEND_API_KEY` desde variables de entorno de Supabase
     - _Requirements: 15.4, 13.1_
-  - [~] 18.2 Crear `src/features/settings/services/notificationService.js`
+  - [ ] 18.2 Crear `src/features/settings/services/notificationService.js`
     - Implementar `sendTestEmail(email)` para verificar configuración
     - _Requirements: 15.4_
-  - [~] 18.3 Actualizar `check-alerts` Edge Function para disparar emails al crear alertas
+  - [ ] 18.3 Actualizar `check-alerts` Edge Function para disparar emails al crear alertas
     - Llamar a `send-notification` cuando se detectan facturas vencidas o próximas a vencer
     - _Requirements: 15.4_
 
 - [ ] 19. Soporte multi-moneda
-  - [~] 19.1 Actualizar `src/lib/constants.js` con lista de monedas soportadas: `ARS`, `USD`, `EUR`
+  - [ ] 19.1 Actualizar `src/lib/constants.js` con lista de monedas soportadas: `ARS`, `USD`, `EUR`
     - Exportar `SUPPORTED_CURRENCIES = ['ARS', 'USD', 'EUR']`
     - _Requirements: 15.4_
-  - [~] 19.2 Actualizar `invoiceSchemas.js` para validar `moneda` contra la lista de monedas soportadas
+  - [ ] 19.2 Actualizar `invoiceSchemas.js` para validar `moneda` contra la lista de monedas soportadas
     - Validar que `tipo_cambio` sea positivo
     - _Requirements: 15.4, 5.10_
-  - [~] 19.3 Actualizar `InvoiceForm.jsx` para mostrar selector de moneda y campo de tipo de cambio
+  - [ ] 19.3 Actualizar `InvoiceForm.jsx` para mostrar selector de moneda y campo de tipo de cambio
     - Mostrar tipo de cambio solo cuando `moneda !== 'ARS'`
     - _Requirements: 15.4_
-  - [~] 19.4 Actualizar `ReportsPage.jsx` y `DashboardPage.jsx` para agrupar y mostrar totales por moneda
+  - [ ] 19.4 Actualizar `ReportsPage.jsx` y `DashboardPage.jsx` para agrupar y mostrar totales por moneda
     - _Requirements: 15.4_
 
-- [~] 20. Checkpoint final — Verificar integraciones y proyecto completo
+- [ ] 20. Checkpoint final — Verificar integraciones y proyecto completo
   - Ejecutar `vitest --run` y verificar que todos los tests (unitarios y property-based) pasan
   - Verificar que no hay llamadas directas a Supabase desde componentes React
   - Preguntar al usuario si hay dudas o ajustes finales

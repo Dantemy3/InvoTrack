@@ -57,10 +57,10 @@ export default function InvoiceTable({ invoices = [], isLoading }) {
             >
               <td className="py-3.5 px-4 font-medium text-gray-900">{invoice.invoice_number}</td>
               <td className="py-3.5 px-4 text-gray-600">
-                {invoice.client?.name || invoice.provider?.name || '-'}
+                {invoice.clients?.name || invoice.providers?.name || '-'}
               </td>
-              <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.issue_date)}</td>
-              <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.due_date)}</td>
+              <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.fecha_emision)}</td>
+              <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.fecha_vencimiento)}</td>
               <td className="py-3.5 px-4 text-right font-semibold text-gray-900">
                 {formatCurrency(invoice.total_amount)}
               </td>
