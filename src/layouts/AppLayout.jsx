@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { authService } from '@/features/auth/services/authService'
 import { useAuth } from '@/features/auth/context/AuthContext'
+import { useUnreadAlertsCount } from '@/features/alerts/hooks/useAlerts'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -28,6 +29,7 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const unreadCount = useUnreadAlertsCount()
 
   const handleSignOut = async () => {
     toast({ title: 'Modo demo activo', description: 'El login está desactivado para pruebas', variant: 'info' })
@@ -84,6 +86,12 @@ export default function AppLayout() {
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               {label}
+              {/* Badge de alertas no leídas — Req 10.4 */}
+              {to === '/alerts' && unreadCount > 0 && (
+                <span className="ml-auto h-5 min-w-5 px-1 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -130,9 +138,13 @@ export default function AppLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative" onClick={() => navigate('/alerts')}>
             <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 h-4 min-w-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </Button>
           <Avatar className="h-8 w-8 cursor-pointer">
             <AvatarFallback className="text-xs">{getInitials(displayName)}</AvatarFallback>

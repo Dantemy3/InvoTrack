@@ -2,17 +2,19 @@ import { supabase } from '@/lib/supabase'
 
 export const providerService = {
   /**
-   * List providers for the current user.
-   * @param {{ search?: string, page?: number, pageSize?: number }} opts
+   * List providers for a given company.
+   * Requirements: 8.7, 8.2
+   * @param {{ companyId: string, search?: string, page?: number, pageSize?: number }} opts
    */
-  async getAll({ search, page = 1, pageSize = 20 } = {}) {
+  async getAll({ companyId, search, page = 1, pageSize = 20 } = {}) {
     let query = supabase
       .from('providers')
       .select('*', { count: 'exact' })
       .order('name', { ascending: true })
       .range((page - 1) * pageSize, page * pageSize - 1)
 
-    if (search) query = query.ilike('name', `%${search}%`)
+    if (companyId) query = query.eq('company_id', companyId)
+    if (search)    query = query.ilike('name', `%${search}%`)
 
     const { data, error, count } = await query
     if (error) throw error

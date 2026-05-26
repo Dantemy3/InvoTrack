@@ -9,21 +9,13 @@ export const cuitSchema = z.string().regex(
   'CUIT inválido. Formato esperado: XX-XXXXXXXX-X'
 )
 
-/**
- * Valid Argentine tax conditions (condición frente al IVA)
- * RI = Responsable Inscripto
- * MO = Monotributista
- * EX = Exento
- * CF = Consumidor Final
- * RS = Responsable Sustituto
- */
 const TAX_CONDITIONS = ['RI', 'MO', 'EX', 'CF', 'RS']
 
 /**
- * Schema for creating a new client.
- * Requirements: 8.4, 8.6
+ * Schema for creating a new provider.
+ * Requirements: 8.4, 8.6, 8.7
  */
-export const clientSchema = z.object({
+export const providerSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   cuit: cuitSchema.optional().or(z.literal('')),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
@@ -36,8 +28,7 @@ export const clientSchema = z.object({
 })
 
 /**
- * Schema for updating an existing client (PATCH).
+ * Schema for updating an existing provider (PATCH).
  * All fields are optional.
- * Requirements: 8.4, 8.6
  */
-export const clientUpdateSchema = clientSchema.partial()
+export const providerUpdateSchema = providerSchema.partial()

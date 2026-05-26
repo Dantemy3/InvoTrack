@@ -20,6 +20,7 @@ export default function ProtectedLayout() {
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
   // Authenticated but no company → go to onboarding
+  // (si la empresa es demo, _isDemo=true, no redirigir)
   if (!company) return <Navigate to="/onboarding" replace />
 
   return <Outlet />

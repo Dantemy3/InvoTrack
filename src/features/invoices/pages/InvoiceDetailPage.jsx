@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, Edit, CheckCircle, Plus, Trash2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Edit, CheckCircle, Plus, Trash2, Loader2, ShieldCheck, ShieldX, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,8 +15,10 @@ import { Badge } from '@/components/ui/badge'
 import InvoiceStatusBadge from '../components/InvoiceStatusBadge'
 import { useInvoice, useUpdateInvoiceStatus } from '../hooks/useInvoices'
 import { useInvoicePayments, useRegisterPayment, useDeletePayment } from '../hooks/useInvoicePayments'
+import { afipService } from '../services/afipService'
 import { formatCurrency, formatDate, formatDateLong } from '@/lib/utils'
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 
 // ── Schema de pago ────────────────────────────────────────────────────────────
 const paymentSchema = z.object({
@@ -98,9 +100,26 @@ export default function InvoiceDetailPage() {
   const updateStatus = useUpdateInvoiceStatus()
   const { data: payments = [], isLoading: paymentsLoading } = useInvoicePayments(id)
   const deletePayment = useDeletePayment(id)
+  const [afipResult, setAfipResult] = useState(null)
+  const [afipLoading, setAfipLoading] = useState(false)
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
   const totalPending = Math.max(0, (invoice?.total_amount ?? 0) - totalPaid)
+
+  const handleValidateCae = async () => {
+    if (!invoice?.cae) return
+    setAfipLoading(true)
+    try {
+      const result = await afipService.validateCae(
+        invoice.cae,
+        invoice.cae_vencimiento,
+        invoice.emisor_cuit
+      )
+      setAfipResult(result)
+    } finally {
+      setAfipLoading(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -388,6 +407,54 @@ export default function InvoiceDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Validación AFIP — Req 15.4 */}
+          {invoice.cae && (
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-blue-500" /> Validación AFIP
+              </CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {/* Estado actual */}
+                {invoice.afip_status && !afipResult && (
+                  <div className="text-sm">
+                    <p className="text-gray-500">Estado guardado</p>
+                    <p className="font-medium capitalize">{invoice.afip_status.replace('_', ' ')}</p>
+                  </div>
+                )}
+
+                {/* Resultado de la última validación */}
+                {afipResult && (
+                  <div className={cn(
+                    'rounded-lg p-3 text-sm',
+                    afipResult.isValid ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                  )}>
+                    <div className="flex items-center gap-2 font-medium mb-1">
+                      {afipResult.isValid
+                        ? <ShieldCheck className="h-4 w-4" />
+                        : <ShieldX className="h-4 w-4" />
+                      }
+                      {afipResult.isValid ? 'CAE válido' : 'CAE inválido'}
+                    </div>
+                    <p className="text-xs opacity-80">{afipResult.message}</p>
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleValidateCae}
+                  disabled={afipLoading}
+                >
+                  {afipLoading
+                    ? <><Loader2 className="h-3 w-3 animate-spin mr-2" /> Validando...</>
+                    : <><ShieldAlert className="h-3 w-3 mr-2" /> Validar CAE</>
+                  }
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

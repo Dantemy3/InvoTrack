@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { IVA_VALID_RATES } from '@/lib/constants'
+import { IVA_VALID_RATES, SUPPORTED_CURRENCIES } from '@/lib/constants'
 import { cuitSchema } from '@/features/auth/schemas/authSchemas'
 
 // ── Tipos de comprobante AFIP ─────────────────────────────────────────────────
@@ -66,10 +66,12 @@ export const invoiceSchema = z.object({
     errorMap: () => ({ message: 'Condición de pago inválida' }),
   }),
 
-  // Moneda
-  moneda: z.string().length(3, 'Código de moneda debe tener 3 caracteres').default('ARS'),
+  // Moneda — validar contra lista de monedas soportadas (Req 15.4)
+  moneda: z.enum(SUPPORTED_CURRENCIES, {
+    errorMap: () => ({ message: `Moneda inválida. Valores permitidos: ${SUPPORTED_CURRENCIES.join(', ')}` }),
+  }).default('ARS'),
   tipo_cambio: z.coerce
-    .number()
+    .number({ invalid_type_error: 'Tipo de cambio inválido' })
     .positive('El tipo de cambio debe ser positivo')
     .default(1.0),
 

@@ -129,3 +129,21 @@ export const QUERY_KEYS = {
   REPORTS: 'reports',
   INVOICE_PAYMENTS: 'invoice-payments',
 }
+
+/**
+ * Monedas soportadas por InvoTrack.
+ * Requirements: 15.4 (multi-moneda)
+ */
+export const SUPPORTED_CURRENCIES = ['ARS', 'USD', 'EUR']
+
+export const CURRENCY_LABELS = {
+  ARS: 'Peso argentino (ARS)',
+  USD: 'Dólar estadounidense (USD)',
+  EUR: 'Euro (EUR)',
+}
+
+export const CURRENCY_SYMBOLS = {
+  ARS: '$',
+  USD: 'U$S',
+  EUR: '€',
+}

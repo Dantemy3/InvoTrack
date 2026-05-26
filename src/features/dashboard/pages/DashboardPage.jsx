@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import {
   TrendingUp, TrendingDown, DollarSign, Clock,
-  AlertTriangle, FileText, Plus, ArrowUpRight, ArrowDownRight
+  AlertTriangle, FileText, Plus, ArrowUpRight, ArrowDownRight, FlaskConical
 } from 'lucide-react'
 import { useDashboardStats, useMonthlyChart } from '@/features/invoices/hooks/useInvoices'
 import { useAuth } from '@/features/auth/context/AuthContext'
+import { useCompany } from '@/features/companies/context/CompanyContext'
 import { formatCurrency } from '@/lib/utils'
 import RevenueChart from '../components/RevenueChart'
 import RecentInvoices from '../components/RecentInvoices'
@@ -96,6 +97,7 @@ function SectionLabel({ children }) {
 export default function DashboardPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { company } = useCompany()
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: chartData, isLoading: chartLoading } = useMonthlyChart(6)
 
@@ -106,7 +108,16 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
 
-      {/* ── Header ── */}
+      {/* Banner modo demo */}
+      {company?._isDemo && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+          <FlaskConical className="h-4 w-4 flex-shrink-0 text-amber-500" />
+          <span>
+            <strong>Modo demo</strong> — Estás viendo datos de ejemplo de "Tech Solutions S.A.".
+            Para usar tus propios datos, <button className="underline font-medium" onClick={() => navigate('/onboarding')}>creá tu empresa</button>.
+          </span>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -120,7 +131,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {/* ── Bloque 1: Los 3 números principales ── */}
+      {/* ── Header ── */}
       <div>
         <SectionLabel>Resumen financiero del mes</SectionLabel>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

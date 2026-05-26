@@ -66,6 +66,7 @@ export default function OcrPage() {
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [provider, setProvider] = useState('gpt4v')
 
   const handleFile = (f) => {
     setFile(f)
@@ -85,7 +86,7 @@ export default function OcrPage() {
     setProcessing(true)
     setError(null)
     try {
-      const res = await ocrService.processInvoice(file, 'mock')
+      const res = await ocrService.processInvoice(file, provider)
       setResult(res)
     } catch (err) {
       setError(err.message)
@@ -184,21 +185,22 @@ export default function OcrPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Fields */}
-                <div className="space-y-3">
+                {/* Todos los campos extraídos con scores */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Identificación</p>
                   {[
+                    { label: 'Tipo comprobante', value: result.normalized.invoice_type, key: 'invoice_type' },
                     { label: 'Número', value: result.normalized.invoice_number, key: 'invoice_number' },
-                    { label: 'Tipo', value: result.normalized.invoice_type, key: 'invoice_type' },
                     { label: 'Fecha emisión', value: result.normalized.issue_date, key: 'issue_date' },
                     { label: 'Vencimiento', value: result.normalized.due_date, key: 'due_date' },
-                    { label: 'CUIT Vendedor', value: result.normalized.seller_cuit, key: 'seller_cuit' },
-                    { label: 'CUIT Comprador', value: result.normalized.buyer_cuit, key: 'buyer_cuit' },
+                    { label: 'CAE', value: result.normalized.cae, key: 'total_amount' },
+                    { label: 'Cond. pago', value: result.normalized.condicion_pago?.replace('_', ' '), key: 'subtotal' },
                   ].map(({ label, value, key }) => (
                     <div key={label} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">{label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{value || '-'}</span>
-                        <ConfidenceBadge score={result.normalized.confidence[key] || 0.5} />
+                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
                       </div>
                     </div>
                   ))}
@@ -206,19 +208,67 @@ export default function OcrPage() {
 
                 <Separator />
 
-                {/* Amounts */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Emisor (Vendedor)</p>
+                  {[
+                    { label: 'Razón social', value: result.normalized.seller_name, key: 'seller_name' },
+                    { label: 'CUIT', value: result.normalized.seller_cuit, key: 'seller_cuit' },
+                    { label: 'Domicilio', value: result.normalized.seller_address, key: 'seller_name' },
+                  ].map(({ label, value, key }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Receptor (Comprador)</p>
+                  {[
+                    { label: 'Razón social', value: result.normalized.buyer_name, key: 'buyer_name' },
+                    { label: 'CUIT', value: result.normalized.buyer_cuit, key: 'buyer_cuit' },
+                    { label: 'Domicilio', value: result.normalized.buyer_address, key: 'buyer_name' },
+                  ].map(({ label, value, key }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Montos */}
                 <div className="space-y-2 text-sm">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Importes</p>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Subtotal</span>
-                    <span className="font-medium">{result.normalized.subtotal ? formatCurrency(result.normalized.subtotal) : '-'}</span>
+                    <span className="text-gray-500">Neto gravado</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{result.normalized.subtotal ? formatCurrency(result.normalized.subtotal) : '-'}</span>
+                      <ConfidenceBadge score={result.normalized.confidence.subtotal ?? 0.1} />
+                    </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">IVA</span>
-                    <span className="font-medium">{result.normalized.total_iva ? formatCurrency(result.normalized.total_iva) : '-'}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{result.normalized.total_iva ? formatCurrency(result.normalized.total_iva) : '-'}</span>
+                      <ConfidenceBadge score={result.normalized.confidence.total_iva ?? 0.1} />
+                    </div>
                   </div>
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
-                    <span className="text-blue-600">{result.normalized.total_amount ? formatCurrency(result.normalized.total_amount) : '-'}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">{result.normalized.total_amount ? formatCurrency(result.normalized.total_amount) : '-'}</span>
+                      <ConfidenceBadge score={result.normalized.confidence.total_amount ?? 0.1} />
+                    </div>
                   </div>
                 </div>
 
@@ -226,12 +276,15 @@ export default function OcrPage() {
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Ítems detectados</p>
-                      <div className="space-y-1">
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Ítems detectados ({result.normalized.items.length})</p>
+                      <div className="space-y-1.5">
                         {result.normalized.items.map((item, i) => (
-                          <div key={i} className="text-xs text-gray-600 flex justify-between">
-                            <span className="truncate flex-1">{item.description}</span>
-                            <span className="ml-2 font-medium">{formatCurrency(item.subtotal)}</span>
+                          <div key={i} className="text-xs bg-gray-50 rounded-lg p-2">
+                            <p className="font-medium text-gray-800 truncate">{item.descripcion}</p>
+                            <p className="text-gray-500 mt-0.5">
+                              {item.cantidad} × {formatCurrency(item.precio_unitario)} · IVA {item.alicuota_iva}%
+                              {item.subtotal_neto ? ` = ${formatCurrency(item.subtotal_neto)}` : ''}
+                            </p>
                           </div>
                         ))}
                       </div>

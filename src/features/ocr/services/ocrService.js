@@ -1,6 +1,7 @@
 import { MockOcrAdapter } from '../adapters/mockOcrAdapter'
-import { GoogleDocumentAiAdapter } from '../adapters/GoogleDocumentAiAdapter'
-import { parseInvoiceFromText } from '../parsers/invoiceParser'
+import GoogleDocumentAiAdapter from '../adapters/GoogleDocumentAiAdapter'
+import Gpt4VisionAdapter from '../adapters/Gpt4VisionAdapter'
+import { parseInvoiceFromText, parseGpt4Response } from '../parsers/invoiceParser'
 
 /**
  * ocrService — orquesta el pipeline OCR completo.
@@ -21,7 +22,7 @@ const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image
 const adapters = {
   mock:   new MockOcrAdapter(),
   google: new GoogleDocumentAiAdapter(),
-  // gpt4v:  new Gpt4VisionAdapter(),   — Fase 4
+  gpt4v:  new Gpt4VisionAdapter(),
   // gemini: new GeminiVisionAdapter(), — Fase 4
 }
 
@@ -66,7 +67,10 @@ export const ocrService = {
     const raw = await adapter.extractText(file)
 
     // Paso 2: Parsear campos estructurados
-    const normalized = parseInvoiceFromText(raw.rawText)
+    // GPT-4 devuelve un formato estructurado propio, los demás usan el parser genérico
+    const normalized = provider === 'gpt4v'
+      ? parseGpt4Response(raw.rawText)
+      : parseInvoiceFromText(raw.rawText)
 
     // Paso 3: Clampear confidence scores (Req 6.4)
     const clampedConfidence = clampConfidenceScores(normalized.confidence)

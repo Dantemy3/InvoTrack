@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { companyService } from '@/features/companies/services/companyService'
 import { useAuth } from '@/features/auth/context/AuthContext'
+import { DEMO_COMPANY } from '@/lib/demoData'
 
 const CompanyContext = createContext(null)
 
@@ -14,28 +15,34 @@ export function CompanyProvider({ children }) {
   const [role, setRole]           = useState(null)
   const [loading, setLoading]     = useState(true)
 
-  /**
-   * Load all companies accessible to the current user via companyService.
-   * companyService.getAll() returns companies with a `role` field already resolved:
-   *   - 'admin' for owned companies (owner_id === userId)
-   *   - the user_roles.role value for member companies
-   */
   const loadCompanies = useCallback(async () => {
     if (!user?.id) return
 
     setLoading(true)
     try {
       const allCompanies = await companyService.getAll(user.id)
+
+      // ── MODO DEMO ──────────────────────────────────────────────────────────
+      // Si el usuario no tiene empresas en Supabase, usar la empresa demo
+      // para poder visualizar el dashboard sin pasar por el onboarding.
+      if (allCompanies.length === 0) {
+        const demoCompany = { ...DEMO_COMPANY, _isDemo: true }
+        setCompanies([demoCompany])
+        setCompany(demoCompany)
+        setRole('admin')
+        setLoading(false)
+        return
+      }
+      // ── FIN MODO DEMO ──────────────────────────────────────────────────────
+
       setCompanies(allCompanies)
 
-      // Auto-select: restore from localStorage or fall back to first available
       const savedId  = localStorage.getItem(STORAGE_KEY)
       const selected = allCompanies.find((c) => c.id === savedId) ?? allCompanies[0] ?? null
 
       setCompany(selected)
       setRole(selected?.role ?? null)
 
-      // Persist the resolved selection
       if (selected) {
         localStorage.setItem(STORAGE_KEY, selected.id)
       } else {
@@ -43,6 +50,11 @@ export function CompanyProvider({ children }) {
       }
     } catch (err) {
       console.error('CompanyContext: error loading companies', err)
+      // En caso de error de red, también usar demo para no bloquear al usuario
+      const demoCompany = { ...DEMO_COMPANY, _isDemo: true }
+      setCompanies([demoCompany])
+      setCompany(demoCompany)
+      setRole('admin')
     } finally {
       setLoading(false)
     }

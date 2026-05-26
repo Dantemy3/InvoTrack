@@ -8,8 +8,7 @@ import { useInvoices } from '@/features/invoices/hooks/useInvoices'
 
 export default function RecentInvoices() {
   const navigate = useNavigate()
-  const { data, isLoading } = useInvoices({ page: 1, pageSize: 5 })
-  const invoices = data?.data || []
+  const { data: invoices, isLoading } = useInvoices({ page: 1, pageSize: 5 })
 
   return (
     <Card>

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
-import { IVA_RATES } from '@/lib/constants'
+import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
 
 // ── Valores por defecto ───────────────────────────────────────────────────────
 const defaultItem = {
@@ -70,6 +70,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
   const items = watch('items') ?? []
+  const moneda = watch('moneda') ?? 'ARS'
 
   // Calcular totales en tiempo real
   const totals = calculateInvoiceTotals(items)
@@ -167,6 +168,38 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             <Label>Vencimiento CAE</Label>
             <Input type="date" {...register('cae_vencimiento')} />
           </div>
+
+          {/* Moneda — Req 15.4 */}
+          <div className="space-y-1.5">
+            <Label>Moneda <span className="text-red-500">*</span></Label>
+            <Controller name="moneda" control={control} render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value ?? 'ARS'}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{CURRENCY_LABELS[c]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )} />
+            {errors.moneda && <p className="text-xs text-red-500">{errors.moneda.message}</p>}
+          </div>
+
+          {/* Tipo de cambio — solo visible cuando moneda !== 'ARS' */}
+          {moneda !== 'ARS' && (
+            <div className="space-y-1.5">
+              <Label>Tipo de cambio <span className="text-red-500">*</span></Label>
+              <Input
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                placeholder="ej: 1050.0000"
+                {...register('tipo_cambio')}
+              />
+              <p className="text-xs text-gray-400">1 {moneda} = X ARS</p>
+              {errors.tipo_cambio && <p className="text-xs text-red-500">{errors.tipo_cambio.message}</p>}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -3,9 +3,11 @@ import { invoiceService } from '../services/invoiceService'
 import { useCompany } from '@/features/companies/context/CompanyContext'
 import { QUERY_KEYS } from '@/lib/constants'
 import { useToast } from '@/components/ui/toast'
+import { DEMO_STATS, DEMO_CHART_DATA, DEMO_INVOICES } from '@/lib/demoData'
 
 /**
  * Lista facturas de la empresa activa con filtros opcionales.
+ * En modo demo retorna los datos de demoData.js.
  * Req 1.4 — company_id se lee de CompanyContext, nunca hardcodeado.
  *
  * @param {object} filters - { status, type, search, dateFrom, dateTo, page, pageSize }
@@ -16,7 +18,20 @@ export function useInvoices(filters = {}) {
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.INVOICES, company?.id, filters],
-    queryFn: () => invoiceService.getAll({ ...filters, companyId: company.id }),
+    queryFn: () => {
+      // Modo demo: retornar datos locales sin llamar a Supabase
+      if (company?._isDemo) {
+        let result = [...DEMO_INVOICES]
+        if (filters.status) result = result.filter((i) => i.status === filters.status)
+        if (filters.type)   result = result.filter((i) => i.type === filters.type)
+        if (filters.search) result = result.filter((i) => i.invoice_number.includes(filters.search))
+        const page = filters.page ?? 1
+        const pageSize = filters.pageSize ?? 20
+        const paginated = result.slice((page - 1) * pageSize, page * pageSize)
+        return { data: paginated, count: result.length }
+      }
+      return invoiceService.getAll({ ...filters, companyId: company.id })
+    },
     enabled: Boolean(company?.id),
   })
 
@@ -31,12 +46,21 @@ export function useInvoices(filters = {}) {
 
 /**
  * Obtiene una factura por ID con sus ítems y pagos.
+ * En modo demo busca en DEMO_INVOICES.
  * @param {string|null} id
  */
 export function useInvoice(id) {
+  const { company } = useCompany()
+
   return useQuery({
     queryKey: [QUERY_KEYS.INVOICE, id],
-    queryFn: () => invoiceService.getById(id),
+    queryFn: () => {
+      if (company?._isDemo) {
+        const found = DEMO_INVOICES.find((i) => i.id === id) ?? null
+        return Promise.resolve(found)
+      }
+      return invoiceService.getById(id)
+    },
     enabled: Boolean(id),
   })
 }
@@ -126,19 +150,24 @@ export function useDeleteInvoice() {
 
 /**
  * KPIs del dashboard para la empresa activa.
+ * En modo demo retorna DEMO_STATS sin llamar a Supabase.
  */
 export function useDashboardStats() {
   const { company } = useCompany()
 
   return useQuery({
     queryKey: [QUERY_KEYS.DASHBOARD_STATS, company?.id],
-    queryFn: () => invoiceService.getDashboardStats(company.id),
+    queryFn: () => {
+      if (company?._isDemo) return Promise.resolve(DEMO_STATS)
+      return invoiceService.getDashboardStats(company.id)
+    },
     enabled: Boolean(company?.id),
   })
 }
 
 /**
  * Datos del gráfico mensual de ingresos vs gastos.
+ * En modo demo retorna DEMO_CHART_DATA sin llamar a Supabase.
  * @param {number} months - Cantidad de meses hacia atrás (default 6)
  */
 export function useMonthlyChart(months = 6) {
@@ -146,7 +175,10 @@ export function useMonthlyChart(months = 6) {
 
   return useQuery({
     queryKey: ['monthly-chart', company?.id, months],
-    queryFn: () => invoiceService.getMonthlyChart(company.id, months),
+    queryFn: () => {
+      if (company?._isDemo) return Promise.resolve(DEMO_CHART_DATA)
+      return invoiceService.getMonthlyChart(company.id, months)
+    },
     enabled: Boolean(company?.id),
   })
 }
