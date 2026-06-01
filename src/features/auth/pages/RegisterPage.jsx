@@ -54,11 +54,22 @@ export default function RegisterPage() {
       })
       setRegistered(true)
     } catch (err) {
-      toast({
-        title: 'Error al registrarse',
-        description: getAuthErrorMessage(err),
-        variant: 'error',
-      })
+      const msg = err?.message ?? ''
+      // Supabase returns success even for duplicate emails (security by design),
+      // but some configs throw this error
+      if (msg.includes('User already registered') || msg.includes('already been registered')) {
+        toast({
+          title: 'Email ya registrado',
+          description: 'Ya existe una cuenta con ese email. Intentá iniciar sesión.',
+          variant: 'error',
+        })
+      } else {
+        toast({
+          title: 'Error al registrarse',
+          description: getAuthErrorMessage(err),
+          variant: 'error',
+        })
+      }
     }
   }
 
@@ -83,9 +94,10 @@ export default function RegisterPage() {
             </div>
             <h1 className="text-xl font-semibold text-gray-900 mb-2">¡Cuenta creada!</h1>
             <p className="text-sm text-gray-500 mb-6">
-              Te enviamos un email de confirmación a{' '}
+              Tu cuenta fue creada con el email{' '}
               <span className="font-medium text-gray-700">{getValues('email')}</span>.
-              Revisá tu bandeja de entrada y hacé clic en el enlace para activar tu cuenta.
+              Si recibís un email de confirmación, hacé clic en el enlace para activar tu cuenta.
+              Si no, podés iniciar sesión directamente.
             </p>
             <Link
               to="/login"

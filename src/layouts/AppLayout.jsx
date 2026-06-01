@@ -152,7 +152,7 @@ export default function AppLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overscroll-none">
           <Outlet />
         </main>
       </div>

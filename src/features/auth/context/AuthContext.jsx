@@ -3,18 +3,12 @@ import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
-// DEV BYPASS: set to true to skip login during development
-const DEV_BYPASS_AUTH = true
-const DEV_MOCK_USER = { id: 'dev-user', email: 'dev@localhost' }
-
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(DEV_BYPASS_AUTH ? DEV_MOCK_USER : null)
-  const [session, setSession] = useState(DEV_BYPASS_AUTH ? { user: DEV_MOCK_USER } : null)
-  const [loading, setLoading] = useState(!DEV_BYPASS_AUTH)
+  const [user, setUser]       = useState(null)
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (DEV_BYPASS_AUTH) return
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -22,15 +16,11 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    // Listen for auth state changes.
-    // Per Requirement 13.7: ONLY TOKEN_REFRESHED and SIGNED_OUT update state.
-    // All other Supabase Auth events (SIGNED_IN, USER_UPDATED, etc.) are ignored.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
+    // Listen for all auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()

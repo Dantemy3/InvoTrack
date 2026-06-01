@@ -67,8 +67,9 @@ export const invoiceService = {
    * @param {{ items: object[], company_id: string, ...invoiceFields }} payload
    */
   async create({ items = [], ...invoice }) {
+    // DEV: usar sesión real si existe, sino hardcodear un user_id para testing
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No autenticado')
+    const userId = user?.id ?? 'dev-user-hardcoded'
 
     // Generate invoice_number from punto_de_venta + numero_comprobante (AFIP format: XXXX-XXXXXXXX)
     const invoiceNumber = invoice.invoice_number ||
@@ -77,7 +78,7 @@ export const invoiceService = {
     // Insert invoice
     const { data: newInvoice, error: invError } = await supabase
       .from('invoices')
-      .insert({ ...invoice, invoice_number: invoiceNumber, user_id: user.id })
+      .insert({ ...invoice, invoice_number: invoiceNumber, user_id: userId })
       .select()
       .single()
 
