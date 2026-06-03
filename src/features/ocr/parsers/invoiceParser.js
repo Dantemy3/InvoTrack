@@ -400,7 +400,7 @@ export function parseGpt4Response(rawText) {
     'nota de débito a': 'Nota de Débito A', 'nota de débito b': 'Nota de Débito B',
     'nota de débito c': 'Nota de Débito C', 'recibo': 'Recibo',
   }
-  const invoice_type = tipoMap[tipoRaw.toLowerCase()] ?? tipoRaw || null
+  const invoice_type = (tipoMap[tipoRaw.toLowerCase()] ?? tipoRaw) || null
 
   const invoice_number = get('NUMERO')
   const issue_date     = parseDate(get('FECHA_EMISION'))

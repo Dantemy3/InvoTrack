@@ -52,7 +52,7 @@ class Gpt4VisionAdapter extends BaseOcrAdapter {
       throw new Error(`No se pudo leer el archivo: ${err.message}`)
     }
 
-    const { data, error } = await supabase.functions.invoke('ocr-gpt4v', {
+    const { data, error } = await supabase.functions.invoke('ocr-gpt4', {
       body: {
         fileBase64,
         mimeType: file.type,
@@ -60,7 +60,7 @@ class Gpt4VisionAdapter extends BaseOcrAdapter {
     })
 
     if (error) {
-      throw new Error(`Error al invocar la Edge Function ocr-gpt4v: ${error.message}`)
+      throw new Error(`Error al invocar la Edge Function ocr-gpt4: ${error.message}`)
     }
 
     return {

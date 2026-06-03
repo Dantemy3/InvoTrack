@@ -87,9 +87,15 @@ export const invoiceService = {
     // Insert line items — rollback (delete invoice) if items fail (Req 5.3)
     if (items.length > 0) {
       const rows = items.map((item, idx) => ({
-        ...item,
-        invoice_id: newInvoice.id,
-        sort_order: idx,
+        invoice_id:    newInvoice.id,
+        sort_order:    idx,
+        description:   item.description    ?? item.descripcion    ?? '',
+        quantity:      item.quantity        ?? item.cantidad       ?? 1,
+        unidad:        item.unidad          ?? item.unit           ?? null,
+        unit_price:    item.unit_price      ?? item.precio_unitario ?? 0,
+        alicuota_iva:  item.alicuota_iva    ?? item.iva_rate       ?? 0,
+        subtotal_neto: item.subtotal_neto   ?? 0,
+        subtotal_iva:  item.subtotal_iva    ?? 0,
       }))
       const { error: itemsError } = await supabase.from('invoice_items').insert(rows)
       if (itemsError) {
