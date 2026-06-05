@@ -24,7 +24,8 @@ export default function OnboardingGuard() {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (company) return <Navigate to="/dashboard" replace />
+  // Solo redirigir al dashboard si tiene una empresa real (no demo)
+  if (company && !company._isDemo) return <Navigate to="/dashboard" replace />
 
   return <Outlet />
 }

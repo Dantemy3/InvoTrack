@@ -1,9 +1,10 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
+import { useCompany } from '@/features/companies/context/CompanyContext'
 
 /**
  * Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.

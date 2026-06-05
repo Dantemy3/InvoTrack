@@ -32,7 +32,12 @@ export default function AppLayout() {
   const unreadCount = useUnreadAlertsCount()
 
   const handleSignOut = async () => {
-    toast({ title: 'Modo demo activo', description: 'El login está desactivado para pruebas', variant: 'info' })
+    try {
+      await authService.signOut()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      toast({ title: 'Error al cerrar sesión', description: err.message, variant: 'error' })
+    }
   }
 
   const displayName = user?.user_metadata?.full_name || user?.email || 'Usuario'
