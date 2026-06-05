@@ -119,7 +119,7 @@ export default function OcrPage() {
               <CardTitle className="flex items-center gap-2">
                 <ScanLine className="h-4 w-4" /> Subir imagen
               </CardTitle>
-              <CardDescription>Factura A, B, C o ticket</CardDescription>
+              <CardDescription>Factura, nota de crédito, débito, recibo o ticket</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <DropZone onFile={handleFile} disabled={processing} />

@@ -63,8 +63,20 @@ class Gpt4VisionAdapter extends BaseOcrAdapter {
       throw new Error(`Error al invocar la Edge Function ocr-gpt4: ${error.message}`)
     }
 
+    // La Edge Function puede retornar { error: "..." } con status 200
+    // En ese caso data.rawText no existe — hay que detectarlo explícitamente
+    if (data?.error) {
+      throw new Error(`La Edge Function reportó un error: ${data.error}`)
+    }
+
+    if (!data?.rawText) {
+      throw new Error(
+        'La Edge Function no devolvió texto. Verificá que OPENAI_API_KEY esté configurada en los secrets de Supabase.'
+      )
+    }
+
     return {
-      rawText: data?.rawText ?? '',
+      rawText: data.rawText,
       rawResponse: data?.rawResponse ?? {},
     }
   }
