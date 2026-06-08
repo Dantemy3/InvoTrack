@@ -9,6 +9,7 @@ import OnboardingGuard from '@/layouts/OnboardingGuard'
 // Lazy loaded pages
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
+const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'))
 const OnboardingPage = lazy(() => import('@/features/companies/pages/OnboardingPage'))
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
 const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage'))
@@ -45,6 +46,9 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: withSuspense(LoginPage) },
       { path: '/register', element: withSuspense(RegisterPage) },
+      // Bug 1 — Ruta que Supabase usa como callback después de confirmar el email.
+      // Sin esta ruta el link del mail tiraba 404.
+      { path: '/auth/callback', element: withSuspense(AuthCallbackPage) },
     ],
   },
   {

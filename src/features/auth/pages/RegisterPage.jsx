@@ -10,6 +10,21 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 
+// ──────────────────────────────────────────────────────────────────────────────
+// FLUJO "CREAR CUENTA" — paso 1 de 3
+// ──────────────────────────────────────────────────────────────────────────────
+// El usuario entra a /register. Esta página maneja el registro con email y contraseña.
+//
+// Pasos del flujo:
+//  1. El usuario completa nombre, email, contraseña y confirmación.
+//  2. Zod valida el formulario (registerSchema) antes de enviar.
+//  3. authService.signUpWithEmail() llama a supabase.auth.signUp().
+//  4. Supabase crea el usuario en su base de datos interna.
+//  5. Si está configurado el email de confirmación, Supabase lo envía.
+//  6. La página muestra la pantalla de "¡Cuenta creada!" para que el usuario
+//     vaya a confirmar su email o inicie sesión directamente.
+// ──────────────────────────────────────────────────────────────────────────────
+
 // Traduce errores de Supabase Auth a mensajes legibles en español para el registro.
 function getAuthErrorMessage(err) {
   const msg = err?.message ?? ''
@@ -35,8 +50,12 @@ function getAuthErrorMessage(err) {
 export default function RegisterPage() {
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
+  // registered controla si mostrar el formulario o la pantalla de "¡Cuenta creada!".
   const [registered, setRegistered] = useState(false)
 
+  // Paso 1a — Inicializar el formulario con validación Zod
+  // registerSchema valida: nombre (≥2 chars), email válido, contraseña (≥8 chars)
+  // y que confirmPassword coincida con password.
   const {
     register,
     handleSubmit,
@@ -44,8 +63,15 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(registerSchema) })
 
-    // Registra el usuario en Supabase y muestra la pantalla de confirmación.
-    const onSubmit = async (data) => {
+  // Paso 1b — Registrar el usuario
+  // Se llama solo cuando todos los campos pasan la validación de Zod.
+  // authService.signUpWithEmail() llama a supabase.auth.signUp() con el email,
+  // contraseña y full_name como metadata del perfil.
+  // Si tiene éxito: setRegistered(true) muestra la pantalla de confirmación.
+  // Si falla (ej: email ya registrado): mostramos el error via toast.
+  // Nota: Supabase por diseño de seguridad puede devolver éxito aunque el email
+  // ya exista — por eso también manejamos ese caso en el catch.
+  const onSubmit = async (data) => {
     try {
       await authService.signUpWithEmail(data.email, data.password, {
         full_name: data.fullName,

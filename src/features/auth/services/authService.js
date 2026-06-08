@@ -1,11 +1,29 @@
 import { supabase } from '@/lib/supabase'
 
+/**
+ * ──────────────────────────────────────────────────────────────────────────────
+ * FLUJO AUTH — paso 2 de 3
+ * ──────────────────────────────────────────────────────────────────────────────
+ * authService es la capa de acceso a Supabase Auth.
+ * Centraliza todas las llamadas de autenticación para que las páginas no
+ * dependan directamente del cliente de Supabase.
+ *
+ * Métodos del flujo principal:
+ *  - signInWithEmail / signIn  → login con email + contraseña
+ *  - signUpWithEmail / signUp  → registro de cuenta nueva
+ *  - signInWithGoogle          → login OAuth con Google
+ *  - signOut                   → cerrar sesión
+ *
+ * Todos los métodos lanzan el error si Supabase devuelve uno,
+ * para que la capa superior (página) lo maneje con el toast apropiado.
+ * ──────────────────────────────────────────────────────────────────────────────
+ */
 export const authService = {
   /**
-   * Sign in with email + password.
-   * @param {string} email
-   * @param {string} password
-   * @returns {Promise<import('@supabase/supabase-js').AuthResponse['data']>}
+   * Paso 2a — Login con email + contraseña.
+   * Llama a supabase.auth.signInWithPassword(). Supabase valida las credenciales
+   * contra su base de usuarios. Si son correctas devuelve { user, session }.
+   * La session contiene el JWT que se usará en todas las peticiones posteriores.
    */
   async signIn(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -14,20 +32,18 @@ export const authService = {
   },
 
   /**
-   * Alias for signIn — kept for backward compatibility.
-   * @param {string} email
-   * @param {string} password
+   * Alias de signIn — mantenido para compatibilidad con llamadas existentes.
    */
   async signInWithEmail(email, password) {
     return this.signIn(email, password)
   },
 
   /**
-   * Register a new user.
-   * @param {string} email
-   * @param {string} password
-   * @param {{ full_name: string }} [metadata]
-   * @returns {Promise<import('@supabase/supabase-js').AuthResponse['data']>}
+   * Paso 2b — Registro de cuenta nueva.
+   * Llama a supabase.auth.signUp(). Supabase crea el usuario en su sistema interno
+   * y guarda el full_name como metadata del perfil (disponible en auth.users.raw_user_meta_data).
+   * Si el proyecto tiene "Email confirmations" activado, Supabase envía un email
+   * de verificación y el usuario debe hacer clic para activar la cuenta.
    */
   async signUp(email, password, metadata = {}) {
     const { data, error } = await supabase.auth.signUp({
@@ -40,17 +56,18 @@ export const authService = {
   },
 
   /**
-   * Alias for signUp — kept for backward compatibility.
-   * @param {string} email
-   * @param {string} password
-   * @param {{ full_name: string }} [metadata]
+   * Alias de signUp — mantenido para compatibilidad con llamadas existentes.
    */
   async signUpWithEmail(email, password, metadata = {}) {
     return this.signUp(email, password, metadata)
   },
 
   /**
-   * OAuth with Google — redirects back to /dashboard.
+   * Paso 2c — Login OAuth con Google.
+   * supabase.auth.signInWithOAuth() redirige el navegador a la pantalla de Google.
+   * El usuario aprueba los permisos y Google devuelve el control a redirectTo (/dashboard).
+   * Supabase intercambia el código OAuth por una sesión y AuthContext la captura
+   * automáticamente via onAuthStateChange.
    */
   async signInWithGoogle() {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -62,7 +79,9 @@ export const authService = {
   },
 
   /**
-   * Sign out the current user.
+   * Cierra la sesión del usuario actual.
+   * Supabase invalida el JWT en el servidor y limpia el storage local.
+   * AuthContext detecta el cambio via onAuthStateChange y pone user = null.
    */
   async signOut() {
     const { error } = await supabase.auth.signOut()

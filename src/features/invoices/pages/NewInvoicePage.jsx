@@ -92,46 +92,66 @@ function mapOcrToFormValues(ocr) {
 }
 
 /**
- * Página de creación y edición de facturas.
- * - Sin `id` en params: modo creación
- * - Con `id` en params: modo edición (carga la factura existente)
+ * ──────────────────────────────────────────────────────────────────────────────
+ * FLUJO "CREAR FACTURA" — paso 1 de 4
+ * ──────────────────────────────────────────────────────────────────────────────
+ * El usuario accede a /invoices/new (o /invoices/:id para editar).
  *
- * Los totales fiscales los calcula InvoiceForm antes de llamar a onSubmit.
- * Req 5.9, 5.10, 5.11, 5.12
+ * Responsabilidades de esta página:
+ *  1. Detectar si es modo creación o edición según el param `id` en la URL.
+ *  2. En modo edición: cargar los datos existentes desde Supabase via useInvoice().
+ *  3. Pasar los defaultValues al formulario (InvoiceForm).
+ *  4. Recibir el evento onSubmit del formulario y llamar al hook de creación/edición.
+ *  5. Redirigir a /invoices una vez que la operación finaliza.
  */
-// Página de creación y edición de facturas.
-// Sin `id` en params: modo creación. Con `id`: modo edición (carga la factura existente).
-// Los datos del OCR se reciben vía navigation state.
 export default function NewInvoicePage() {
+  // ── Hooks de navegación ──────────────────────────────────────────────────────
+  // navigate: para redirigir después de guardar o cancelar.
+  // location: para leer `state.ocrData` si la página se abrió desde el escáner OCR.
+  // id: si existe en la URL (/invoices/:id) activa el modo edición.
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams()
   const isEditMode = Boolean(id)
 
-  // Datos pre-cargados desde OCR (vienen via navigate('/invoices/new', { state: { ocrData } }))
+  // Paso 1a — Datos pre-cargados desde OCR
+  // Si el usuario escaneó una factura, llega aquí con ocrData en el navigation state.
+  // mapOcrToFormValues() convierte esos datos al formato del formulario.
   const ocrData = location.state?.ocrData ?? null
 
+  // Paso 1b — Hooks de mutación (creación y edición)
+  // useCreateInvoice y useUpdateInvoice encapsulan la llamada a Supabase y el
+  // manejo de caché de React Query. Se usan en handleSubmit más abajo.
   const createInvoice = useCreateInvoice()
   const updateInvoice = useUpdateInvoice()
 
-  // Solo carga la factura existente en modo edición
+  // Paso 1c — Cargar factura existente solo en modo edición
+  // Si no hay id (modo creación), el hook recibe null y no hace ninguna petición.
   const { data: existingInvoice, isLoading: isLoadingInvoice } = useInvoice(isEditMode ? id : null)
 
+  // isLoading es true mientras cualquiera de las dos mutaciones está en curso;
+  // se pasa al formulario para deshabilitar el botón de envío y mostrar el spinner.
   const isLoading = createInvoice.isPending || updateInvoice.isPending
 
-  // Crea o actualiza la factura y navega al listado al completar.
+  // ── Paso 2 — Handler de envío ────────────────────────────────────────────────
+  // InvoiceForm llama a esta función con todos los datos del formulario
+  // (ya incluyen los totales fiscales calculados en InvoiceForm.handleFormSubmit).
+  // Según el modo, se crea o actualiza la factura y luego se redirige al listado.
   const handleSubmit = async (data) => {
     if (isEditMode) {
-      // data ya viene con totales calculados por InvoiceForm
+      // Modo edición: actualizamos los campos de la factura con su id.
       await updateInvoice.mutateAsync({ id, ...data })
     } else {
+      // Modo creación: creamos una nueva factura.
+      // El hook agrega automáticamente el company_id desde CompanyContext.
       await createInvoice.mutateAsync(data)
     }
+    // Al completar, volvemos al listado de facturas.
     navigate('/invoices')
   }
 
-  // Preparar defaultValues para el formulario
-  // Prioridad: modo edición > datos OCR > valores por defecto
+  // ── Paso 1d — Calcular defaultValues ────────────────────────────────────────
+  // Prioridad de datos iniciales: edición > OCR > formulario vacío.
   // Retorna los defaultValues del formulario con prioridad: edición > OCR > vacío.
   const getDefaultValues = () => {
     if (isEditMode && existingInvoice) {

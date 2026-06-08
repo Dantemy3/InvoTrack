@@ -10,6 +10,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 
+// ──────────────────────────────────────────────────────────────────────────────
+// FLUJO "INICIAR SESIÓN" — paso 1 de 3
+// ──────────────────────────────────────────────────────────────────────────────
+// El usuario entra a /login. Esta página maneja dos caminos:
+//   A) Email + contraseña  → authService.signInWithEmail()
+//   B) Google (OAuth)      → authService.signInWithGoogle()
+//
+// En ambos casos, si el login es exitoso Supabase emite un evento de sesión
+// que AuthContext captura automáticamente (onAuthStateChange), actualizando
+// el estado global de autenticación sin que la página lo haga manualmente.
+// ──────────────────────────────────────────────────────────────────────────────
+
 // Traduce errores de Supabase Auth a mensajes legibles en español para el usuario.
 function getAuthErrorMessage(err) {
   const msg = err?.message ?? ''
@@ -38,14 +50,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
+  // Paso 1a — Inicializar el formulario con validación Zod
+  // loginSchema valida: email con formato válido y contraseña de al menos 6 caracteres.
+  // Si algún campo no pasa la validación, react-hook-form NO llama a onSubmit
+  // y muestra los errores directamente en pantalla.
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(loginSchema) })
 
-    // Envía las credenciales a Supabase y redirige al dashboard en caso de éxito.
-    const onSubmit = async (data) => {
+  // Paso 1b — Login con email y contraseña
+  // Se llama solo cuando el formulario pasa la validación de Zod.
+  // authService.signInWithEmail() llama a Supabase → supabase.auth.signInWithPassword().
+  // Si tiene éxito: Supabase emite un evento que AuthContext escucha y actualiza el
+  // estado global (user, session). Luego redirigimos al dashboard.
+  // Si falla: mostramos el error traducido al español via toast.
+  const onSubmit = async (data) => {
     try {
       await authService.signInWithEmail(data.email, data.password)
       navigate('/dashboard')
@@ -58,7 +79,12 @@ export default function LoginPage() {
     }
   }
 
-  // Inicia el flujo OAuth con Google; el navegador redirige a Google y vuelve al dashboard.
+  // Paso 1c — Login con Google (OAuth)
+  // authService.signInWithGoogle() llama a supabase.auth.signInWithOAuth().
+  // Supabase redirige el navegador a Google. El usuario aprueba y Google
+  // devuelve el control a /dashboard (configurado en redirectTo).
+  // AuthContext captura la sesión al volver, igual que con email/contraseña.
+  // No se necesita navigate() porque el browser ya fue redirigido por OAuth.
   const handleGoogle = async () => {
     setGoogleLoading(true)
     try {

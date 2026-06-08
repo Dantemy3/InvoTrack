@@ -62,29 +62,79 @@ export const invoiceService = {
   },
 
   /**
-   * Create a new invoice with its line items.
-   * payload debe incluir company_id.
+   * ──────────────────────────────────────────────────────────────────────────
+   * FLUJO "CREAR FACTURA" — paso 4 de 4
+   * ──────────────────────────────────────────────────────────────────────────
+   * create() es la función que persiste la factura en la base de datos (Supabase).
+   *
+   * Pasos internos:
+   *  1. Obtener el usuario autenticado con supabase.auth.getUser().
+   *  2. Generar el invoice_number en formato AFIP: XXXX-XXXXXXXX.
+   *  3. Insertar la fila en la tabla `invoices` con todos los campos fiscales.
+   *  4. Insertar las filas de ítems en `invoice_items` vinculadas por invoice_id.
+   *  5. Si los ítems fallan, hacer rollback borrando la factura para no dejar
+   *     registros huérfanos.
+   *
+   * El RLS de Supabase garantiza que solo usuarios de esa empresa pueden
+   * leer/escribir sus propias facturas (aislamiento multi-tenant).
+   * ──────────────────────────────────────────────────────────────────────────
    * @param {{ items: object[], company_id: string, ...invoiceFields }} payload
    */
   async create({ items = [], ...invoice }) {
-    // DEV: usar sesión real si existe, sino hardcodear un user_id para testing
+    // Paso 4a — Obtener usuario autenticado
+    // En producción, user.id identifica al creador de la factura.
+    // En desarrollo local, si no hay sesión activa se usa un id de prueba.
     const { data: { user } } = await supabase.auth.getUser()
     const userId = user?.id ?? 'dev-user-hardcoded'
 
-    // Generate invoice_number from punto_de_venta + numero_comprobante (AFIP format: XXXX-XXXXXXXX)
+    // Paso 4b — Generar número de factura en formato AFIP (XXXX-XXXXXXXX)
     const invoiceNumber = invoice.invoice_number ||
       `${String(invoice.punto_de_venta ?? 1).padStart(4, '0')}-${String(invoice.numero_comprobante ?? 1).padStart(8, '0')}`
 
-    // Insert invoice
+    // Paso 4b.1 — Verificar que no exista ya una factura con el mismo número
+    // y tipo de comprobante para esta empresa. AFIP no permite duplicados.
+    const { data: existing } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('company_id', invoice.company_id)
+      .eq('invoice_number', invoiceNumber)
+      .eq('tipo_comprobante', invoice.tipo_comprobante)
+      .maybeSingle()
+
+    if (existing) {
+      throw new Error(
+        `Ya existe una ${invoice.tipo_comprobante} con el número ${invoiceNumber}. ` +
+        `Cambiá el número de comprobante o el punto de venta.`
+      )
+    }
+
+    // Paso 4b.1 — Limpiar campos de fecha vacíos antes de enviar a Supabase.
+    // Postgres espera NULL o una fecha válida — un string vacío ("") tira
+    // "invalid input syntax for type date". Esto ocurre en tipos de factura
+    // que no tienen fecha de vencimiento (Factura C, Recibo, Notas).
+    const cleanInvoice = { ...invoice }
+    if (!cleanInvoice.fecha_vencimiento || cleanInvoice.fecha_vencimiento.trim() === '') {
+      cleanInvoice.fecha_vencimiento = null
+    }
+    if (!cleanInvoice.cae_vencimiento || cleanInvoice.cae_vencimiento.trim() === '') {
+      cleanInvoice.cae_vencimiento = null
+    }
+    if (!cleanInvoice.cae || cleanInvoice.cae.trim() === '') {
+      cleanInvoice.cae = null
+    }
+
+    // Paso 4c — Insertar la cabecera de la factura en la tabla `invoices`
+    // .select().single() devuelve el registro recién creado con su id generado por Supabase.
     const { data: newInvoice, error: invError } = await supabase
       .from('invoices')
-      .insert({ ...invoice, invoice_number: invoiceNumber, user_id: userId })
+      .insert({ ...cleanInvoice, invoice_number: invoiceNumber, user_id: userId })
       .select()
       .single()
 
     if (invError) throw invError
 
-    // Insert line items — rollback (delete invoice) if items fail (Req 5.3)
+    // Paso 4d — Insertar los ítems de la factura en `invoice_items`
+    // Cada ítem lleva el invoice_id de la cabecera y un sort_order para mantener el orden.
     if (items.length > 0) {
       const rows = items.map((item, idx) => ({
         invoice_id:    newInvoice.id,
@@ -98,13 +148,17 @@ export const invoiceService = {
         subtotal_iva:  item.subtotal_iva    ?? 0,
       }))
       const { error: itemsError } = await supabase.from('invoice_items').insert(rows)
+
       if (itemsError) {
-        // Rollback: eliminar la factura para no dejar registros huérfanos
+        // Paso 4e — Rollback manual: si los ítems fallan, eliminamos la factura
+        // para no dejar una cabecera sin líneas (registro huérfano) en la base de datos.
         await supabase.from('invoices').delete().eq('id', newInvoice.id)
         throw itemsError
       }
     }
 
+    // Paso 4f — Devolver la factura creada al hook (useCreateInvoice)
+    // que a su vez invalida el caché y muestra el toast de éxito.
     return newInvoice
   },
 

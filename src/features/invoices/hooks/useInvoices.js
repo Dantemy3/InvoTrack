@@ -19,7 +19,6 @@ export function useInvoices(filters = {}) {
   const query = useQuery({
     queryKey: [QUERY_KEYS.INVOICES, company?.id, filters],
     queryFn: () => {
-      // Modo demo: retornar datos locales sin llamar a Supabase
       if (company?._isDemo) {
         let result = [...DEMO_INVOICES]
         if (filters.status) result = result.filter((i) => i.status === filters.status)
@@ -66,8 +65,18 @@ export function useInvoice(id) {
 }
 
 /**
- * Crea una nueva factura con sus ítems (atómico).
- * Invalida el caché de facturas y dashboard al completar.
+ * ──────────────────────────────────────────────────────────────────────────────
+ * FLUJO "CREAR FACTURA" — paso 3 de 4
+ * ──────────────────────────────────────────────────────────────────────────────
+ * useCreateInvoice es el hook de React Query que orquesta la mutación.
+ *
+ * Responsabilidades:
+ *  1. Recibir el payload del formulario y agregarle el company_id desde el contexto.
+ *  2. Llamar a invoiceService.create() (paso 4) que escribe en Supabase.
+ *  3. Al completar con éxito: invalidar el caché de facturas y dashboard para
+ *     que las listas y los KPIs se actualicen solos.
+ *  4. Mostrar un toast de éxito o error al usuario.
+ * ──────────────────────────────────────────────────────────────────────────────
  */
 export function useCreateInvoice() {
   const queryClient = useQueryClient()
@@ -75,13 +84,20 @@ export function useCreateInvoice() {
   const { company } = useCompany()
 
   return useMutation({
+    // mutationFn: recibe el payload del formulario y agrega company_id desde el contexto.
+    // company_id identifica a qué empresa pertenece la factura (aislamiento multi-tenant).
     mutationFn: (payload) =>
       invoiceService.create({ ...payload, company_id: company.id }),
+
+    // onSuccess: React Query invalida las queries de facturas y del dashboard,
+    // forzando una re-fetching automática para reflejar la factura recién creada.
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICES] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_STATS] })
       toast({ title: 'Factura creada', variant: 'success' })
     },
+
+    // onError: si Supabase o la red devuelven un error, se muestra al usuario via toast.
     onError: (err) => {
       toast({ title: 'Error al crear factura', description: err.message, variant: 'error' })
     },

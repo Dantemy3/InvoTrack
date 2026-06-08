@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { companyService } from '@/features/companies/services/companyService'
 import { useAuth } from '@/features/auth/context/AuthContext'
 import { DEMO_COMPANY } from '@/lib/demoData'
@@ -9,7 +9,6 @@ const STORAGE_KEY = 'invotrack_company_id'
 
 // Provider de empresa activa. Carga todas las empresas del usuario, selecciona
 // la activa (persistida en localStorage) y expone helpers de rol y switchCompany.
-// En modo demo (sin empresa en Supabase) usa DEMO_COMPANY para no bloquear al usuario.
 export function CompanyProvider({ children }) {
   const { user, isAuthenticated } = useAuth()
 
@@ -18,25 +17,25 @@ export function CompanyProvider({ children }) {
   const [role, setRole]           = useState(null)
   const [loading, setLoading]     = useState(true)
 
-  const loadCompanies = useCallback(async () => {
-    if (!user?.id) return
+  // Guardamos el userId en un ref para compararlo en el efecto.
+  // Así evitamos re-ejecutar loadCompanies cuando Supabase refresca el token
+  // y AuthContext re-crea el objeto `user` con la misma id pero distinta referencia,
+  // lo cual causaba el "refresco" de página al volver de otra pestaña.
+  const loadedForUserId = useRef(null)
 
-    setLoading(true)
+  const loadCompanies = useCallback(async (userId, forceReload = false) => {
+    if (!userId) return
+
+    // Si ya cargamos para este usuario y no es un reload forzado (ej: después del onboarding),
+    // no mostrar el spinner de carga de nuevo — evita el flash/refresco visual.
+    const isFirstLoad = loadedForUserId.current !== userId
+    if (isFirstLoad || forceReload) {
+      setLoading(true)
+    }
+
     try {
-      const allCompanies = await companyService.getAll(user.id)
-
-      // ── MODO DEMO ──────────────────────────────────────────────────────────
-      // Si el usuario no tiene empresas en Supabase, usar la empresa demo
-      // para poder visualizar el dashboard sin pasar por el onboarding.
-      if (allCompanies.length === 0) {
-        const demoCompany = { ...DEMO_COMPANY, _isDemo: true }
-        setCompanies([demoCompany])
-        setCompany(demoCompany)
-        setRole('admin')
-        setLoading(false)
-        return
-      }
-      // ── FIN MODO DEMO ──────────────────────────────────────────────────────
+      const allCompanies = await companyService.getAll(userId)
+      loadedForUserId.current = userId
 
       setCompanies(allCompanies)
 
@@ -53,35 +52,29 @@ export function CompanyProvider({ children }) {
       }
     } catch (err) {
       console.error('CompanyContext: error loading companies', err)
-      // En caso de error de red, también usar demo para no bloquear al usuario
-      const demoCompany = { ...DEMO_COMPANY, _isDemo: true }
-      setCompanies([demoCompany])
-      setCompany(demoCompany)
-      setRole('admin')
+      loadedForUserId.current = userId
+      setCompanies([])
+      setCompany(null)
+      setRole(null)
     } finally {
       setLoading(false)
     }
-  }, [user?.id])
+  }, [])
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      // Clear state when user logs out
+    if (!isAuthenticated || !user?.id) {
+      // Limpiar estado al cerrar sesión
       setCompany(null)
       setCompanies([])
       setRole(null)
       setLoading(false)
+      loadedForUserId.current = null
       return
     }
-    loadCompanies()
-  }, [isAuthenticated, user, loadCompanies])
+    // Pasamos solo el id (string) para evitar dependencia del objeto user completo
+    loadCompanies(user.id)
+  }, [isAuthenticated, user?.id, loadCompanies])
 
-  /**
-   * Switch the active company.
-   * Persists the selection to localStorage and updates the role immediately
-   * using the role already embedded in the companies list (no extra network call).
-   *
-   * @param {string} companyId - UUID of the company to activate
-   */
   function switchCompany(companyId) {
     const found = companies.find((c) => c.id === companyId)
     if (!found) return
@@ -92,12 +85,13 @@ export function CompanyProvider({ children }) {
   }
 
   const value = {
-    company,          // currently active company object (includes `role` field)
-    companies,        // all accessible companies for the user
-    role,             // 'admin' | 'accountant' | 'viewer' | null
+    company,
+    companies,
+    role,
     loading,
     switchCompany,
-    refetch: loadCompanies,
+    // refetch forzado: se usa después del onboarding para cargar la empresa recién creada
+    refetch: () => user?.id ? loadCompanies(user.id, true) : Promise.resolve(),
     isAdmin:      role === 'admin',
     isAccountant: role === 'accountant',
     canWrite:     role === 'admin' || role === 'accountant',

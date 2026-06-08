@@ -1,7 +1,8 @@
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Trash2, Loader2 } from 'lucide-react'
-import { invoiceSchema, TIPOS_COMPROBANTE, TAX_CONDITION_VALUES } from '../schemas/invoiceSchemas'
+import { useNavigate } from 'react-router-dom'
+import { invoiceSchema, TIPOS_COMPROBANTE, TAX_CONDITION_VALUES, TIPOS_SIN_VENCIMIENTO, CONDICIONES_PAGO, TIPOS_RECEPTOR_IDENTIFICADO } from '../schemas/invoiceSchemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
+
+// ──────────────────────────────────────────────────────────────────────────────
+// FLUJO "CREAR FACTURA" — paso 2 de 4
+// ──────────────────────────────────────────────────────────────────────────────
+// InvoiceForm es el formulario visual que el usuario completa.
+//
+// Responsabilidades:
+//  1. Inicializar react-hook-form con validación Zod (invoiceSchema).
+//  2. Renderizar todas las secciones: tipo, emisor, receptor, ítems y notas.
+//  3. Calcular totales fiscales en tiempo real a medida que el usuario edita ítems.
+//  4. Al hacer submit: calcular totales finales, enriquecer los datos y
+//     llamar a onSubmit (que viene de NewInvoicePage → handleSubmit).
+// ──────────────────────────────────────────────────────────────────────────────
 
 // ── Valores por defecto ───────────────────────────────────────────────────────
 const defaultItem = {
@@ -36,6 +50,13 @@ const TAX_CONDITION_LABELS = {
  * @param {{ defaultValues?: object, onSubmit: Function, isLoading?: boolean, clients?: object[], providers?: object[] }} props
  */
 export default function InvoiceForm({ defaultValues, onSubmit, isLoading, clients = [], providers = [] }) {
+  // Bug 3 — Usar navigate de React Router en vez de window.history.back()
+  // para evitar reloads del browser que pierden el estado del formulario.
+  const navigate = useNavigate()
+
+  // Paso 2a — Inicializar el formulario con validación Zod
+  // zodResolver conecta invoiceSchema con react-hook-form: todos los campos se
+  // validan automáticamente según las reglas definidas en invoiceSchemas.js.
   const {
     register,
     handleSubmit,
@@ -68,15 +89,29 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     },
   })
 
+  // useFieldArray administra la lista dinámica de ítems (descripción, cantidad, precio, IVA).
+  // append() agrega un ítem vacío; remove(index) elimina uno existente.
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
+
+  // watch('items') reacciona en tiempo real a cada cambio del usuario en los ítems,
+  // lo que permite recalcular los totales fiscales sin esperar al submit.
   const items = watch('items') ?? []
   const moneda = watch('moneda') ?? 'ARS'
+  const tipoComprobante = watch('tipo_comprobante') ?? 'Factura B'
+  const requiereVencimiento = !TIPOS_SIN_VENCIMIENTO.includes(tipoComprobante)
+  // Receptor requerido solo para Factura A, M y sus Notas
+  const receptorRequerido = TIPOS_RECEPTOR_IDENTIFICADO.includes(tipoComprobante)
 
-  // Calcular totales en tiempo real
+  // Paso 2b — Calcular totales en tiempo real
+  // calculateInvoiceTotals recorre los ítems y devuelve neto gravado, IVA por alícuota y total.
+  // El resultado se muestra en el panel de totales al pie del formulario.
   const totals = calculateInvoiceTotals(items)
 
-  // Handler que inyecta los totales calculados antes de llamar al onSubmit del padre
-    // Calcula los totales a partir de los ítems e invoca el onSubmit del padre con los datos enriquecidos.
+  // Paso 2c — Handler de submit
+  // react-hook-form valida todos los campos con Zod ANTES de llegar aquí.
+  // Si la validación falla, no se llama a esta función y se muestran los errores en pantalla.
+  // Si pasa: recalculamos los totales con los valores finales y llamamos al onSubmit del padre
+  // (NewInvoicePage.handleSubmit → useCreateInvoice → invoiceService.create → Supabase).
   const handleFormSubmit = (data) => {
     const enriched = calculateInvoiceTotals(data.items)
     onSubmit({
@@ -130,11 +165,14 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="contado">Contado</SelectItem>
-                  <SelectItem value="cuenta_corriente">Cuenta corriente</SelectItem>
+                  {/* Bug 2 — Opciones de pago ampliadas */}
+                  {CONDICIONES_PAGO.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )} />
+            {errors.condicion_pago && <p className="text-xs text-red-500">{errors.condicion_pago.message}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -156,8 +194,19 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </div>
 
           <div className="space-y-1.5">
-            <Label>Fecha de vencimiento</Label>
-            <Input type="date" {...register('fecha_vencimiento')} />
+            {/* Bug 4/5 — Fecha de vencimiento solo obligatoria si el tipo lo requiere.
+                Tipos sin vencimiento: Factura C, Recibo, Notas de Crédito/Débito. */}
+            <Label>
+              Fecha de vencimiento
+              {requiereVencimiento && <span className="text-red-500"> *</span>}
+              {!requiereVencimiento && <span className="text-gray-400 text-xs ml-1">(no aplica para {tipoComprobante})</span>}
+            </Label>
+            <Input
+              type="date"
+              disabled={!requiereVencimiento}
+              {...register('fecha_vencimiento')}
+            />
+            {errors.fecha_vencimiento && <p className="text-xs text-red-500">{errors.fecha_vencimiento.message}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -208,17 +257,19 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       <Card>
         <CardHeader><CardTitle>Datos del emisor</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Bug 6 — Razón social y CUIT del emisor son obligatorios */}
           <div className="space-y-1.5">
-            <Label>Razón social</Label>
+            <Label>Razón social <span className="text-red-500">*</span></Label>
             <Input placeholder="Empresa S.A." {...register('emisor_razon_social')} />
+            {errors.emisor_razon_social && <p className="text-xs text-red-500">{errors.emisor_razon_social.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>CUIT</Label>
+            <Label>CUIT <span className="text-red-500">*</span></Label>
             <Input placeholder="20-12345678-9" {...register('emisor_cuit')} />
             {errors.emisor_cuit && <p className="text-xs text-red-500">{errors.emisor_cuit.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Condición IVA</Label>
+            <Label>Condición IVA <span className="text-red-500">*</span></Label>
             <Controller name="emisor_condicion_iva" control={control} render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value ?? ''}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
@@ -229,6 +280,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
                 </SelectContent>
               </Select>
             )} />
+            {errors.emisor_condicion_iva && <p className="text-xs text-red-500">{errors.emisor_condicion_iva.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Domicilio</Label>
@@ -239,19 +291,36 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
       {/* ── Receptor ─────────────────────────────────────────────────────── */}
       <Card>
-        <CardHeader><CardTitle>Datos del receptor</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Datos del receptor</CardTitle>
+          {!receptorRequerido && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Para {tipoComprobante}, el receptor puede ser Consumidor Final — los datos son opcionales.
+            </p>
+          )}
+        </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label>Razón social</Label>
+            <Label>
+              Razón social
+              {receptorRequerido && <span className="text-red-500"> *</span>}
+            </Label>
             <Input placeholder="Cliente S.R.L." {...register('receptor_razon_social')} />
+            {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>CUIT</Label>
+            <Label>
+              CUIT
+              {receptorRequerido && <span className="text-red-500"> *</span>}
+            </Label>
             <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
             {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Condición IVA</Label>
+            <Label>
+              Condición IVA
+              {receptorRequerido && <span className="text-red-500"> *</span>}
+            </Label>
             <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value ?? ''}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
@@ -262,6 +331,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
                 </SelectContent>
               </Select>
             )} />
+            {errors.receptor_condicion_iva && <p className="text-xs text-red-500">{errors.receptor_condicion_iva.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Domicilio</Label>
@@ -307,24 +377,41 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
+
+          {/* Cabecera de columnas — visible solo en pantallas medianas en adelante */}
+          <div className="hidden sm:grid grid-cols-12 gap-2 px-0.5">
+            <div className="col-span-4 text-xs font-medium text-gray-400 uppercase tracking-wide">Descripción</div>
+            <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Cantidad</div>
+            <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Unidad</div>
+            <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Precio unit.</div>
+            <div className="col-span-1 text-xs font-medium text-gray-400 uppercase tracking-wide">IVA</div>
+            <div className="col-span-1" />
+          </div>
+
           {fields.map((field, index) => (
             <div key={field.id} className="grid grid-cols-12 gap-2 items-start">
               <div className="col-span-12 sm:col-span-4">
-                <Input placeholder="Descripción" {...register(`items.${index}.descripcion`)} />
+                {/* En mobile mostramos el label inline porque no hay cabecera */}
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Descripción</label>
+                <Input placeholder="Motor" {...register(`items.${index}.descripcion`)} />
                 {errors.items?.[index]?.descripcion && (
                   <p className="text-xs text-red-500 mt-0.5">{errors.items[index].descripcion.message}</p>
                 )}
               </div>
               <div className="col-span-3 sm:col-span-2">
-                <Input type="number" placeholder="Cant." step="0.0001" min="0" {...register(`items.${index}.cantidad`)} />
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Cantidad</label>
+                <Input type="number" placeholder="1" step="0.0001" min="0" {...register(`items.${index}.cantidad`)} />
               </div>
               <div className="col-span-3 sm:col-span-2">
-                <Input placeholder="Unidad" {...register(`items.${index}.unidad`)} />
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Unidad</label>
+                <Input placeholder="Ej: hs, kg, un" {...register(`items.${index}.unidad`)} />
               </div>
               <div className="col-span-3 sm:col-span-2">
-                <Input type="number" placeholder="Precio" step="0.01" min="0" {...register(`items.${index}.precio_unitario`)} />
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Precio unitario</label>
+                <Input type="number" placeholder="0.00" step="0.01" min="0" {...register(`items.${index}.precio_unitario`)} />
               </div>
               <div className="col-span-2 sm:col-span-1">
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">IVA</label>
                 <Controller
                   name={`items.${index}.alicuota_iva`}
                   control={control}
@@ -400,7 +487,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={() => window.history.back()}>
+        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
           Cancelar
         </Button>
         <Button type="submit" disabled={isLoading}>

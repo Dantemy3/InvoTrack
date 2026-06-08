@@ -42,6 +42,7 @@ export default function InvoiceTable({ invoices = [], isLoading }) {
         <thead>
           <tr className="border-b border-gray-100">
             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Número</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipo</th>
             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente/Proveedor</th>
             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Fecha</th>
             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Vencimiento</th>
@@ -58,8 +59,15 @@ export default function InvoiceTable({ invoices = [], isLoading }) {
               onClick={() => navigate(`/invoices/${invoice.id}`)}
             >
               <td className="py-3.5 px-4 font-medium text-gray-900">{invoice.invoice_number}</td>
+              <td className="py-3.5 px-4 text-gray-600 text-xs">
+                {invoice.tipo_comprobante ?? '-'}
+              </td>
               <td className="py-3.5 px-4 text-gray-600">
-                {invoice.clients?.name || invoice.providers?.name || '-'}
+                {invoice.clients?.name
+                  || invoice.providers?.name
+                  || invoice.receptor_razon_social
+                  || invoice.emisor_razon_social
+                  || '-'}
               </td>
               <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.fecha_emision)}</td>
               <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.fecha_vencimiento)}</td>

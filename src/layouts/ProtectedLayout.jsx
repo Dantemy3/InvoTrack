@@ -9,7 +9,7 @@ export default function ProtectedLayout() {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { company, loading: companyLoading } = useCompany()
 
-  // Show loading spinner while auth or company state is resolving
+  // Mostrar spinner mientras se resuelve la sesión o las empresas
   if (authLoading || companyLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -18,12 +18,13 @@ export default function ProtectedLayout() {
     )
   }
 
-  // Not authenticated → go to login
+  // No autenticado → ir al login
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
-  // Authenticated but no company → go to onboarding
-  // (si la empresa es demo, _isDemo=true, no redirigir)
-  if (!company) return <Navigate to="/onboarding" replace />
+  // Autenticado pero sin empresa real → ir al onboarding
+  // NOTA: si company es null o es la empresa demo (_isDemo=true), redirigir.
+  // El modo demo solo sirve para navegar si el usuario YA tiene empresa.
+  if (!company || company._isDemo) return <Navigate to="/onboarding" replace />
 
   return <Outlet />
 }

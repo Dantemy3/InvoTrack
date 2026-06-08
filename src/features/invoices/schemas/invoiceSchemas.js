@@ -10,25 +10,71 @@ export const TIPOS_COMPROBANTE = [
   'Recibo',
 ]
 
+// ── Tipos que requieren datos COMPLETOS del receptor (CUIT + razón social + condición IVA)
+// Factura A y M: operaciones entre responsables inscriptos — receptor siempre identificado.
+export const TIPOS_RECEPTOR_IDENTIFICADO = [
+  'Factura A', 'Factura M',
+  'Nota de Crédito A', 'Nota de Débito A',
+]
+
+// ── Tipos donde el receptor puede ser Consumidor Final (sin CUIT ni razón social)
+// Factura C: emitida por Monotributistas a cualquier receptor.
+// Factura B: para consumidor final (aunque técnicamente puede tener datos).
+// Recibo, Notas B/C: idem.
+export const TIPOS_RECEPTOR_OPCIONAL = [
+  'Factura B', 'Factura C',
+  'Nota de Crédito B', 'Nota de Débito B',
+  'Nota de Crédito C', 'Nota de Débito C',
+  'Recibo',
+]
+// Factura C: emitida por Monotributistas, no requiere vencimiento.
+// Recibo: comprobante de pago, no tiene vencimiento.
+// Notas de Crédito/Débito: ajustes, no tienen vencimiento propio.
+export const TIPOS_SIN_VENCIMIENTO = [
+  'Factura C',
+  'Recibo',
+  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
+  'Nota de Débito A', 'Nota de Débito B', 'Nota de Débito C',
+]
+
+// ── Condiciones de pago ───────────────────────────────────────────────────────
+// Bug 2 — Ampliar las condiciones de pago más allá de contado/cuenta_corriente
+export const CONDICIONES_PAGO = [
+  { value: 'contado',           label: 'Contado' },
+  { value: 'cuenta_corriente',  label: 'Cuenta corriente' },
+  { value: '15_dias',           label: '15 días' },
+  { value: '30_dias',           label: '30 días' },
+  { value: '60_dias',           label: '60 días' },
+  { value: '90_dias',           label: '90 días' },
+  { value: 'contra_entrega',    label: 'Contra entrega' },
+  { value: 'anticipado',        label: 'Pago anticipado' },
+]
+
+export const CONDICIONES_PAGO_VALUES = CONDICIONES_PAGO.map((c) => c.value)
+
+// z.enum() requiere un tuple de al menos 2 elementos, no un array dinámico.
+// Lo casteamos con 'as const' equivalente para que Zod lo acepte.
+export const CONDICIONES_PAGO_ENUM = /** @type {[string, ...string[]]} */ (CONDICIONES_PAGO_VALUES)
+
 // ── Condiciones IVA ───────────────────────────────────────────────────────────
 export const TAX_CONDITION_VALUES = ['RI', 'MO', 'EX', 'CF', 'RS']
 
 // ── Schema de ítem de factura ─────────────────────────────────────────────────
-// Req 5.7, 5.13
+// Bug 7 — Todos los mensajes de error en español
 export const invoiceItemSchema = z.object({
-  descripcion: z.string().min(1, 'La descripción es requerida'),
+  descripcion: z.string().min(1, 'La descripción del ítem es requerida'),
   cantidad: z.coerce
-    .number({ invalid_type_error: 'Cantidad inválida' })
+    .number({ invalid_type_error: 'La cantidad debe ser un número' })
     .positive('La cantidad debe ser mayor a 0'),
   unidad: z.string().optional(),
   precio_unitario: z.coerce
-    .number({ invalid_type_error: 'Precio inválido' })
-    .positive('El precio debe ser mayor a 0'),
+    .number({ invalid_type_error: 'El precio debe ser un número' })
+    .positive('El precio unitario debe ser mayor a 0'),
   alicuota_iva: z.coerce
-    .number({ invalid_type_error: 'Alícuota inválida' })
+    .number({ invalid_type_error: 'La alícuota de IVA debe ser un número' })
     .refine(
       (v) => IVA_VALID_RATES.includes(v),
-      { message: `Alícuota IVA inválida. Valores permitidos: ${IVA_VALID_RATES.join(', ')}` }
+      { message: `Alícuota de IVA inválida. Valores permitidos: ${IVA_VALID_RATES.join(', ')}%` }
     ),
   subtotal_neto: z.coerce.number().optional(),
   subtotal_iva: z.coerce.number().optional(),
@@ -36,52 +82,63 @@ export const invoiceItemSchema = z.object({
 })
 
 // ── Schema principal de factura ───────────────────────────────────────────────
-// Req 5.9, 5.10, 5.11, 5.12
+// Bug 2: condiciones de pago ampliadas
+// Bug 4: fecha de vencimiento condicional según tipo de comprobante
+// Bug 5: mismo que bug 4 — tipos sin vencimiento
+// Bug 6: emisor y receptor obligatorios
+// Bug 7: todos los mensajes en español
 export const invoiceSchema = z.object({
   // Tipo y flujo
   tipo_comprobante: z.enum(TIPOS_COMPROBANTE, {
-    errorMap: () => ({ message: 'Tipo de comprobante inválido' }),
+    errorMap: () => ({ message: 'Seleccioná un tipo de comprobante válido' }),
   }),
   type: z.enum(['receivable', 'payable'], {
-    errorMap: () => ({ message: 'Tipo de flujo inválido' }),
+    errorMap: () => ({ message: 'Seleccioná un tipo de flujo válido' }),
   }),
 
   // Numeración AFIP
   punto_de_venta: z.coerce
-    .number({ invalid_type_error: 'Punto de venta inválido' })
-    .int()
-    .min(1, 'Mínimo 1')
-    .max(99999, 'Máximo 99999'),
+    .number({ invalid_type_error: 'El punto de venta debe ser un número' })
+    .int('El punto de venta debe ser un número entero')
+    .min(1, 'El punto de venta mínimo es 1')
+    .max(99999, 'El punto de venta máximo es 99999'),
   numero_comprobante: z.coerce
-    .number({ invalid_type_error: 'Número de comprobante inválido' })
-    .int()
-    .positive('Debe ser positivo'),
+    .number({ invalid_type_error: 'El número de comprobante debe ser un número' })
+    .int('El número de comprobante debe ser un número entero')
+    .positive('El número de comprobante debe ser positivo'),
 
   // Fechas
   fecha_emision: z.string().min(1, 'La fecha de emisión es requerida'),
+  // Bug 4/5 — Se valida condicionalmente en el .superRefine() de abajo
   fecha_vencimiento: z.string().optional().nullable(),
 
-  // Condición de pago
-  condicion_pago: z.enum(['contado', 'cuenta_corriente'], {
-    errorMap: () => ({ message: 'Condición de pago inválida' }),
+  // Bug 2 — Condiciones de pago ampliadas
+  condicion_pago: z.enum(CONDICIONES_PAGO_ENUM, {
+    errorMap: () => ({ message: 'Seleccioná una condición de pago válida' }),
   }),
 
-  // Moneda — validar contra lista de monedas soportadas (Req 15.4)
+  // Moneda
   moneda: z.enum(SUPPORTED_CURRENCIES, {
     errorMap: () => ({ message: `Moneda inválida. Valores permitidos: ${SUPPORTED_CURRENCIES.join(', ')}` }),
   }).default('ARS'),
   tipo_cambio: z.coerce
-    .number({ invalid_type_error: 'Tipo de cambio inválido' })
-    .positive('El tipo de cambio debe ser positivo')
+    .number({ invalid_type_error: 'El tipo de cambio debe ser un número' })
+    .positive('El tipo de cambio debe ser mayor a 0')
     .default(1.0),
 
-  // Datos del emisor
-  emisor_cuit: cuitSchema.or(z.literal('')).optional().nullable(),
-  emisor_razon_social: z.string().optional().nullable(),
-  emisor_condicion_iva: z.enum(TAX_CONDITION_VALUES).optional().nullable(),
+  // Bug 6 — Emisor siempre obligatorio (el emisor es siempre la empresa)
+  emisor_cuit: cuitSchema.or(z.literal('')).refine(
+    (v) => v && v.trim() !== '',
+    { message: 'El CUIT del emisor es requerido' }
+  ),
+  emisor_razon_social: z.string().min(1, 'La razón social del emisor es requerida'),
+  emisor_condicion_iva: z.enum(TAX_CONDITION_VALUES, {
+    errorMap: () => ({ message: 'Seleccioná la condición de IVA del emisor' }),
+  }),
   emisor_domicilio: z.string().optional().nullable(),
 
-  // Datos del receptor
+  // Receptor — obligatorio u opcional según tipo de comprobante.
+  // La validación condicional se hace en superRefine() más abajo.
   receptor_cuit: cuitSchema.or(z.literal('')).optional().nullable(),
   receptor_razon_social: z.string().optional().nullable(),
   receptor_condicion_iva: z.enum(TAX_CONDITION_VALUES).optional().nullable(),
@@ -110,6 +167,44 @@ export const invoiceSchema = z.object({
 
   // Ítems (array requerido, mínimo 1)
   items: z.array(invoiceItemSchema).min(1, 'La factura debe tener al menos un ítem'),
+}).superRefine((data, ctx) => {
+  // Validación 1 — Fecha de vencimiento condicional
+  const requiereVencimiento = !TIPOS_SIN_VENCIMIENTO.includes(data.tipo_comprobante)
+  if (requiereVencimiento && (!data.fecha_vencimiento || data.fecha_vencimiento.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['fecha_vencimiento'],
+      message: `La fecha de vencimiento es requerida para ${data.tipo_comprobante}`,
+    })
+  }
+
+  // Validación 2 — Receptor obligatorio solo en Factura A y M
+  // En Factura A/M la operación es entre responsables inscriptos: el receptor
+  // siempre debe estar identificado con CUIT, razón social y condición IVA.
+  // En Factura B/C y Recibo el receptor puede ser Consumidor Final sin datos.
+  if (TIPOS_RECEPTOR_IDENTIFICADO.includes(data.tipo_comprobante)) {
+    if (!data.receptor_cuit || data.receptor_cuit.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_cuit'],
+        message: `El CUIT del receptor es requerido para ${data.tipo_comprobante}`,
+      })
+    }
+    if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_razon_social'],
+        message: `La razón social del receptor es requerida para ${data.tipo_comprobante}`,
+      })
+    }
+    if (!data.receptor_condicion_iva) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_condicion_iva'],
+        message: `La condición de IVA del receptor es requerida para ${data.tipo_comprobante}`,
+      })
+    }
+  }
 })
 
 // ── Schema de filtros para listado de facturas ────────────────────────────────
