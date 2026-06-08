@@ -15,6 +15,8 @@ const ALERT_TYPE_CONFIG = {
   anomaly:   { label: 'Anomalía',   icon: AlertTriangle, color: 'text-purple-500',bg: 'bg-purple-50',badge: 'secondary' },
 }
 
+// Fila individual de alerta. Navega al detalle de factura al hacer click y
+// permite marcarla como leída de forma individual.
 function AlertRow({ alert, onMarkRead }) {
   const config = ALERT_TYPE_CONFIG[alert.type] ?? ALERT_TYPE_CONFIG.anomaly
   const Icon = config.icon
@@ -67,6 +69,8 @@ function AlertRow({ alert, onMarkRead }) {
   )
 }
 
+// Página de alertas. Muestra un resumen de vencidas/próximas/sin leer y
+// la lista completa de alertas con opción de marcar todas como leídas.
 export default function AlertsPage() {
   const { data: alerts = [], isLoading } = useAlerts()
   const markAsRead = useMarkAlertAsRead()

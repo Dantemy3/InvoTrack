@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import * as LabelPrimitive from '@radix-ui/react-label'
 import { cn } from '@/lib/utils'
 
+// Etiqueta de formulario accesible, con soporte para estado deshabilitado del peer.
 const Label = forwardRef(({ className, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}

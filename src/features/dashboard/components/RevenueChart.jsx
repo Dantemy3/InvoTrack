@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
 
+// Procesa el array de facturas raw agrupándolas por mes para el gráfico de área.
 function processChartData(rawData = []) {
   const months = {}
 
@@ -29,6 +30,7 @@ function processChartData(rawData = []) {
     .map(({ _date, ...rest }) => rest)
 }
 
+// Tooltip personalizado del gráfico de área que muestra ingresos y gastos formateados.
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
@@ -49,6 +51,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+// Gráfico de área que muestra ingresos cobrados vs gastos de los últimos 6 meses.
 export default function RevenueChart({ data, isLoading }) {
   const chartData = processChartData(data)
 

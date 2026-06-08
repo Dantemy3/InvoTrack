@@ -11,6 +11,8 @@ import { Loader2 } from 'lucide-react'
  * - Authenticated AND already has a company → redirect to /dashboard
  * - Authenticated AND no company → render <Outlet /> (show OnboardingPage)
  */
+// Guard para la ruta /onboarding. Redirige al login si no está autenticado,
+// al dashboard si ya tiene empresa real, o muestra el onboarding si no tiene empresa.
 export default function OnboardingGuard() {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { company, loading: companyLoading } = useCompany()

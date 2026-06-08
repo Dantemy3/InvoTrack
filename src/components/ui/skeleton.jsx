@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 
+// Placeholder animado (efecto pulse) para indicar carga de contenido.
 function Skeleton({ className, ...props }) {
   return (
     <div

@@ -10,11 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 
-/**
- * Maps Supabase Auth error messages to user-friendly Spanish messages.
- * @param {Error} err
- * @returns {string}
- */
+// Traduce errores de Supabase Auth a mensajes legibles en español para el usuario.
 function getAuthErrorMessage(err) {
   const msg = err?.message ?? ''
   if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
@@ -35,6 +31,7 @@ function getAuthErrorMessage(err) {
   return msg || 'Ocurrió un error inesperado. Intentá de nuevo.'
 }
 
+// Página de login. Maneja el formulario email/contraseña y el login con Google.
 export default function LoginPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -47,7 +44,8 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(loginSchema) })
 
-  const onSubmit = async (data) => {
+    // Envía las credenciales a Supabase y redirige al dashboard en caso de éxito.
+    const onSubmit = async (data) => {
     try {
       await authService.signInWithEmail(data.email, data.password)
       navigate('/dashboard')
@@ -60,6 +58,7 @@ export default function LoginPage() {
     }
   }
 
+  // Inicia el flujo OAuth con Google; el navegador redirige a Google y vuelve al dashboard.
   const handleGoogle = async () => {
     setGoogleLoading(true)
     try {

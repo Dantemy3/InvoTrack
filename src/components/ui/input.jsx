@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 
+// Input de texto estilizado con soporte para ref. Aplica ring azul al enfocarse.
 const Input = forwardRef(({ className, type, ...props }, ref) => {
   return (
     <input

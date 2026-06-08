@@ -15,6 +15,8 @@ import { useInvoices } from '../hooks/useInvoices'
  * Req 9.5 — filtros en URL params para compartir y navegar con atrás
  * Paginación server-side con pageSize=20
  */
+// Página de listado de facturas con filtros (estado, tipo, fecha, búsqueda),
+// paginación server-side y persistencia de filtros en URL params.
 export default function InvoicesPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -72,6 +74,7 @@ export default function InvoicesPage() {
 
   const totalPages = Math.max(1, Math.ceil(count / pageSize))
 
+  // Actualiza un filtro en los URL params y resetea la paginación a página 1.
   const setFilter = (key, value) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -82,6 +85,7 @@ export default function InvoicesPage() {
     })
   }
 
+  // Navega a la página indicada actualizando el param `page` en la URL.
   const setPage = (p) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -90,6 +94,7 @@ export default function InvoicesPage() {
     })
   }
 
+  // Limpia todos los filtros activos y resetea la URL a su estado inicial.
   const clearFilters = () => {
     setInputValue('')
     setSearchParams({})

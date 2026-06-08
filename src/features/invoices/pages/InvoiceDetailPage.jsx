@@ -32,6 +32,7 @@ const paymentSchema = z.object({
 })
 
 // ── Formulario de pago ────────────────────────────────────────────────────────
+// Formulario de registro de pago parcial o total de una factura.
 function PaymentForm({ invoiceId, totalAmount, totalPaid }) {
   const registerPayment = useRegisterPayment(invoiceId)
   const remaining = Math.max(0, totalAmount - totalPaid)
@@ -46,7 +47,8 @@ function PaymentForm({ invoiceId, totalAmount, totalPaid }) {
     },
   })
 
-  const onSubmit = async (data) => {
+    // Registra el pago y resetea el formulario si tiene éxito.
+    const onSubmit = async (data) => {
     await registerPayment.mutateAsync(data)
     reset()
   }
@@ -93,6 +95,8 @@ function PaymentForm({ invoiceId, totalAmount, totalPaid }) {
 }
 
 // ── Página principal ──────────────────────────────────────────────────────────
+// Página de detalle de una factura. Muestra partes, ítems, historial de pagos
+// e información fiscal. Permite marcar como pagada, editar y validar el CAE con AFIP.
 export default function InvoiceDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -106,6 +110,7 @@ export default function InvoiceDetailPage() {
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
   const totalPending = Math.max(0, (invoice?.total_amount ?? 0) - totalPaid)
 
+  // Llama a la Edge Function AFIP para validar el CAE de la factura activa.
   const handleValidateCae = async () => {
     if (!invoice?.cae) return
     setAfipLoading(true)

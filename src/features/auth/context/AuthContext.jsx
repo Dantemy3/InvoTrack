@@ -3,6 +3,9 @@ import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
+// Provider de autenticación. Obtiene la sesión inicial de Supabase y se suscribe
+// a cambios de estado (login, logout, refresh de token). Expone user, session,
+// loading e isAuthenticated a todos los componentes hijos.
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null)
   const [session, setSession] = useState(null)
@@ -36,6 +39,8 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// Hook para acceder al contexto de autenticación desde cualquier componente.
+// Lanza error si se usa fuera de AuthProvider.
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

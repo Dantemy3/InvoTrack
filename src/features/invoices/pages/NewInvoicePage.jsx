@@ -6,10 +6,8 @@ import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
 import { useCompany } from '@/features/companies/context/CompanyContext'
 
-/**
- * Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.
- * Cubre todos los campos del formulario.
- */
+// Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.
+// Cubre todos los campos del formulario.
 function mapOcrToFormValues(ocr) {
   if (!ocr) return undefined
 
@@ -101,6 +99,9 @@ function mapOcrToFormValues(ocr) {
  * Los totales fiscales los calcula InvoiceForm antes de llamar a onSubmit.
  * Req 5.9, 5.10, 5.11, 5.12
  */
+// Página de creación y edición de facturas.
+// Sin `id` en params: modo creación. Con `id`: modo edición (carga la factura existente).
+// Los datos del OCR se reciben vía navigation state.
 export default function NewInvoicePage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -118,6 +119,7 @@ export default function NewInvoicePage() {
 
   const isLoading = createInvoice.isPending || updateInvoice.isPending
 
+  // Crea o actualiza la factura y navega al listado al completar.
   const handleSubmit = async (data) => {
     if (isEditMode) {
       // data ya viene con totales calculados por InvoiceForm
@@ -130,6 +132,7 @@ export default function NewInvoicePage() {
 
   // Preparar defaultValues para el formulario
   // Prioridad: modo edición > datos OCR > valores por defecto
+  // Retorna los defaultValues del formulario con prioridad: edición > OCR > vacío.
   const getDefaultValues = () => {
     if (isEditMode && existingInvoice) {
       return {

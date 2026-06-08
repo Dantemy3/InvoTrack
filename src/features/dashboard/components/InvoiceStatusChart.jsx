@@ -18,6 +18,7 @@ const LABELS = {
   cancelled: 'Canceladas',
 }
 
+// Gráfico de torta que muestra la distribución de facturas por estado (pagadas/pendientes/vencidas).
 export default function InvoiceStatusChart({ stats, isLoading }) {
   if (isLoading) {
     return (

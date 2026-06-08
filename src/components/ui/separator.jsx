@@ -1,6 +1,7 @@
 import * as SeparatorPrimitive from '@radix-ui/react-separator'
 import { cn } from '@/lib/utils'
 
+// Línea divisoria horizontal o vertical configurable mediante el prop `orientation`.
 function Separator({ className, orientation = 'horizontal', decorative = true, ...props }) {
   return (
     <SeparatorPrimitive.Root

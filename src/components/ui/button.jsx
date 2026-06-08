@@ -30,6 +30,7 @@ const buttonVariants = cva(
   }
 )
 
+// Botón configurable con variantes de estilo y tamaño. Soporta renderizado como slot (asChild).
 const Button = forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : 'button'
   return (

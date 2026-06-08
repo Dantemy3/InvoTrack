@@ -1,10 +1,12 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+// Combina clases de Tailwind resolviendo conflictos con twMerge y clsx.
 export function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
+// Formatea un número como moneda según locale argentino (ej: $1.234,56).
 export function formatCurrency(amount, currency = 'ARS') {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -13,18 +15,21 @@ export function formatCurrency(amount, currency = 'ARS') {
   }).format(amount)
 }
 
+// Formatea una fecha al formato dd/MM/yyyy en locale es-AR.
 export function formatDate(date, formatStr = 'dd/MM/yyyy') {
   if (!date) return '-'
   const d = typeof date === 'string' ? new Date(date) : date
   return d.toLocaleDateString('es-AR')
 }
 
+// Formatea una fecha con día, mes largo y año (ej: "08 de junio de 2026").
 export function formatDateLong(date) {
   if (!date) return '-'
   const d = typeof date === 'string' ? new Date(date) : date
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
+// Extrae hasta 2 iniciales en mayúsculas del nombre dado (ej: "Juan García" → "JG").
 export function getInitials(name) {
   if (!name) return '?'
   return name
@@ -35,6 +40,7 @@ export function getInitials(name) {
     .slice(0, 2)
 }
 
+// Convierte un texto a slug URL-friendly (ej: "Mi Empresa" → "mi-empresa").
 export function slugify(text) {
   return text
     .toLowerCase()
@@ -42,6 +48,7 @@ export function slugify(text) {
     .replace(/[^\w-]+/g, '')
 }
 
+// Trunca un string a `length` caracteres y agrega "..." si excede ese límite.
 export function truncate(str, length = 50) {
   if (!str) return ''
   return str.length > length ? str.slice(0, length) + '...' : str
@@ -97,7 +104,7 @@ export function calculateInvoiceTotals(items = []) {
   }
 }
 
-/** Redondea a 2 decimales evitando errores de punto flotante. */
+// Redondea a 2 decimales evitando errores de punto flotante.
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100
 }

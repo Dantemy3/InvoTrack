@@ -9,6 +9,7 @@ const DropdownMenuPortal = DropdownMenuPrimitive.Portal
 const DropdownMenuSub = DropdownMenuPrimitive.Sub
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
+// Trigger que abre un sub-menú anidado dentro del dropdown.
 function DropdownMenuSubTrigger({ className, inset, children, ...props }) {
   return (
     <DropdownMenuPrimitive.SubTrigger
@@ -21,6 +22,7 @@ function DropdownMenuSubTrigger({ className, inset, children, ...props }) {
   )
 }
 
+// Panel flotante del sub-menú anidado.
 function DropdownMenuSubContent({ className, ...props }) {
   return (
     <DropdownMenuPrimitive.SubContent
@@ -30,6 +32,7 @@ function DropdownMenuSubContent({ className, ...props }) {
   )
 }
 
+// Panel principal flotante del dropdown, se renderiza en un portal.
 function DropdownMenuContent({ className, sideOffset = 4, ...props }) {
   return (
     <DropdownMenuPrimitive.Portal>
@@ -45,6 +48,7 @@ function DropdownMenuContent({ className, sideOffset = 4, ...props }) {
   )
 }
 
+// Ítem individual dentro del dropdown, con soporte para indent (`inset`).
 function DropdownMenuItem({ className, inset, ...props }) {
   return (
     <DropdownMenuPrimitive.Item
@@ -54,6 +58,7 @@ function DropdownMenuItem({ className, inset, ...props }) {
   )
 }
 
+// Elemento del dropdown con ítem de checkbox. Muestra un check cuando está seleccionado.
 function DropdownMenuCheckboxItem({ className, children, checked, ...props }) {
   return (
     <DropdownMenuPrimitive.CheckboxItem
@@ -71,6 +76,7 @@ function DropdownMenuCheckboxItem({ className, children, checked, ...props }) {
   )
 }
 
+// Etiqueta de sección dentro del dropdown, no es clickeable.
 function DropdownMenuLabel({ className, inset, ...props }) {
   return (
     <DropdownMenuPrimitive.Label
@@ -80,6 +86,7 @@ function DropdownMenuLabel({ className, inset, ...props }) {
   )
 }
 
+// Línea separadora entre grupos de ítems del dropdown.
 function DropdownMenuSeparator({ className, ...props }) {
   return (
     <DropdownMenuPrimitive.Separator

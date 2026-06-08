@@ -6,6 +6,7 @@ const Select = SelectPrimitive.Root
 const SelectGroup = SelectPrimitive.Group
 const SelectValue = SelectPrimitive.Value
 
+// Trigger del select que muestra el valor actual y un ícono de flecha.
 function SelectTrigger({ className, children, ...props }) {
   return (
     <SelectPrimitive.Trigger
@@ -23,6 +24,7 @@ function SelectTrigger({ className, children, ...props }) {
   )
 }
 
+// Botón de scroll hacia arriba dentro del listado del select.
 function SelectScrollUpButton({ className, ...props }) {
   return (
     <SelectPrimitive.ScrollUpButton
@@ -34,6 +36,7 @@ function SelectScrollUpButton({ className, ...props }) {
   )
 }
 
+// Botón de scroll hacia abajo dentro del listado del select.
 function SelectScrollDownButton({ className, ...props }) {
   return (
     <SelectPrimitive.ScrollDownButton
@@ -45,6 +48,7 @@ function SelectScrollDownButton({ className, ...props }) {
   )
 }
 
+// Panel flotante del select con el listado de opciones.
 function SelectContent({ className, children, position = 'popper', ...props }) {
   return (
     <SelectPrimitive.Portal>
@@ -69,6 +73,7 @@ function SelectContent({ className, children, position = 'popper', ...props }) {
   )
 }
 
+// Etiqueta de agrupación dentro del listado del select, no seleccionable.
 function SelectLabel({ className, ...props }) {
   return (
     <SelectPrimitive.Label
@@ -78,6 +83,7 @@ function SelectLabel({ className, ...props }) {
   )
 }
 
+// Opción individual del select. Muestra un check cuando está seleccionada.
 function SelectItem({ className, children, ...props }) {
   return (
     <SelectPrimitive.Item
@@ -97,6 +103,7 @@ function SelectItem({ className, children, ...props }) {
   )
 }
 
+// Línea separadora entre grupos de opciones del select.
 function SelectSeparator({ className, ...props }) {
   return (
     <SelectPrimitive.Separator

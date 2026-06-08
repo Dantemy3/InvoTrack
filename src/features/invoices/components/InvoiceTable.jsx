@@ -11,6 +11,8 @@ import InvoiceStatusBadge from './InvoiceStatusBadge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useUpdateInvoiceStatus, useDeleteInvoice } from '../hooks/useInvoices'
 
+// Tabla de facturas con columnas de número, cliente/proveedor, fechas, total y estado.
+// Incluye menú de acciones (ver, editar, marcar pagada, eliminar) por fila.
 export default function InvoiceTable({ invoices = [], isLoading }) {
   const navigate = useNavigate()
   const updateStatus = useUpdateInvoiceStatus()

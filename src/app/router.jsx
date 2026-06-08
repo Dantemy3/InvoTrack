@@ -21,12 +21,14 @@ const AlertsPage = lazy(() => import('@/features/alerts/pages/AlertsPage'))
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'))
 const OcrPage = lazy(() => import('@/features/ocr/pages/OcrPage'))
 
+// Spinner de carga que se muestra mientras una página lazy se está descargando.
 const PageLoader = () => (
   <div className="flex items-center justify-center h-full min-h-[400px]">
     <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
   </div>
 )
 
+// Envuelve un componente lazy en Suspense para mostrar el PageLoader mientras carga.
 const withSuspense = (Component) => (
   <Suspense fallback={<PageLoader />}>
     <Component />

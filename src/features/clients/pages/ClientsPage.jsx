@@ -20,13 +20,15 @@ import { useClients, useCreateClient, useDeleteClient } from '../hooks/useClient
 import { getInitials } from '@/lib/utils'
 import { TAX_CONDITIONS } from '@/lib/constants'
 
+// Dialogo de creación de cliente con formulario validado por Zod.
 function ClientFormDialog({ open, onClose }) {
   const createClient = useCreateClient()
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(clientSchema),
   })
 
-  const onSubmit = async (data) => {
+    // Crea el cliente, cierra el dialog y resetea el formulario al completar.
+    const onSubmit = async (data) => {
     await createClient.mutateAsync(data)
     reset()
     onClose()
@@ -90,6 +92,7 @@ function ClientFormDialog({ open, onClose }) {
   )
 }
 
+// Página de listado de clientes con búsqueda, grilla de tarjetas y botón de creación.
 export default function ClientsPage() {
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)

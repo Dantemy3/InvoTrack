@@ -6,6 +6,7 @@ import InvoiceStatusBadge from '@/features/invoices/components/InvoiceStatusBadg
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useInvoices } from '@/features/invoices/hooks/useInvoices'
 
+// Muestra las últimas 5 facturas de la empresa activa con su monto, estado y fecha.
 export default function RecentInvoices() {
   const navigate = useNavigate()
   const { data: invoices, isLoading } = useInvoices({ page: 1, pageSize: 5 })

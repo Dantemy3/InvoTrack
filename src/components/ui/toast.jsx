@@ -11,6 +11,8 @@ const ICONS = {
   info: <Info className="h-4 w-4 text-blue-500" />,
 }
 
+// Provider global de toasts. Gestiona la lista de notificaciones activas
+// y las renderiza en la esquina inferior derecha de la pantalla.
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
@@ -56,6 +58,8 @@ export function ToastProvider({ children }) {
   )
 }
 
+// Hook para disparar toasts desde cualquier componente dentro de ToastProvider.
+// Retorna { toast } donde `toast({ title, description, variant, duration })`.
 export function useToast() {
   const ctx = useContext(ToastContext)
   if (!ctx) throw new Error('useToast must be used within ToastProvider')

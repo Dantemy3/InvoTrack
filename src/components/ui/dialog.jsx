@@ -7,6 +7,7 @@ const DialogTrigger = DialogPrimitive.Trigger
 const DialogPortal = DialogPrimitive.Portal
 const DialogClose = DialogPrimitive.Close
 
+// Overlay semitransparente que aparece detrás del contenido del dialog.
 function DialogOverlay({ className, ...props }) {
   return (
     <DialogPrimitive.Overlay
@@ -19,6 +20,7 @@ function DialogOverlay({ className, ...props }) {
   )
 }
 
+// Panel central del dialog, incluye el overlay, el contenido y el botón de cierre.
 function DialogContent({ className, children, ...props }) {
   return (
     <DialogPortal>
@@ -40,14 +42,17 @@ function DialogContent({ className, children, ...props }) {
   )
 }
 
+// Encabezado del dialog, centra el contenido en mobile y lo alinea a la izquierda en desktop.
 function DialogHeader({ className, ...props }) {
   return <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
 }
 
+// Pie del dialog, apila botones en mobile y los alinea a la derecha en desktop.
 function DialogFooter({ className, ...props }) {
   return <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)} {...props} />
 }
 
+// Título accesible del dialog, usado por lectores de pantalla.
 function DialogTitle({ className, ...props }) {
   return (
     <DialogPrimitive.Title
@@ -57,6 +62,7 @@ function DialogTitle({ className, ...props }) {
   )
 }
 
+// Descripción accesible del dialog, en texto pequeño gris.
 function DialogDescription({ className, ...props }) {
   return (
     <DialogPrimitive.Description

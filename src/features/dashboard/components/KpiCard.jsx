@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
+// Tarjeta de KPI con título, valor principal, subtexto, ícono y tendencia opcional.
 export default function KpiCard({ title, value, subtitle, icon: Icon, trend, color = 'blue', isLoading }) {
   const colorMap = {
     blue: 'bg-blue-50 text-blue-600',

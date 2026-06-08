@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 
 const Tabs = TabsPrimitive.Root
 
+// Barra de pestañas que contiene los triggers.
 function TabsList({ className, ...props }) {
   return (
     <TabsPrimitive.List
@@ -12,6 +13,7 @@ function TabsList({ className, ...props }) {
   )
 }
 
+// Botón de una pestaña individual. Se resalta cuando está activa.
 function TabsTrigger({ className, ...props }) {
   return (
     <TabsPrimitive.Trigger
@@ -24,6 +26,7 @@ function TabsTrigger({ className, ...props }) {
   )
 }
 
+// Panel de contenido asociado a una pestaña, solo visible cuando la pestaña está activa.
 function TabsContent({ className, ...props }) {
   return (
     <TabsPrimitive.Content

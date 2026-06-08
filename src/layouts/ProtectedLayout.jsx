@@ -3,6 +3,8 @@ import { useAuth } from '@/features/auth/context/AuthContext'
 import { useCompany } from '@/features/companies/context/CompanyContext'
 import { Loader2 } from 'lucide-react'
 
+// Guard para rutas privadas. Redirige al login si no está autenticado,
+// al onboarding si no tiene empresa, o renderiza las páginas protegidas.
 export default function ProtectedLayout() {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { company, loading: companyLoading } = useCompany()

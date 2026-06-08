@@ -24,6 +24,8 @@ const navItems = [
   { to: '/alerts', icon: Bell, label: 'Alertas' },
 ]
 
+// Layout principal de la app autenticada. Contiene la sidebar de navegación,
+// el topbar con notificaciones y el área de contenido donde se renderizan las páginas.
 export default function AppLayout() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -31,6 +33,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const unreadCount = useUnreadAlertsCount()
 
+  // Cierra la sesión del usuario y redirige al login.
   const handleSignOut = async () => {
     try {
       await authService.signOut()

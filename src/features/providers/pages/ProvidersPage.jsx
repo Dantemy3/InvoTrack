@@ -16,11 +16,13 @@ import { useForm } from 'react-hook-form'
 import { useProviders, useCreateProvider, useDeleteProvider } from '../hooks/useProviders'
 import { getInitials } from '@/lib/utils'
 
+// Dialog de creación de proveedor con formulario básico.
 function ProviderFormDialog({ open, onClose }) {
   const createProvider = useCreateProvider()
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm()
 
-  const onSubmit = async (data) => {
+    // Crea el proveedor, cierra el dialog y resetea el formulario al completar.
+    const onSubmit = async (data) => {
     await createProvider.mutateAsync(data)
     reset()
     onClose()
@@ -65,6 +67,7 @@ function ProviderFormDialog({ open, onClose }) {
   )
 }
 
+// Página de listado de proveedores con búsqueda, grilla de tarjetas y botón de creación.
 export default function ProvidersPage() {
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)

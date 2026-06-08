@@ -76,6 +76,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const totals = calculateInvoiceTotals(items)
 
   // Handler que inyecta los totales calculados antes de llamar al onSubmit del padre
+    // Calcula los totales a partir de los ítems e invoca el onSubmit del padre con los datos enriquecidos.
   const handleFormSubmit = (data) => {
     const enriched = calculateInvoiceTotals(data.items)
     onSubmit({

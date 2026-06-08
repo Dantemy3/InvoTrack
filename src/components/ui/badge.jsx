@@ -20,6 +20,7 @@ const badgeVariants = cva(
   }
 )
 
+// Etiqueta de estado visual (badge). Aplica variantes de color según el prop `variant`.
 function Badge({ className, variant, ...props }) {
   return <span className={cn(badgeVariants({ variant }), className)} {...props} />
 }

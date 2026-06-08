@@ -1,6 +1,7 @@
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
 import { cn } from '@/lib/utils'
 
+// Contenedor circular del avatar, envuelve los subcomponentes Image y Fallback.
 function Avatar({ className, ...props }) {
   return (
     <AvatarPrimitive.Root
@@ -10,6 +11,7 @@ function Avatar({ className, ...props }) {
   )
 }
 
+// Renderiza la imagen del avatar con relación de aspecto cuadrada y cobertura total.
 function AvatarImage({ className, ...props }) {
   return (
     <AvatarPrimitive.Image
@@ -19,6 +21,7 @@ function AvatarImage({ className, ...props }) {
   )
 }
 
+// Muestra un fallback (iniciales u otro contenido) cuando la imagen no carga.
 function AvatarFallback({ className, ...props }) {
   return (
     <AvatarPrimitive.Fallback

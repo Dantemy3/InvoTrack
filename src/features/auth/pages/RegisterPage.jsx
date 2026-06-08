@@ -10,11 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 
-/**
- * Maps Supabase Auth error messages to user-friendly Spanish messages.
- * @param {Error} err
- * @returns {string}
- */
+// Traduce errores de Supabase Auth a mensajes legibles en español para el registro.
 function getAuthErrorMessage(err) {
   const msg = err?.message ?? ''
   if (msg.includes('User already registered') || msg.includes('already been registered')) {
@@ -35,6 +31,7 @@ function getAuthErrorMessage(err) {
   return msg || 'Ocurrió un error inesperado. Intentá de nuevo.'
 }
 
+// Página de registro. Crea la cuenta con email/contraseña y muestra confirmación.
 export default function RegisterPage() {
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
@@ -47,7 +44,8 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(registerSchema) })
 
-  const onSubmit = async (data) => {
+    // Registra el usuario en Supabase y muestra la pantalla de confirmación.
+    const onSubmit = async (data) => {
     try {
       await authService.signUpWithEmail(data.email, data.password, {
         full_name: data.fullName,

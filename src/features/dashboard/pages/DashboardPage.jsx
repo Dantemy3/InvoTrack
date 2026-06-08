@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 // ── Bloque financiero principal ──────────────────────────────
+// Bloque de métrica financiera principal con ícono, valor grande y tendencia.
 function FinancialBlock({ label, value, sub, icon: Icon, iconBg, iconColor, trend, trendUp, isLoading }) {
   if (isLoading) {
     return (
@@ -56,6 +57,7 @@ function FinancialBlock({ label, value, sub, icon: Icon, iconBg, iconColor, tren
 }
 
 // ── Bloque de estado (contador) ──────────────────────────────
+// Bloque de contador por estado (pagadas/pendientes/vencidas/total) con color codificado.
 function StatusBlock({ label, count, amount, color, isLoading }) {
   const colors = {
     green:  { dot: 'bg-emerald-400', text: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -82,6 +84,7 @@ function StatusBlock({ label, count, amount, color, isLoading }) {
 }
 
 // ── Separador visual con label ───────────────────────────────
+// Separador visual con texto de etiqueta para dividir secciones del dashboard.
 function SectionLabel({ children }) {
   return (
     <div className="flex items-center gap-3 mb-4">
@@ -94,6 +97,8 @@ function SectionLabel({ children }) {
 }
 
 // ── Dashboard principal ──────────────────────────────────────
+// Página principal del dashboard. Muestra KPIs del mes, resultado neto,
+// estado de facturas, gráfico de evolución y facturas recientes.
 export default function DashboardPage() {
   const { user } = useAuth()
   const navigate = useNavigate()

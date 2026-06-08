@@ -32,6 +32,8 @@ const TAX_CONDITIONS = [
 ]
 
 // ── Componente ────────────────────────────────────────────────────────────────
+// Página de onboarding: permite al usuario crear su primera empresa.
+// Tras crear la empresa, recarga el CompanyContext y navega al dashboard.
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -47,7 +49,8 @@ export default function OnboardingPage() {
     defaultValues: { tax_condition: 'RI' },
   })
 
-  const onSubmit = async (data) => {
+    // Crea la empresa en Supabase, recarga el contexto y redirige al dashboard.
+    const onSubmit = async (data) => {
     setServerError(null)
     try {
       // Limpiar campos opcionales vacíos

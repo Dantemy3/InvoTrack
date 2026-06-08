@@ -7,6 +7,9 @@ const CompanyContext = createContext(null)
 
 const STORAGE_KEY = 'invotrack_company_id'
 
+// Provider de empresa activa. Carga todas las empresas del usuario, selecciona
+// la activa (persistida en localStorage) y expone helpers de rol y switchCompany.
+// En modo demo (sin empresa en Supabase) usa DEMO_COMPANY para no bloquear al usuario.
 export function CompanyProvider({ children }) {
   const { user, isAuthenticated } = useAuth()
 
@@ -107,6 +110,8 @@ export function CompanyProvider({ children }) {
   )
 }
 
+// Hook para acceder al contexto de empresa desde cualquier componente.
+// Lanza error si se usa fuera de CompanyProvider.
 export function useCompany() {
   const ctx = useContext(CompanyContext)
   if (!ctx) throw new Error('useCompany must be used within CompanyProvider')
