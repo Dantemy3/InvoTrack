@@ -99,8 +99,6 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const moneda = watch('moneda') ?? 'ARS'
   const tipoComprobante = watch('tipo_comprobante') ?? 'Factura B'
   const requiereVencimiento = !TIPOS_SIN_VENCIMIENTO.includes(tipoComprobante)
-  // Receptor requerido solo para Factura A, M y sus Notas
-  const receptorRequerido = TIPOS_RECEPTOR_IDENTIFICADO.includes(tipoComprobante)
 
   // Paso 2b — Calcular totales en tiempo real
   // calculateInvoiceTotals recorre los ítems y devuelve neto gravado, IVA por alícuota y total.
@@ -293,33 +291,25 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       <Card>
         <CardHeader>
           <CardTitle>Datos del receptor</CardTitle>
-          {!receptorRequerido && (
-            <p className="text-xs text-gray-400 mt-0.5">
-              Para {tipoComprobante}, el receptor puede ser Consumidor Final — los datos son opcionales.
-            </p>
-          )}
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>
-              Razón social
-              {receptorRequerido && <span className="text-red-500"> *</span>}
+              Razón social <span className="text-red-500">*</span>
             </Label>
             <Input placeholder="Cliente S.R.L." {...register('receptor_razon_social')} />
             {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>
-              CUIT
-              {receptorRequerido && <span className="text-red-500"> *</span>}
+              CUIT <span className="text-red-500">*</span>
             </Label>
             <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
             {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>
-              Condición IVA
-              {receptorRequerido && <span className="text-red-500"> *</span>}
+              Condición IVA <span className="text-red-500">*</span>
             </Label>
             <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value ?? ''}>

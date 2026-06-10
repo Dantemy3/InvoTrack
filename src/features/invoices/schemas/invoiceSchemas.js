@@ -137,11 +137,15 @@ export const invoiceSchema = z.object({
   }),
   emisor_domicilio: z.string().optional().nullable(),
 
-  // Receptor — obligatorio u opcional según tipo de comprobante.
-  // La validación condicional se hace en superRefine() más abajo.
-  receptor_cuit: cuitSchema.or(z.literal('')).optional().nullable(),
-  receptor_razon_social: z.string().optional().nullable(),
-  receptor_condicion_iva: z.enum(TAX_CONDITION_VALUES).optional().nullable(),
+  // Receptor — siempre obligatorio (igual que el emisor).
+  receptor_cuit: cuitSchema.or(z.literal('')).refine(
+    (v) => v && v.trim() !== '',
+    { message: 'El CUIT del receptor es requerido' }
+  ),
+  receptor_razon_social: z.string().min(1, 'La razón social del receptor es requerida'),
+  receptor_condicion_iva: z.enum(TAX_CONDITION_VALUES, {
+    errorMap: () => ({ message: 'Seleccioná la condición de IVA del receptor' }),
+  }),
   receptor_domicilio: z.string().optional().nullable(),
 
   // Totales fiscales (calculados en frontend antes de persistir)
@@ -178,33 +182,8 @@ export const invoiceSchema = z.object({
     })
   }
 
-  // Validación 2 — Receptor obligatorio solo en Factura A y M
-  // En Factura A/M la operación es entre responsables inscriptos: el receptor
-  // siempre debe estar identificado con CUIT, razón social y condición IVA.
-  // En Factura B/C y Recibo el receptor puede ser Consumidor Final sin datos.
-  if (TIPOS_RECEPTOR_IDENTIFICADO.includes(data.tipo_comprobante)) {
-    if (!data.receptor_cuit || data.receptor_cuit.trim() === '') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['receptor_cuit'],
-        message: `El CUIT del receptor es requerido para ${data.tipo_comprobante}`,
-      })
-    }
-    if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['receptor_razon_social'],
-        message: `La razón social del receptor es requerida para ${data.tipo_comprobante}`,
-      })
-    }
-    if (!data.receptor_condicion_iva) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['receptor_condicion_iva'],
-        message: `La condición de IVA del receptor es requerida para ${data.tipo_comprobante}`,
-      })
-    }
-  }
+  // Validación 2 — El receptor siempre es requerido (validación a nivel campo arriba).
+  // Se mantiene el bloque por compatibilidad pero ya no agrega issues adicionales.
 })
 
 // ── Schema de filtros para listado de facturas ────────────────────────────────
