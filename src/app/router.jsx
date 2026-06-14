@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
 import AuthLayout from '@/layouts/AuthLayout'
@@ -7,6 +7,7 @@ import ProtectedLayout from '@/layouts/ProtectedLayout'
 import OnboardingGuard from '@/layouts/OnboardingGuard'
 
 // Lazy loaded pages
+const LandingPage = lazy(() => import('@/features/landing/LandingPage'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
 const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'))
@@ -38,12 +39,11 @@ const withSuspense = (Component) => (
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Navigate to="/dashboard" replace />,
-  },
-  {
+    // Ruta raíz: muestra la landing si no está logueado, o redirige al dashboard si sí lo está.
+    // LandingPage usa AuthLayout para aprovechar la lógica de redirección.
     element: <AuthLayout />,
     children: [
+      { path: '/', element: withSuspense(LandingPage) },
       { path: '/login', element: withSuspense(LoginPage) },
       { path: '/register', element: withSuspense(RegisterPage) },
       // Bug 1 — Ruta que Supabase usa como callback después de confirmar el email.
