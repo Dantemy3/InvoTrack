@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
 import AuthLayout from '@/layouts/AuthLayout'
+import LandingGuard from '@/layouts/LandingGuard'
 import ProtectedLayout from '@/layouts/ProtectedLayout'
 import OnboardingGuard from '@/layouts/OnboardingGuard'
 
@@ -39,15 +40,19 @@ const withSuspense = (Component) => (
 
 export const router = createBrowserRouter([
   {
-    // Ruta raíz: muestra la landing si no está logueado, o redirige al dashboard si sí lo está.
-    // LandingPage usa AuthLayout para aprovechar la lógica de redirección.
-    element: <AuthLayout />,
+    // Ruta raíz: landing para no logueados, redirige al dashboard si ya está autenticado.
+    element: <LandingGuard />,
     children: [
       { path: '/', element: withSuspense(LandingPage) },
+    ],
+  },
+  {
+    // Rutas públicas de auth: redirigen al dashboard si el usuario ya está logueado.
+    element: <AuthLayout />,
+    children: [
       { path: '/login', element: withSuspense(LoginPage) },
       { path: '/register', element: withSuspense(RegisterPage) },
-      // Bug 1 — Ruta que Supabase usa como callback después de confirmar el email.
-      // Sin esta ruta el link del mail tiraba 404.
+      // Callback de Supabase después de confirmar el email.
       { path: '/auth/callback', element: withSuspense(AuthCallbackPage) },
     ],
   },

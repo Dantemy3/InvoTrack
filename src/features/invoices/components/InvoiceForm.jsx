@@ -1,8 +1,16 @@
+import { useState } from 'react'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Loader2, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { invoiceSchema, TIPOS_COMPROBANTE, TAX_CONDITION_VALUES, TIPOS_SIN_VENCIMIENTO, CONDICIONES_PAGO, TIPOS_RECEPTOR_IDENTIFICADO } from '../schemas/invoiceSchemas'
+import {
+  invoiceSchema,
+  TIPOS_COMPROBANTE, TAX_CONDITION_VALUES, TAX_CONDITION_RECEPTOR_AM,
+  TIPOS_SIN_VENCIMIENTO, TIPOS_RECEPTOR_IDENTIFICADO, TIPOS_EXPORTACION,
+  TIPOS_CON_IVA_DISCRIMINADO, TIPOS_RECEPTOR_OPCIONAL,
+  TIPOS_PARA_RI, TIPOS_PARA_MO_EX,
+  CONDICIONES_PAGO, PAISES_EXPORTACION, UMBRAL_CF_ARS,
+} from '../schemas/invoiceSchemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,27 +20,7 @@ import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
 
-// ──────────────────────────────────────────────────────────────────────────────
-// FLUJO "CREAR FACTURA" — paso 2 de 4
-// ──────────────────────────────────────────────────────────────────────────────
-// InvoiceForm es el formulario visual que el usuario completa.
-//
-// Responsabilidades:
-//  1. Inicializar react-hook-form con validación Zod (invoiceSchema).
-//  2. Renderizar todas las secciones: tipo, emisor, receptor, ítems y notas.
-//  3. Calcular totales fiscales en tiempo real a medida que el usuario edita ítems.
-//  4. Al hacer submit: calcular totales finales, enriquecer los datos y
-//     llamar a onSubmit (que viene de NewInvoicePage → handleSubmit).
-// ──────────────────────────────────────────────────────────────────────────────
-
-// ── Valores por defecto ───────────────────────────────────────────────────────
-const defaultItem = {
-  descripcion: '',
-  cantidad: 1,
-  unidad: '',
-  precio_unitario: 0,
-  alicuota_iva: 21,
-}
+const defaultItem = { descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }
 
 const TAX_CONDITION_LABELS = {
   RI: 'Responsable Inscripto',
@@ -42,26 +30,19 @@ const TAX_CONDITION_LABELS = {
   RS: 'Responsable Sustituto',
 }
 
-// ── Componente ────────────────────────────────────────────────────────────────
-/**
- * Formulario completo de factura con todos los campos fiscales argentinos.
- * Req 5.9, 5.10, 5.11, 5.12
- *
- * @param {{ defaultValues?: object, onSubmit: Function, isLoading?: boolean, clients?: object[], providers?: object[] }} props
- */
+// Devuelve los tipos de comprobante permitidos según la condición IVA del emisor.
+function getTiposPermitidos(emisorCondicion) {
+  if (emisorCondicion === 'MO' || emisorCondicion === 'EX') return TIPOS_PARA_MO_EX
+  if (emisorCondicion === 'RI') return TIPOS_PARA_RI
+  // Para otras condiciones (CF, RS, etc.) mostramos todo y Zod validará.
+  return TIPOS_COMPROBANTE
+}
+
 export default function InvoiceForm({ defaultValues, onSubmit, isLoading, clients = [], providers = [] }) {
-  // Bug 3 — Usar navigate de React Router en vez de window.history.back()
-  // para evitar reloads del browser que pierden el estado del formulario.
   const navigate = useNavigate()
 
-  // Paso 2a — Inicializar el formulario con validación Zod
-  // zodResolver conecta invoiceSchema con react-hook-form: todos los campos se
-  // validan automáticamente según las reglas definidas en invoiceSchemas.js.
   const {
-    register,
-    handleSubmit,
-    control,
-    watch,
+    register, handleSubmit, control, watch, setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(invoiceSchema),
@@ -76,50 +57,60 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       moneda: 'ARS',
       tipo_cambio: 1,
       emisor_condicion_iva: 'RI',
-      receptor_condicion_iva: 'CF',
-      neto_gravado: 0,
-      neto_no_gravado: 0,
-      exento: 0,
-      iva_105: 0,
-      iva_21: 0,
-      iva_27: 0,
-      otros_tributos: 0,
-      total_amount: 0,
+      receptor_condicion_iva: 'RI',
+      consumidor_final_anonimo: false,
+      neto_gravado: 0, neto_no_gravado: 0, exento: 0,
+      iva_105: 0, iva_21: 0, iva_27: 0, otros_tributos: 0, total_amount: 0,
       items: [defaultItem],
     },
   })
 
-  // useFieldArray administra la lista dinámica de ítems (descripción, cantidad, precio, IVA).
-  // append() agrega un ítem vacío; remove(index) elimina uno existente.
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
 
-  // watch('items') reacciona en tiempo real a cada cambio del usuario en los ítems,
-  // lo que permite recalcular los totales fiscales sin esperar al submit.
-  const items = watch('items') ?? []
-  const moneda = watch('moneda') ?? 'ARS'
-  const tipoComprobante = watch('tipo_comprobante') ?? 'Factura B'
-  const requiereVencimiento = !TIPOS_SIN_VENCIMIENTO.includes(tipoComprobante)
+  // Valores observados para la lógica dinámica
+  const items               = watch('items') ?? []
+  const moneda              = watch('moneda') ?? 'ARS'
+  const tipoComprobante     = watch('tipo_comprobante') ?? 'Factura B'
+  const emisorCondicionIva  = watch('emisor_condicion_iva') ?? 'RI'
+  const esAnonimo           = watch('consumidor_final_anonimo') ?? false
 
-  // Paso 2b — Calcular totales en tiempo real
-  // calculateInvoiceTotals recorre los ítems y devuelve neto gravado, IVA por alícuota y total.
-  // El resultado se muestra en el panel de totales al pie del formulario.
+  // Flags derivados
+  const tiposPermitidos      = getTiposPermitidos(emisorCondicionIva)
+  const requiereVencimiento  = !TIPOS_SIN_VENCIMIENTO.includes(tipoComprobante)
+  const esExportacion        = TIPOS_EXPORTACION.includes(tipoComprobante)
+  const receptorObligatorio  = TIPOS_RECEPTOR_IDENTIFICADO.includes(tipoComprobante)
+  const discriminaIva        = TIPOS_CON_IVA_DISCRIMINADO.includes(tipoComprobante)
+  const esBoCOpcional        = TIPOS_RECEPTOR_OPCIONAL.includes(tipoComprobante) && tipoComprobante !== 'Recibo'
+
+  // Totales en tiempo real
   const totals = calculateInvoiceTotals(items)
+  const superaUmbral = totals.total_amount >= UMBRAL_CF_ARS
 
-  // Paso 2c — Handler de submit
-  // react-hook-form valida todos los campos con Zod ANTES de llegar aquí.
-  // Si la validación falla, no se llama a esta función y se muestran los errores en pantalla.
-  // Si pasa: recalculamos los totales con los valores finales y llamamos al onSubmit del padre
-  // (NewInvoicePage.handleSubmit → useCreateInvoice → invoiceService.create → Supabase).
+  // Si el tipo cambia a uno no permitido para el emisor actual, resetear.
+  const handleEmisorCondicionChange = (val) => {
+    setValue('emisor_condicion_iva', val)
+    const permitidos = getTiposPermitidos(val)
+    if (!permitidos.includes(tipoComprobante)) {
+      setValue('tipo_comprobante', permitidos[0])
+    }
+  }
+
+  // Handler de submit: enriquece con totales calculados.
+  // Para B/C con IVA no discriminado, alícuota interna se fija en 0.
   const handleFormSubmit = (data) => {
-    const enriched = calculateInvoiceTotals(data.items)
+    const itemsNormalizados = data.items.map((item) => ({
+      ...item,
+      alicuota_iva: discriminaIva ? item.alicuota_iva : 0,
+    }))
+    const enriched = calculateInvoiceTotals(itemsNormalizados)
     onSubmit({
       ...data,
-      neto_gravado: enriched.neto_gravado,
-      iva_105: enriched.iva_105,
-      iva_21: enriched.iva_21,
-      iva_27: enriched.iva_27,
-      total_amount: enriched.total_amount,
-      items: enriched.items,
+      neto_gravado:  enriched.neto_gravado,
+      iva_105:       enriched.iva_105,
+      iva_21:        enriched.iva_21,
+      iva_27:        enriched.iva_27,
+      total_amount:  enriched.total_amount,
+      items:         enriched.items,
     })
   }
 
@@ -131,13 +122,14 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         <CardHeader><CardTitle>Tipo de comprobante</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
+          {/* Tipo de comprobante — filtrado por condición del emisor */}
           <div className="space-y-1.5">
             <Label>Tipo de comprobante <span className="text-red-500">*</span></Label>
             <Controller name="tipo_comprobante" control={control} render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_COMPROBANTE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {tiposPermitidos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             )} />
@@ -163,7 +155,6 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {/* Bug 2 — Opciones de pago ampliadas */}
                   {CONDICIONES_PAGO.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
@@ -192,18 +183,14 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </div>
 
           <div className="space-y-1.5">
-            {/* Bug 4/5 — Fecha de vencimiento solo obligatoria si el tipo lo requiere.
-                Tipos sin vencimiento: Factura C, Recibo, Notas de Crédito/Débito. */}
             <Label>
               Fecha de vencimiento
-              {requiereVencimiento && <span className="text-red-500"> *</span>}
-              {!requiereVencimiento && <span className="text-gray-400 text-xs ml-1">(no aplica para {tipoComprobante})</span>}
+              {requiereVencimiento
+                ? <span className="text-red-500"> *</span>
+                : <span className="text-gray-400 text-xs ml-1">(no aplica para {tipoComprobante})</span>
+              }
             </Label>
-            <Input
-              type="date"
-              disabled={!requiereVencimiento}
-              {...register('fecha_vencimiento')}
-            />
+            <Input type="date" disabled={!requiereVencimiento} {...register('fecha_vencimiento')} />
             {errors.fecha_vencimiento && <p className="text-xs text-red-500">{errors.fecha_vencimiento.message}</p>}
           </div>
 
@@ -217,7 +204,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             <Input type="date" {...register('cae_vencimiento')} />
           </div>
 
-          {/* Moneda — Req 15.4 */}
+          {/* Moneda — Factura E permite cualquiera; las demás solo ARS por defecto */}
           <div className="space-y-1.5">
             <Label>Moneda <span className="text-red-500">*</span></Label>
             <Controller name="moneda" control={control} render={({ field }) => (
@@ -233,21 +220,37 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             {errors.moneda && <p className="text-xs text-red-500">{errors.moneda.message}</p>}
           </div>
 
-          {/* Tipo de cambio — solo visible cuando moneda !== 'ARS' */}
+          {/* Tipo de cambio — visible cuando moneda ≠ ARS */}
           {moneda !== 'ARS' && (
             <div className="space-y-1.5">
               <Label>Tipo de cambio <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                step="0.0001"
-                min="0.0001"
-                placeholder="ej: 1050.0000"
-                {...register('tipo_cambio')}
-              />
+              <Input type="number" step="0.0001" min="0.0001" placeholder="ej: 1050.0000" {...register('tipo_cambio')} />
               <p className="text-xs text-gray-400">1 {moneda} = X ARS</p>
               {errors.tipo_cambio && <p className="text-xs text-red-500">{errors.tipo_cambio.message}</p>}
             </div>
           )}
+
+          {/* País de destino — solo Factura E */}
+          {esExportacion && (
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-blue-500" />
+                País de destino <span className="text-red-500">*</span>
+              </Label>
+              <Controller name="pais_destino" control={control} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar país" /></SelectTrigger>
+                  <SelectContent>
+                    {PAISES_EXPORTACION.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )} />
+              {errors.pais_destino && <p className="text-xs text-red-500">{errors.pais_destino.message}</p>}
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
@@ -255,7 +258,6 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       <Card>
         <CardHeader><CardTitle>Datos del emisor</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Bug 6 — Razón social y CUIT del emisor son obligatorios */}
           <div className="space-y-1.5">
             <Label>Razón social <span className="text-red-500">*</span></Label>
             <Input placeholder="Empresa S.A." {...register('emisor_razon_social')} />
@@ -268,8 +270,9 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </div>
           <div className="space-y-1.5">
             <Label>Condición IVA <span className="text-red-500">*</span></Label>
+            {/* Cambiar la condición del emisor actualiza los tipos disponibles */}
             <Controller name="emisor_condicion_iva" control={control} render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value ?? ''}>
+              <Select onValueChange={(val) => { field.onChange(val); handleEmisorCondicionChange(val) }} value={field.value ?? ''}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   {TAX_CONDITION_VALUES.map((v) => (
@@ -290,45 +293,100 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       {/* ── Receptor ─────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>Datos del receptor</CardTitle>
+          <CardTitle>
+            {esExportacion ? 'Destinatario (Exportación)' : 'Datos del receptor'}
+          </CardTitle>
+          {receptorObligatorio && (
+            <p className="text-xs text-amber-600 mt-0.5">
+              Para {tipoComprobante} el receptor debe ser Responsable Inscripto o Responsable Sustituto con CUIT válido.
+            </p>
+          )}
+          {esBoCOpcional && !superaUmbral && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Opcional para totales menores a {formatCurrency(UMBRAL_CF_ARS)}.
+            </p>
+          )}
+          {esBoCOpcional && superaUmbral && (
+            <p className="text-xs text-amber-600 mt-0.5">
+              El total supera {formatCurrency(UMBRAL_CF_ARS)} — ARCA exige identificar al receptor.
+            </p>
+          )}
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>
-              Razón social <span className="text-red-500">*</span>
-            </Label>
-            <Input placeholder="Cliente S.R.L." {...register('receptor_razon_social')} />
-            {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              CUIT <span className="text-red-500">*</span>
-            </Label>
-            <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
-            {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Condición IVA <span className="text-red-500">*</span>
-            </Label>
-            <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>
-                  {TAX_CONDITION_VALUES.map((v) => (
-                    <SelectItem key={v} value={v}>{TAX_CONDITION_LABELS[v]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )} />
-            {errors.receptor_condicion_iva && <p className="text-xs text-red-500">{errors.receptor_condicion_iva.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Domicilio</Label>
-            <Input placeholder="Av. Santa Fe 5678, CABA" {...register('receptor_domicilio')} />
-          </div>
 
-          {clients.length > 0 && (
+          {/* Checkbox Consumidor Final Anónimo — solo en Factura B/C bajo umbral */}
+          {esBoCOpcional && !superaUmbral && (
+            <div className="sm:col-span-2 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <input
+                type="checkbox"
+                id="consumidor_final_anonimo"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                {...register('consumidor_final_anonimo')}
+              />
+              <label htmlFor="consumidor_final_anonimo" className="text-sm font-medium text-gray-700 cursor-pointer">
+                Consumidor Final Anónimo
+                <span className="ml-1.5 text-xs text-gray-400">(total bajo {formatCurrency(UMBRAL_CF_ARS)} — no requiere identificación)</span>
+              </label>
+            </div>
+          )}
+
+          {/* Ocultar campos si es CF anónimo y no supera el umbral */}
+          {(!esAnonimo || superaUmbral || receptorObligatorio) && (
+            <>
+              {/* ID Impositivo Extranjero en Factura E; CUIT en el resto */}
+              <div className="space-y-1.5">
+                <Label>
+                  {esExportacion ? 'ID Impositivo Extranjero' : 'CUIT'}
+                  {(receptorObligatorio || esExportacion) && <span className="text-red-500"> *</span>}
+                </Label>
+                {esExportacion
+                  ? <Input placeholder="Tax ID, VAT, EIN, etc." {...register('receptor_id_impositivo')} />
+                  : <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
+                }
+                {errors.receptor_id_impositivo && <p className="text-xs text-red-500">{errors.receptor_id_impositivo.message}</p>}
+                {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>
+                  {esExportacion ? 'Razón social / Nombre' : 'Razón social'}
+                  {(receptorObligatorio || esExportacion || superaUmbral) && <span className="text-red-500"> *</span>}
+                </Label>
+                <Input placeholder={esExportacion ? 'Foreign Corp LLC' : 'Cliente S.R.L.'} {...register('receptor_razon_social')} />
+                {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
+              </div>
+
+              {/* Condición IVA — solo para facturas nacionales */}
+              {!esExportacion && (
+                <div className="space-y-1.5">
+                  <Label>
+                    Condición IVA
+                    {receptorObligatorio && <span className="text-red-500"> *</span>}
+                  </Label>
+                  <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                      <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                      <SelectContent>
+                        {/* Para A/M solo se permiten RI y RS */}
+                        {(receptorObligatorio ? TAX_CONDITION_RECEPTOR_AM : TAX_CONDITION_VALUES).map((v) => (
+                          <SelectItem key={v} value={v}>{TAX_CONDITION_LABELS[v]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )} />
+                  {errors.receptor_condicion_iva && <p className="text-xs text-red-500">{errors.receptor_condicion_iva.message}</p>}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>Domicilio</Label>
+                <Input placeholder={esExportacion ? '123 Main St, New York' : 'Av. Santa Fe 5678, CABA'} {...register('receptor_domicilio')} />
+              </div>
+            </>
+          )}
+
+          {/* Vínculos con clientes/proveedores registrados */}
+          {clients.length > 0 && !esExportacion && (
             <div className="space-y-1.5">
               <Label>Vincular cliente</Label>
               <Controller name="client_id" control={control} render={({ field }) => (
@@ -341,8 +399,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               )} />
             </div>
           )}
-
-          {providers.length > 0 && (
+          {providers.length > 0 && !esExportacion && (
             <div className="space-y-1.5">
               <Label>Vincular proveedor</Label>
               <Controller name="provider_id" control={control} render={({ field }) => (
@@ -368,20 +425,22 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         </CardHeader>
         <CardContent className="space-y-3">
 
-          {/* Cabecera de columnas — visible solo en pantallas medianas en adelante */}
-          <div className="hidden sm:grid grid-cols-12 gap-2 px-0.5">
+          {/* Cabecera de columnas */}
+          <div className={`hidden sm:grid gap-2 px-0.5 ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
             <div className="col-span-4 text-xs font-medium text-gray-400 uppercase tracking-wide">Descripción</div>
             <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Cantidad</div>
             <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Unidad</div>
             <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Precio unit.</div>
-            <div className="col-span-1 text-xs font-medium text-gray-400 uppercase tracking-wide">IVA</div>
+            {/* Columna IVA solo en facturas con IVA discriminado (A, M) */}
+            {discriminaIva && (
+              <div className="col-span-1 text-xs font-medium text-gray-400 uppercase tracking-wide">IVA</div>
+            )}
             <div className="col-span-1" />
           </div>
 
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-12 gap-2 items-start">
+            <div key={field.id} className={`grid gap-2 items-start ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
               <div className="col-span-12 sm:col-span-4">
-                {/* En mobile mostramos el label inline porque no hay cabecera */}
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Descripción</label>
                 <Input placeholder="Motor" {...register(`items.${index}.descripcion`)} />
                 {errors.items?.[index]?.descripcion && (
@@ -394,32 +453,41 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               </div>
               <div className="col-span-3 sm:col-span-2">
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Unidad</label>
-                <Input placeholder="Ej: hs, kg, un" {...register(`items.${index}.unidad`)} />
+                <Input placeholder="hs, kg, un" {...register(`items.${index}.unidad`)} />
               </div>
               <div className="col-span-3 sm:col-span-2">
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Precio unitario</label>
                 <Input type="number" placeholder="0.00" step="0.01" min="0" {...register(`items.${index}.precio_unitario`)} />
               </div>
-              <div className="col-span-2 sm:col-span-1">
-                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">IVA</label>
-                <Controller
-                  name={`items.${index}.alicuota_iva`}
-                  control={control}
-                  render={({ field: f }) => (
-                    <Select onValueChange={(v) => f.onChange(parseFloat(v))} value={String(f.value)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {IVA_RATES.map((r) => (
-                          <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+
+              {/* Selector IVA — visible solo cuando se discrimina (Factura A / M) */}
+              {discriminaIva && (
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">IVA</label>
+                  <Controller
+                    name={`items.${index}.alicuota_iva`}
+                    control={control}
+                    render={({ field: f }) => (
+                      <Select onValueChange={(v) => f.onChange(parseFloat(v))} value={String(f.value)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {IVA_RATES.map((r) => (
+                            <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              )}
+
               <div className="col-span-1 flex justify-end">
                 {fields.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:text-red-600" onClick={() => remove(index)}>
+                  <Button
+                    type="button" variant="ghost" size="icon"
+                    className="h-9 w-9 text-red-400 hover:text-red-600"
+                    onClick={() => remove(index)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
@@ -429,36 +497,52 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
           <Separator className="my-4" />
 
-          {/* Totales fiscales */}
+          {/* Panel de totales — IVA discriminado solo en A / M */}
           <div className="flex flex-col items-end gap-1 text-sm">
-            <div className="flex gap-8">
-              <span className="text-gray-500">Neto gravado</span>
-              <span className="font-medium w-36 text-right">{formatCurrency(totals.neto_gravado)}</span>
-            </div>
-            {totals.iva_105 > 0 && (
+            {discriminaIva ? (
+              <>
+                <div className="flex gap-8">
+                  <span className="text-gray-500">Neto gravado</span>
+                  <span className="font-medium w-36 text-right">{formatCurrency(totals.neto_gravado)}</span>
+                </div>
+                {totals.iva_105 > 0 && (
+                  <div className="flex gap-8">
+                    <span className="text-gray-500">IVA 10.5%</span>
+                    <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_105)}</span>
+                  </div>
+                )}
+                {totals.iva_21 > 0 && (
+                  <div className="flex gap-8">
+                    <span className="text-gray-500">IVA 21%</span>
+                    <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_21)}</span>
+                  </div>
+                )}
+                {totals.iva_27 > 0 && (
+                  <div className="flex gap-8">
+                    <span className="text-gray-500">IVA 27%</span>
+                    <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_27)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Para B / C / E el IVA está subsumido en el precio — solo se muestra el total */
               <div className="flex gap-8">
-                <span className="text-gray-500">IVA 10.5%</span>
-                <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_105)}</span>
-              </div>
-            )}
-            {totals.iva_21 > 0 && (
-              <div className="flex gap-8">
-                <span className="text-gray-500">IVA 21%</span>
-                <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_21)}</span>
-              </div>
-            )}
-            {totals.iva_27 > 0 && (
-              <div className="flex gap-8">
-                <span className="text-gray-500">IVA 27%</span>
-                <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_27)}</span>
+                <span className="text-xs text-gray-400 self-end pb-0.5">
+                  {esExportacion ? 'Precio sin IVA (exportación)' : 'IVA incluido en precio'}
+                </span>
+                <span className="font-medium w-36 text-right">{formatCurrency(totals.neto_gravado)}</span>
               </div>
             )}
             <Separator className="w-56 my-1" />
             <div className="flex gap-8">
               <span className="font-semibold text-gray-900">Total</span>
-              <span className="font-bold text-gray-900 w-36 text-right text-base">{formatCurrency(totals.total_amount)}</span>
+              <span className="font-bold text-gray-900 w-36 text-right text-base">
+                {formatCurrency(totals.total_amount)}
+                {moneda !== 'ARS' && <span className="text-xs text-gray-400 ml-1">{moneda}</span>}
+              </span>
             </div>
           </div>
+
         </CardContent>
       </Card>
 
@@ -485,6 +569,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           Guardar factura
         </Button>
       </div>
+
     </form>
   )
 }

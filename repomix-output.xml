@@ -114,6 +114,8 @@ src/features/invoices/schemas/invoiceSchemas.js
 src/features/invoices/services/afipService.js
 src/features/invoices/services/invoicePaymentService.js
 src/features/invoices/services/invoiceService.js
+src/features/landing/LandingPage.css
+src/features/landing/LandingPage.jsx
 src/features/ocr/__tests__/.gitkeep
 src/features/ocr/__tests__/ocrService.test.js
 src/features/ocr/adapters/BaseOcrAdapter.js
@@ -137,6 +139,7 @@ src/features/settings/services/notificationService.js
 src/index.css
 src/layouts/AppLayout.jsx
 src/layouts/AuthLayout.jsx
+src/layouts/LandingGuard.jsx
 src/layouts/OnboardingGuard.jsx
 src/layouts/ProtectedLayout.jsx
 src/lib/constants.js
@@ -167,6 +170,956 @@ vitest.config.js
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/features/landing/LandingPage.css">
+/* ─────────────────────────────────────────────────────────────────────────────
+   LandingPage.css
+   Todos los estilos usan el prefijo "lp-" para no colisionar con Tailwind
+   ni con los componentes del resto de la app.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── FUENTES ─────────────────────────────────────────────────────────────────
+   Pegá esto en tu index.html dentro de <head> si no lo tenés ya:
+
+   <link rel="preconnect" href="https://fonts.googleapis.com" />
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── TOKENS ──────────────────────────────────────────────────────────────────
+   Cambiá estos valores para modificar la paleta completa de la landing.
+   ──────────────────────────────────────────────────────────────────────────── */
+.lp-root {
+  --lp-navy:          #042C53;
+  --lp-navy-mid:      #185FA5;
+  --lp-blue:          #378ADD;
+  --lp-blue-light:    #B5D4F4;
+  --lp-blue-pale:     #E6F1FB;
+  --lp-emerald:       #0F6E56;
+  --lp-emerald-light: #E1F5EE;
+  --lp-emerald-mid:   #1D9E75;
+  --lp-gray-900:      #2C2C2A;
+  --lp-gray-700:      #5F5E5A;
+  --lp-gray-400:      #888780;
+  --lp-gray-100:      #D3D1C7;
+  --lp-gray-50:       #F1EFE8;
+  --lp-white:         #ffffff;
+
+  --lp-font-body:    'Inter', system-ui, sans-serif;
+  --lp-font-display: 'Syne', system-ui, sans-serif;
+
+  font-family: var(--lp-font-body);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--lp-gray-900);
+  background: var(--lp-white);
+  -webkit-font-smoothing: antialiased;
+  /* Sin overflow ni height — el scroll lo maneja el body normalmente */
+}
+
+/* ── NAV ─────────────────────────────────────────────────────────────────────*/
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--lp-gray-100);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.lp-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.lp-logo-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--lp-navy);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-logo-text {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--lp-navy);
+  letter-spacing: -0.3px;
+}
+
+.lp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lp-nav-links a {
+  text-decoration: none;
+  color: var(--lp-gray-700);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.lp-nav-links a:hover { color: var(--lp-navy); }
+
+.lp-nav-cta {
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lp-nav-cta:hover { background: var(--lp-navy-mid); }
+
+/* ── HERO ────────────────────────────────────────────────────────────────────*/
+.lp-hero {
+  padding: 5rem 2rem 4rem;
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.lp-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lp-emerald-light);
+  color: var(--lp-emerald);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+}
+
+.lp-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--lp-emerald-mid);
+  border-radius: 50%;
+  animation: lp-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ── TIPOGRAFÍA DE TÍTULOS ────────────────────────────────────────────────────
+   Cambiá font-size y letter-spacing para ajustar el peso visual del hero.
+   ──────────────────────────────────────────────────────────────────────────── */
+.lp-hero-title {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 3rem;           /* ← cambiá esto para agrandar/achicar el hero */
+  line-height: 1.1;
+  letter-spacing: -1.5px;   /* ← letra más junta da sensación de marca */
+  color: var(--lp-navy);
+  margin-bottom: 1.25rem;
+}
+
+.lp-hero-title em {
+  font-style: normal;
+  color: var(--lp-blue);
+}
+
+.lp-hero-sub {
+  font-size: 1.1rem;
+  color: var(--lp-gray-700);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: 420px;
+}
+
+.lp-hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── BOTONES ─────────────────────────────────────────────────────────────────*/
+.lp-btn-primary {
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.lp-btn-primary:hover { background: var(--lp-navy-mid); transform: translateY(-1px); }
+
+.lp-btn-secondary {
+  background: transparent;
+  color: var(--lp-gray-700);
+  padding: 13px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--lp-gray-100);
+}
+
+.lp-btn-secondary:hover { background: var(--lp-gray-50); }
+
+.lp-btn-white {
+  background: var(--lp-white);
+  color: var(--lp-navy);
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lp-btn-white:hover { background: var(--lp-blue-pale); }
+
+.lp-btn-ghost-white {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 13px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.lp-btn-ghost-white:hover { border-color: rgba(255, 255, 255, 0.5); color: var(--lp-white); }
+
+/* ── HERO PROOF ──────────────────────────────────────────────────────────────*/
+.lp-hero-proof {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.lp-avatars { display: flex; }
+
+.lp-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--lp-white);
+  margin-right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lp-white);
+}
+
+.lp-proof-text { font-size: 13px; color: var(--lp-gray-700); }
+.lp-proof-text strong { color: var(--lp-gray-900); }
+
+/* ── HERO VISUAL (mockup factura) ────────────────────────────────────────────*/
+.lp-hero-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-invoice-card {
+  background: var(--lp-white);
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 16px;
+  padding: 24px;
+  width: 340px;
+  box-shadow: 0 4px 40px rgba(4, 44, 83, 0.10);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.lp-scan-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--lp-blue), transparent);
+  animation: lp-scan 2.5s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes lp-scan {
+  0%   { top: 0; opacity: 1; }
+  50%  { top: 100%; opacity: 0.7; }
+  100% { top: 0; opacity: 1; }
+}
+
+.lp-invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.lp-invoice-type {
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+.lp-invoice-num { font-size: 11px; color: var(--lp-gray-400); }
+
+.lp-invoice-company {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--lp-navy);
+  margin-bottom: 4px;
+}
+
+.lp-invoice-cuit { font-size: 11px; color: var(--lp-gray-400); margin-bottom: 16px; }
+
+.lp-invoice-divider { border: none; border-top: 1px solid var(--lp-gray-100); margin: 12px 0; }
+
+.lp-invoice-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--lp-gray-700);
+  padding: 3px 0;
+}
+
+.lp-invoice-total { font-weight: 600; font-size: 14px; color: var(--lp-navy); margin-top: 4px; }
+
+.lp-extracted-badge {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--lp-emerald-light);
+  border: 1px solid var(--lp-emerald-mid);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 150px;
+  z-index: 3;
+}
+
+.lp-extracted-badge > p {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--lp-emerald);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.lp-extracted-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--lp-emerald);
+  padding: 2px 0;
+}
+
+.lp-extracted-row span:first-child { color: var(--lp-gray-700); }
+
+.lp-check-icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  background: var(--lp-emerald-mid);
+  border-radius: 50%;
+  border: 2px solid var(--lp-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── LOGOS BAR ───────────────────────────────────────────────────────────────*/
+.lp-logos-bar {
+  background: var(--lp-gray-50);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  border-top: 1px solid var(--lp-gray-100);
+  border-bottom: 1px solid var(--lp-gray-100);
+}
+
+.lp-logos-bar > p {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lp-gray-400);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.lp-logos-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.lp-logos-row span {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--lp-gray-400);
+}
+
+/* ── SECCIÓN GENÉRICA ────────────────────────────────────────────────────────*/
+.lp-section {
+  padding: 5rem 2rem;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+/* ── TIPOGRAFÍA DE SECCIONES ─────────────────────────────────────────────────
+   Cambiá estos tres bloques para redefinir toda la tipografía de secciones.
+   ──────────────────────────────────────────────────────────────────────────── */
+.lp-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lp-blue);
+  margin-bottom: 0.75rem;
+}
+
+.lp-section-title {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.2rem;       /* ← cambiá para agrandar los títulos de sección */
+  letter-spacing: -1px;
+  color: var(--lp-navy);
+  margin-bottom: 0.75rem;
+  line-height: 1.15;
+}
+
+.lp-section-sub {
+  font-size: 1rem;
+  color: var(--lp-gray-700);
+  max-width: 520px;
+  margin-bottom: 3rem;
+}
+
+/* ── FEATURES GRID ───────────────────────────────────────────────────────────*/
+.lp-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.lp-feature-card {
+  background: var(--lp-white);
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.lp-feature-card:hover {
+  border-color: var(--lp-blue-light);
+  transform: translateY(-2px);
+}
+
+.lp-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.lp-feature-title {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--lp-navy);
+  margin-bottom: 0.4rem;
+}
+
+.lp-feature-desc { font-size: 14px; color: var(--lp-gray-700); line-height: 1.6; }
+
+/* ── HOW IT WORKS ────────────────────────────────────────────────────────────*/
+.lp-how-section { background: var(--lp-navy); padding: 5rem 2rem; }
+.lp-how-inner   { max-width: 1140px; margin: 0 auto; }
+
+.lp-steps-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  position: relative;
+}
+
+.lp-steps-row::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(33.33% / 2);
+  right: calc(33.33% / 2);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.lp-step { text-align: center; position: relative; z-index: 1; }
+
+.lp-step-num {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--lp-white);
+}
+
+.lp-step-num-active { background: var(--lp-blue); border-color: var(--lp-blue); }
+
+.lp-step h3 {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--lp-white);
+  margin-bottom: 0.5rem;
+}
+
+.lp-step p { font-size: 14px; color: rgba(255, 255, 255, 0.6); line-height: 1.6; }
+
+/* ── METRICS ─────────────────────────────────────────────────────────────────*/
+.lp-metrics-section {
+  background: var(--lp-blue-pale);
+  padding: 4rem 2rem;
+  border-top: 1px solid var(--lp-blue-light);
+  border-bottom: 1px solid var(--lp-blue-light);
+}
+
+.lp-metrics-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  text-align: center;
+}
+
+.lp-metric-val {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.8rem;         /* ← cambiá para ajustar el tamaño de las métricas */
+  color: var(--lp-navy);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  letter-spacing: -2px;
+}
+
+.lp-metric-label { font-size: 14px; color: var(--lp-gray-700); line-height: 1.4; }
+
+/* ── TESTIMONIAL ─────────────────────────────────────────────────────────────*/
+.lp-testimonial-section {
+  padding: 5rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.lp-stars {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.lp-testimonial-quote {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--lp-navy);
+  line-height: 1.4;
+  letter-spacing: -0.5px;
+  margin-bottom: 1.5rem;
+}
+
+.lp-testimonial-author {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.lp-author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--lp-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lp-white);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ── ROLES ───────────────────────────────────────────────────────────────────*/
+.lp-roles-section {
+  background: var(--lp-gray-50);
+  padding: 5rem 2rem;
+  border-top: 1px solid var(--lp-gray-100);
+  border-bottom: 1px solid var(--lp-gray-100);
+}
+
+.lp-roles-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.lp-roles-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+
+.lp-role-item { display: flex; gap: 14px; align-items: flex-start; }
+
+.lp-role-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.lp-role-name { font-weight: 600; font-size: 14px; color: var(--lp-navy); margin-bottom: 2px; }
+.lp-role-desc { font-size: 13px; color: var(--lp-gray-700); line-height: 1.5; }
+
+.lp-roles-visual {
+  background: var(--lp-white);
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lp-roles-vis-header {
+  background: var(--lp-navy);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-vis-dots { display: flex; gap: 6px; }
+
+.lp-vis-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.lp-vis-title { font-size: 12px; color: rgba(255, 255, 255, 0.6); font-weight: 500; }
+
+.lp-roles-vis-body { padding: 16px; }
+
+.lp-role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: background 0.1s;
+}
+
+.lp-role-row:last-child { margin-bottom: 0; }
+.lp-role-row:hover { background: var(--lp-gray-50); }
+
+.lp-role-user { display: flex; align-items: center; gap: 10px; }
+
+.lp-role-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--lp-white);
+}
+
+.lp-role-user-name { font-size: 13px; font-weight: 500; color: var(--lp-navy); }
+.lp-role-user-email { font-size: 11px; color: var(--lp-gray-400); }
+
+.lp-role-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── PRICING ─────────────────────────────────────────────────────────────────*/
+.lp-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.lp-pricing-card {
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  position: relative;
+  background: var(--lp-white);
+  transition: border-color 0.2s;
+}
+
+.lp-featured { border: 2px solid var(--lp-navy-mid); }
+
+.lp-featured-tag {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.lp-plan-name {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--lp-navy);
+  margin-bottom: 0.5rem;
+}
+
+.lp-plan-price {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.4rem;
+  color: var(--lp-navy);
+  letter-spacing: -1.5px;
+  margin-bottom: 0.2rem;
+  line-height: 1;
+}
+
+.lp-plan-price span { font-size: 14px; font-weight: 500; color: var(--lp-gray-400); letter-spacing: 0; }
+
+.lp-plan-desc {
+  font-size: 13px;
+  color: var(--lp-gray-700);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--lp-gray-100);
+}
+
+.lp-plan-features {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.lp-plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--lp-gray-700);
+}
+
+.lp-plan-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  display: block;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--lp-font-body);
+}
+
+.lp-plan-btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--lp-gray-100);
+  color: var(--lp-navy);
+}
+
+.lp-plan-btn-outline:hover { border-color: var(--lp-navy); background: var(--lp-gray-50); }
+
+.lp-plan-btn-solid {
+  background: var(--lp-navy);
+  border: 1.5px solid var(--lp-navy);
+  color: var(--lp-white);
+}
+
+.lp-plan-btn-solid:hover { background: var(--lp-navy-mid); border-color: var(--lp-navy-mid); }
+
+/* ── CTA FINAL ───────────────────────────────────────────────────────────────*/
+.lp-cta-section { background: var(--lp-navy); padding: 5rem 2rem; text-align: center; }
+
+.lp-cta-title {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.5rem;
+  color: var(--lp-white);
+  letter-spacing: -1.5px;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.lp-cta-sub {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lp-cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────────*/
+.lp-footer {
+  background: var(--lp-navy);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.lp-footer-brand { font-family: var(--lp-font-display); font-weight: 700; font-size: 16px; color: var(--lp-white); }
+.lp-footer-copy  { font-size: 13px; color: rgba(255, 255, 255, 0.4); }
+
+.lp-footer-links { display: flex; gap: 1.5rem; }
+
+.lp-footer-links a {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.lp-footer-links a:hover { color: rgba(255, 255, 255, 0.9); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────────*/
+@media (max-width: 900px) {
+  .lp-hero            { grid-template-columns: 1fr; gap: 3rem; }
+  .lp-hero-visual     { order: -1; }
+  .lp-extracted-badge { display: none; }
+  .lp-features-grid   { grid-template-columns: 1fr 1fr; }
+  .lp-steps-row       { grid-template-columns: 1fr; }
+  .lp-steps-row::before { display: none; }
+  .lp-metrics-inner   { grid-template-columns: repeat(2, 1fr); }
+  .lp-roles-inner     { grid-template-columns: 1fr; }
+  .lp-pricing-grid    { grid-template-columns: 1fr; }
+  .lp-nav-links       { display: none; }
+  .lp-hero-title      { font-size: 2.2rem; }
+}
+
+@media (max-width: 600px) {
+  .lp-features-grid { grid-template-columns: 1fr; }
+  .lp-metrics-inner { grid-template-columns: 1fr 1fr; }
+}
+</file>
+
+<file path="src/layouts/LandingGuard.jsx">
+import { Outlet, Navigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/features/auth/context/AuthContext'
+
+// Guard exclusivo para la ruta raíz (/).
+// - Cargando → spinner centrado (evita parpadeo de la landing).
+// - Autenticado → redirige directo al dashboard.
+// - No autenticado → muestra la landing (Outlet).
+export default function LandingGuard() {
+  const { isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <Outlet />
+}
+</file>
 
 <file path=".kiro/specs/invotrack-master-spec/design.md">
 # Design Document — InvoTrack Master Spec
@@ -2204,6 +3157,387 @@ export const afipService = {
     }
   },
 }
+</file>
+
+<file path="src/features/landing/LandingPage.jsx">
+import { useNavigate } from 'react-router-dom'
+import './LandingPage.css'
+
+// ── Íconos inline simples ─────────────────────────────────────────────────────
+const IconPlay = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+)
+const IconStar = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="#BA7517"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+)
+const IconCheck = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+)
+
+// ── Componente principal ──────────────────────────────────────────────────────
+export default function LandingPage() {
+  const navigate = useNavigate()
+
+  return (
+    <div className="lp-root">
+
+      {/* NAV */}
+      <nav className="lp-nav">
+        <a href="/" className="lp-nav-logo">
+          <div className="lp-logo-mark">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="2" y="2" width="14" height="14" rx="2" stroke="white" strokeWidth="1.4"/>
+              <path d="M5 6h8M5 9h6M5 12h4" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="14" cy="4" r="3" fill="#1D9E75"/>
+              <path d="M12.7 4l.9.9 1.5-1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span className="lp-logo-text">InvoTrack</span>
+        </a>
+        <ul className="lp-nav-links">
+          <li><a href="#features">Funcionalidades</a></li>
+          <li><a href="#como-funciona">Cómo funciona</a></li>
+          <li><a href="#precios">Precios</a></li>
+          <li>
+            <button className="lp-nav-cta" onClick={() => navigate('/register')}>
+              Empezar gratis
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      {/* HERO */}
+      <section className="lp-hero">
+        <div className="lp-hero-content">
+          <div className="lp-hero-eyebrow">
+            <span className="lp-dot" />
+            OCR con IA — Facturas en segundos
+          </div>
+          <h1 className="lp-hero-title">
+            Controlá tus facturas sin <em>perder tiempo</em>
+          </h1>
+          <p className="lp-hero-sub">
+            Escaneá, registrá y organizá todas las facturas de tu negocio desde el celular. InvoTrack extrae los datos automáticamente y lleva el control por vos.
+          </p>
+          <div className="lp-hero-actions">
+            <button className="lp-btn-primary" onClick={() => navigate('/register')}>
+              <IconPlay /> Probar gratis
+            </button>
+            <a href="#como-funciona" className="lp-btn-secondary">
+              Ver cómo funciona
+            </a>
+          </div>
+          <div className="lp-hero-proof">
+            <div className="lp-avatars">
+              <div className="lp-avatar" style={{ background: '#185FA5' }}>DM</div>
+              <div className="lp-avatar" style={{ background: '#1D9E75' }}>CP</div>
+              <div className="lp-avatar" style={{ background: '#993C1D' }}>RP</div>
+            </div>
+            <p className="lp-proof-text"><strong>PyMEs argentinas</strong> ya usan InvoTrack</p>
+          </div>
+        </div>
+
+        <div className="lp-hero-visual">
+          <div className="lp-invoice-card">
+            <div className="lp-scan-overlay" />
+            <div className="lp-invoice-header">
+              <span className="lp-invoice-type">FACTURA A</span>
+              <span className="lp-invoice-num">0003-00004521</span>
+            </div>
+            <p className="lp-invoice-company">Tech Solutions S.A.</p>
+            <p className="lp-invoice-cuit">CUIT: 30-71234567-8 · Resp. Inscripto</p>
+            <hr className="lp-invoice-divider" />
+            <div className="lp-invoice-row"><span>Consultoría IT (10 hs)</span><span>$125.000</span></div>
+            <div className="lp-invoice-row"><span>Licencia software anual</span><span>$90.000</span></div>
+            <hr className="lp-invoice-divider" />
+            <div className="lp-invoice-row"><span>Neto gravado</span><span>$215.000</span></div>
+            <div className="lp-invoice-row"><span>IVA 21%</span><span>$45.150</span></div>
+            <div className="lp-invoice-row lp-invoice-total"><span>Total</span><span>$260.150</span></div>
+            <hr className="lp-invoice-divider" />
+            <div className="lp-invoice-row">
+              <span style={{ fontSize: '10px', color: '#888780' }}>CAE: 74123456789012 · Venc: 22/06/2025</span>
+            </div>
+          </div>
+          <div className="lp-extracted-badge">
+            <div className="lp-check-icon">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-5"/></svg>
+            </div>
+            <p>Datos extraídos</p>
+            <div className="lp-extracted-row"><span>Emisor</span><span>Detectado ✓</span></div>
+            <div className="lp-extracted-row"><span>Monto</span><span>$260.150 ✓</span></div>
+            <div className="lp-extracted-row"><span>CAE</span><span>Válido ✓</span></div>
+            <div className="lp-extracted-row"><span>IVA 21%</span><span>$45.150 ✓</span></div>
+          </div>
+        </div>
+      </section>
+
+      {/* LOGOS BAR */}
+      <div className="lp-logos-bar">
+        <p>Integrado con los sistemas que ya usás</p>
+        <div className="lp-logos-row">
+          {['AFIP / ARCA', 'Google Doc AI', 'GPT-4 Vision', 'Supabase', 'Resend'].map((name) => (
+            <span key={name}>{name}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* FEATURES */}
+      <section id="features" className="lp-section">
+        <p className="lp-section-label">Funcionalidades</p>
+        <h2 className="lp-section-title">Todo lo que necesitás, nada de lo que no</h2>
+        <p className="lp-section-sub">Diseñado para comercios y PyMEs que necesitan control financiero sin complejidad contable.</p>
+        <div className="lp-features-grid">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="lp-feature-card">
+              <div className="lp-feature-icon" style={{ background: f.iconBg }}>
+                <f.Icon color={f.iconColor} />
+              </div>
+              <p className="lp-feature-title">{f.title}</p>
+              <p className="lp-feature-desc">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="como-funciona" className="lp-how-section">
+        <div className="lp-how-inner">
+          <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Cómo funciona</p>
+          <h2 className="lp-section-title" style={{ color: 'white' }}>Tres pasos. Sin complicaciones.</h2>
+          <p className="lp-section-sub" style={{ color: 'rgba(255,255,255,0.65)', marginBottom: '3rem' }}>
+            Sin conocimientos contables. Sin configuración compleja. Empezás en minutos.
+          </p>
+          <div className="lp-steps-row">
+            {STEPS.map((step, i) => (
+              <div key={step.title} className="lp-step">
+                <div className={`lp-step-num${i === 0 ? ' lp-step-num-active' : ''}`}>{i + 1}</div>
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* METRICS */}
+      <section className="lp-metrics-section">
+        <div className="lp-metrics-inner">
+          {METRICS.map((m) => (
+            <div key={m.label} className="lp-metric">
+              <p className="lp-metric-val">{m.val}</p>
+              <p className="lp-metric-label">{m.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIAL */}
+      <section className="lp-testimonial-section">
+        <div className="lp-stars">
+          {[...Array(5)].map((_, i) => <IconStar key={i} />)}
+        </div>
+        <p className="lp-testimonial-quote">
+          "Nos ahorraría muchísimo tiempo operativo. La persona que ingresa facturas tarda una semana entera. Esto cambiaría todo."
+        </p>
+        <div className="lp-testimonial-author">
+          <div className="lp-author-avatar">RP</div>
+          <div>
+            <p style={{ fontWeight: 600, fontSize: 14, color: '#042C53' }}>Roberto P.</p>
+            <p style={{ fontSize: 13, color: '#888780' }}>Empresa de repuestos Iveco, Buenos Aires</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ROLES */}
+      <section className="lp-roles-section">
+        <div className="lp-roles-inner">
+          <div>
+            <p className="lp-section-label">Control por roles</p>
+            <h2 className="lp-section-title">Cada persona hace lo suyo</h2>
+            <p className="lp-section-sub">Un sistema de permisos pensado para negocios reales.</p>
+            <div className="lp-roles-list">
+              {ROLES.map((r) => (
+                <div key={r.name} className="lp-role-item">
+                  <div className="lp-role-dot" style={{ background: r.color }} />
+                  <div>
+                    <p className="lp-role-name">{r.name}</p>
+                    <p className="lp-role-desc">{r.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lp-roles-visual">
+            <div className="lp-roles-vis-header">
+              <div className="lp-vis-dots">
+                <div className="lp-vis-dot" style={{ background: '#E24B4A' }} />
+                <div className="lp-vis-dot" style={{ background: '#EF9F27' }} />
+                <div className="lp-vis-dot" style={{ background: '#1D9E75' }} />
+              </div>
+              <span className="lp-vis-title">Gestión de usuarios — Empresa</span>
+            </div>
+            <div className="lp-roles-vis-body">
+              {ROLE_USERS.map((u) => (
+                <div key={u.name} className="lp-role-row">
+                  <div className="lp-role-user">
+                    <div className="lp-role-user-avatar" style={{ background: u.color }}>{u.initials}</div>
+                    <div>
+                      <p className="lp-role-user-name">{u.name}</p>
+                      <p className="lp-role-user-email">{u.email}</p>
+                    </div>
+                  </div>
+                  <span className="lp-role-badge" style={{ background: u.badgeBg, color: u.badgeColor }}>
+                    {u.role}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="precios" className="lp-section">
+        <p className="lp-section-label">Precios</p>
+        <h2 className="lp-section-title">Simple, predecible, sin sorpresas</h2>
+        <p className="lp-section-sub">Empezá gratis y escalá cuando tu negocio lo necesite.</p>
+        <div className="lp-pricing-grid">
+          {PLANS.map((plan) => (
+            <div key={plan.name} className={`lp-pricing-card${plan.featured ? ' lp-featured' : ''}`}>
+              {plan.featured && <div className="lp-featured-tag">Más popular</div>}
+              <p className="lp-plan-name">{plan.name}</p>
+              <p className="lp-plan-price">{plan.price} <span>/ mes</span></p>
+              <p className="lp-plan-desc">{plan.desc}</p>
+              <ul className="lp-plan-features">
+                {plan.features.map((f) => (
+                  <li key={f}><IconCheck /> {f}</li>
+                ))}
+              </ul>
+              <button
+                className={`lp-plan-btn ${plan.featured ? 'lp-plan-btn-solid' : 'lp-plan-btn-outline'}`}
+                onClick={() => plan.href ? window.location.href = plan.href : navigate('/register')}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="lp-cta-section">
+        <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Empezá hoy</p>
+        <h2 className="lp-cta-title">Escaneá. Registrá. Controlá.</h2>
+        <p className="lp-cta-sub">Registrate gratis y en minutos tenés tu primera factura cargada. Sin tarjeta de crédito.</p>
+        <div className="lp-cta-actions">
+          <button className="lp-btn-white" onClick={() => navigate('/register')}>
+            <IconPlay /> Crear cuenta gratis
+          </button>
+          <a href="mailto:hola@invotrack.app" className="lp-btn-ghost-white">
+            Contactar al equipo →
+          </a>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="lp-footer">
+        <span className="lp-footer-brand">InvoTrack</span>
+        <span className="lp-footer-copy">© 2025 InvoTrack · Hecho en Argentina 🇦🇷</span>
+        <div className="lp-footer-links">
+          <a href="#">Privacidad</a>
+          <a href="#">Términos</a>
+          <a href="mailto:hola@invotrack.app">Contacto</a>
+        </div>
+      </footer>
+
+    </div>
+  )
+}
+
+// ── Datos ─────────────────────────────────────────────────────────────────────
+
+const ScanIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 8h10M7 12h6M7 16h4"/><path d="M18 3l3 3-3 3"/>
+  </svg>
+)
+const DashIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M9 21V9"/>
+  </svg>
+)
+const BellIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+)
+const UsersIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+)
+const PaymentIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </svg>
+)
+const ExportIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
+  </svg>
+)
+
+const FEATURES = [
+  { title: 'Escaneo OCR con IA', desc: 'Sacás foto y la app extrae emisor, receptor, CUIT, montos, IVA y CAE. Compatible con PDF, JPG y PNG.', iconBg: '#E1F5EE', iconColor: '#0F6E56', Icon: ScanIcon },
+  { title: 'Dashboard financiero', desc: 'Resultado neto, dinero cobrado, gastos del mes y evolución de ingresos en un panel actualizado en tiempo real.', iconBg: '#E6F1FB', iconColor: '#185FA5', Icon: DashIcon },
+  { title: 'Alertas de vencimiento', desc: 'Te avisamos antes de que venza una factura para que nunca pierdas un cobro ni una deuda. Notificaciones por email.', iconBg: '#FAECE7', iconColor: '#993C1D', Icon: BellIcon },
+  { title: 'Gestión de roles', desc: 'Administrador, contador y visualizador. Cada usuario ve y hace solo lo que le corresponde.', iconBg: '#EEEDFE', iconColor: '#534AB7', Icon: UsersIcon },
+  { title: 'Pagos parciales', desc: 'Registrá pagos en cuotas. El estado de la factura se actualiza automáticamente según lo cobrado.', iconBg: '#FAEEDA', iconColor: '#BA7517', Icon: PaymentIcon },
+  { title: 'Exportación a CSV', desc: 'Descargá reportes de ingresos y gastos por período para compartir con tu contador sin intermediarios.', iconBg: '#EAF3DE', iconColor: '#3B6D11', Icon: ExportIcon },
+]
+
+const STEPS = [
+  { title: 'Escaneá la factura', desc: 'Subís una foto o PDF. El OCR con IA lee todos los campos: CUIT, montos, IVA, CAE y vencimiento.' },
+  { title: 'Revisás y guardás', desc: 'Los datos aparecen pre-completados con indicadores de confianza. Corregís lo que necesites y guardás en un click.' },
+  { title: 'Controlás tus finanzas', desc: 'El dashboard te muestra qué cobrar, qué pagar, alertas de vencimiento y el resultado del mes.' },
+]
+
+const METRICS = [
+  { val: '-80%', label: 'Menos tiempo cargando facturas manualmente' },
+  { val: '11', label: 'Tipos de comprobante AFIP soportados' },
+  { val: '0', label: 'Conocimientos contables necesarios para empezar' },
+  { val: 'ARS / USD / EUR', label: 'Multi-moneda con tipo de cambio' },
+]
+
+const ROLES = [
+  { name: 'Administrador', desc: 'Acceso total: facturas, usuarios, reportes y configuración.', color: '#185FA5' },
+  { name: 'Contador', desc: 'Puede cargar y editar facturas, registrar pagos y exportar datos.', color: '#0F6E56' },
+  { name: 'Visualizador', desc: 'Solo lectura. Consulta facturas y reportes sin modificar nada.', color: '#888780' },
+]
+
+const ROLE_USERS = [
+  { name: 'Dante Martínez', email: 'dante@empresa.com', initials: 'DM', color: '#185FA5', role: 'Admin', badgeBg: '#E6F1FB', badgeColor: '#0C447C' },
+  { name: 'Ciro Perazzo', email: 'ciro@empresa.com', initials: 'CP', color: '#0F6E56', role: 'Contador', badgeBg: '#E1F5EE', badgeColor: '#085041' },
+  { name: 'María González', email: 'maria@empresa.com', initials: 'MG', color: '#888780', role: 'Visualizador', badgeBg: '#F1EFE8', badgeColor: '#444441' },
+]
+
+const PLANS = [
+  {
+    name: 'Gratuito', price: '$0', desc: 'Para probar InvoTrack sin compromiso.',
+    features: ['Hasta 20 facturas por mes', '1 empresa', 'OCR con modo mock', 'Dashboard básico'],
+    cta: 'Empezar gratis', featured: false,
+  },
+  {
+    name: 'PyME', price: '$9.990', desc: 'Para negocios que procesan facturas todos los días.',
+    features: ['Facturas ilimitadas', 'OCR real con GPT-4 Vision', 'Alertas de vencimiento por email', 'Hasta 5 usuarios', 'Exportación CSV + reportes', 'Validación CAE con AFIP'],
+    cta: 'Probar 14 días gratis', featured: true,
+  },
+  {
+    name: 'Empresa', price: 'A medida', desc: 'Para operaciones con alto volumen o múltiples sucursales.',
+    features: ['Multi-empresa sin límite', 'Usuarios ilimitados', 'Google Document AI', 'SLA y soporte prioritario', 'API REST para integraciones'],
+    cta: 'Hablar con el equipo', featured: false, href: 'mailto:hola@invotrack.app',
+  },
+]
 </file>
 
 <file path="src/features/ocr/__tests__/.gitkeep">
@@ -6147,15 +7481,15 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 
 <file path="index.html">
 <!doctype html>
-<html lang="en" style="height: 100%; overflow: hidden;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>invotrack</title>
   </head>
-  <body style="height: 100%; overflow: hidden; margin: 0;">
-    <div id="root" style="height: 100%;"></div>
+  <body style="margin: 0;">
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
@@ -10410,103 +11744,6 @@ function round2(n) {
 }
 </file>
 
-<file path="src/app/router.jsx">
-import { lazy, Suspense } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
-import AppLayout from '@/layouts/AppLayout'
-import AuthLayout from '@/layouts/AuthLayout'
-import ProtectedLayout from '@/layouts/ProtectedLayout'
-import OnboardingGuard from '@/layouts/OnboardingGuard'
-
-// Lazy loaded pages
-const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
-const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
-const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'))
-const OnboardingPage = lazy(() => import('@/features/companies/pages/OnboardingPage'))
-const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
-const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage'))
-const NewInvoicePage = lazy(() => import('@/features/invoices/pages/NewInvoicePage'))
-const InvoiceDetailPage = lazy(() => import('@/features/invoices/pages/InvoiceDetailPage'))
-const ClientsPage = lazy(() => import('@/features/clients/pages/ClientsPage'))
-const ProvidersPage = lazy(() => import('@/features/providers/pages/ProvidersPage'))
-const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
-const AlertsPage = lazy(() => import('@/features/alerts/pages/AlertsPage'))
-const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'))
-const OcrPage = lazy(() => import('@/features/ocr/pages/OcrPage'))
-
-// Spinner de carga que se muestra mientras una página lazy se está descargando.
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-full min-h-[400px]">
-    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-  </div>
-)
-
-// Envuelve un componente lazy en Suspense para mostrar el PageLoader mientras carga.
-const withSuspense = (Component) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
-)
-
-export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Navigate to="/dashboard" replace />,
-  },
-  {
-    element: <AuthLayout />,
-    children: [
-      { path: '/login', element: withSuspense(LoginPage) },
-      { path: '/register', element: withSuspense(RegisterPage) },
-      // Bug 1 — Ruta que Supabase usa como callback después de confirmar el email.
-      // Sin esta ruta el link del mail tiraba 404.
-      { path: '/auth/callback', element: withSuspense(AuthCallbackPage) },
-    ],
-  },
-  {
-    // Onboarding: requires authentication but NOT a company (OnboardingGuard handles this)
-    element: <OnboardingGuard />,
-    children: [
-      { path: '/onboarding', element: withSuspense(OnboardingPage) },
-    ],
-  },
-  {
-    element: <ProtectedLayout />,
-    children: [
-      {
-        element: <AppLayout />,
-        children: [
-          { path: '/dashboard', element: withSuspense(DashboardPage) },
-          { path: '/invoices', element: withSuspense(InvoicesPage) },
-          { path: '/invoices/new', element: withSuspense(NewInvoicePage) },
-          { path: '/invoices/:id', element: withSuspense(InvoiceDetailPage) },
-          { path: '/invoices/:id/edit', element: withSuspense(NewInvoicePage) },
-          { path: '/clients', element: withSuspense(ClientsPage) },
-          { path: '/providers', element: withSuspense(ProvidersPage) },
-          { path: '/reports', element: withSuspense(ReportsPage) },
-          { path: '/alerts', element: withSuspense(AlertsPage) },
-          { path: '/settings', element: withSuspense(SettingsPage) },
-          { path: '/ocr', element: withSuspense(OcrPage) },
-        ],
-      },
-    ],
-  },
-  {
-    path: '*',
-    element: (
-      <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
-        <p className="text-6xl font-bold text-gray-200">404</p>
-        <p className="mt-2">Página no encontrada</p>
-        <a href="/dashboard" className="mt-4 text-blue-600 hover:underline text-sm">
-          Volver al dashboard
-        </a>
-      </div>
-    ),
-  },
-])
-</file>
-
 <file path="src/components/ui/button.jsx">
 import { forwardRef } from 'react'
 import { Slot } from '@radix-ui/react-slot'
@@ -13265,6 +14502,108 @@ El lenguaje de implementación es **JavaScript (JSX/JS)** en todo el proyecto. N
 ```
 </file>
 
+<file path="src/app/router.jsx">
+import { lazy, Suspense } from 'react'
+import { createBrowserRouter } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import AppLayout from '@/layouts/AppLayout'
+import AuthLayout from '@/layouts/AuthLayout'
+import LandingGuard from '@/layouts/LandingGuard'
+import ProtectedLayout from '@/layouts/ProtectedLayout'
+import OnboardingGuard from '@/layouts/OnboardingGuard'
+
+// Lazy loaded pages
+const LandingPage = lazy(() => import('@/features/landing/LandingPage'))
+const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
+const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
+const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'))
+const OnboardingPage = lazy(() => import('@/features/companies/pages/OnboardingPage'))
+const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
+const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage'))
+const NewInvoicePage = lazy(() => import('@/features/invoices/pages/NewInvoicePage'))
+const InvoiceDetailPage = lazy(() => import('@/features/invoices/pages/InvoiceDetailPage'))
+const ClientsPage = lazy(() => import('@/features/clients/pages/ClientsPage'))
+const ProvidersPage = lazy(() => import('@/features/providers/pages/ProvidersPage'))
+const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
+const AlertsPage = lazy(() => import('@/features/alerts/pages/AlertsPage'))
+const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'))
+const OcrPage = lazy(() => import('@/features/ocr/pages/OcrPage'))
+
+// Spinner de carga que se muestra mientras una página lazy se está descargando.
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-full min-h-[400px]">
+    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+  </div>
+)
+
+// Envuelve un componente lazy en Suspense para mostrar el PageLoader mientras carga.
+const withSuspense = (Component) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+)
+
+export const router = createBrowserRouter([
+  {
+    // Ruta raíz: landing para no logueados, redirige al dashboard si ya está autenticado.
+    element: <LandingGuard />,
+    children: [
+      { path: '/', element: withSuspense(LandingPage) },
+    ],
+  },
+  {
+    // Rutas públicas de auth: redirigen al dashboard si el usuario ya está logueado.
+    element: <AuthLayout />,
+    children: [
+      { path: '/login', element: withSuspense(LoginPage) },
+      { path: '/register', element: withSuspense(RegisterPage) },
+      // Callback de Supabase después de confirmar el email.
+      { path: '/auth/callback', element: withSuspense(AuthCallbackPage) },
+    ],
+  },
+  {
+    // Onboarding: requires authentication but NOT a company (OnboardingGuard handles this)
+    element: <OnboardingGuard />,
+    children: [
+      { path: '/onboarding', element: withSuspense(OnboardingPage) },
+    ],
+  },
+  {
+    element: <ProtectedLayout />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/dashboard', element: withSuspense(DashboardPage) },
+          { path: '/invoices', element: withSuspense(InvoicesPage) },
+          { path: '/invoices/new', element: withSuspense(NewInvoicePage) },
+          { path: '/invoices/:id', element: withSuspense(InvoiceDetailPage) },
+          { path: '/invoices/:id/edit', element: withSuspense(NewInvoicePage) },
+          { path: '/clients', element: withSuspense(ClientsPage) },
+          { path: '/providers', element: withSuspense(ProvidersPage) },
+          { path: '/reports', element: withSuspense(ReportsPage) },
+          { path: '/alerts', element: withSuspense(AlertsPage) },
+          { path: '/settings', element: withSuspense(SettingsPage) },
+          { path: '/ocr', element: withSuspense(OcrPage) },
+        ],
+      },
+    ],
+  },
+  {
+    path: '*',
+    element: (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
+        <p className="text-6xl font-bold text-gray-200">404</p>
+        <p className="mt-2">Página no encontrada</p>
+        <a href="/dashboard" className="mt-4 text-blue-600 hover:underline text-sm">
+          Volver al dashboard
+        </a>
+      </div>
+    ),
+  },
+])
+</file>
+
 <file path="src/features/auth/pages/RegisterPage.jsx">
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -13947,15 +15286,10 @@ export const invoiceSchema = z.object({
   }),
   emisor_domicilio: z.string().optional().nullable(),
 
-  // Receptor — siempre obligatorio (igual que el emisor).
-  receptor_cuit: cuitSchema.or(z.literal('')).refine(
-    (v) => v && v.trim() !== '',
-    { message: 'El CUIT del receptor es requerido' }
-  ),
-  receptor_razon_social: z.string().min(1, 'La razón social del receptor es requerida'),
-  receptor_condicion_iva: z.enum(TAX_CONDITION_VALUES, {
-    errorMap: () => ({ message: 'Seleccioná la condición de IVA del receptor' }),
-  }),
+  // Receptor — todos opcionales.
+  receptor_cuit: cuitSchema.or(z.literal('')).optional().nullable(),
+  receptor_razon_social: z.string().optional().nullable(),
+  receptor_condicion_iva: z.enum(TAX_CONDITION_VALUES).optional().nullable(),
   receptor_domicilio: z.string().optional().nullable(),
 
   // Totales fiscales (calculados en frontend antes de persistir)
@@ -14391,26 +15725,21 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       <Card>
         <CardHeader>
           <CardTitle>Datos del receptor</CardTitle>
+          <p className="text-xs text-gray-400 mt-0.5">Opcional — podés completarlo después.</p>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label>
-              Razón social <span className="text-red-500">*</span>
-            </Label>
+            <Label>Razón social</Label>
             <Input placeholder="Cliente S.R.L." {...register('receptor_razon_social')} />
             {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>
-              CUIT <span className="text-red-500">*</span>
-            </Label>
+            <Label>CUIT</Label>
             <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
             {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>
-              Condición IVA <span className="text-red-500">*</span>
-            </Label>
+            <Label>Condición IVA</Label>
             <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value ?? ''}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
