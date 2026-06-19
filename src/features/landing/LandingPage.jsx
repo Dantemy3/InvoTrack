@@ -341,7 +341,7 @@ const STEPS = [
 ]
 
 const METRICS = [
-  { val: '-80%', label: 'Menos tiempo cargando facturas manualmente' },
+  { val: '-60%', label: 'Menos tiempo cargando facturas manualmente' },
   { val: '11', label: 'Tipos de comprobante AFIP soportados' },
   { val: '0', label: 'Conocimientos contables necesarios para empezar' },
   { val: 'ARS / USD / EUR', label: 'Multi-moneda con tipo de cambio' },
