@@ -1,7 +1,8 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft, Loader2, FlaskConical } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
 import { useCompany } from '@/features/companies/context/CompanyContext'
@@ -118,6 +119,7 @@ export default function NewInvoicePage() {
   // Si el usuario escaneó una factura, llega aquí con ocrData en el navigation state.
   // mapOcrToFormValues() convierte esos datos al formato del formulario.
   const ocrData = location.state?.ocrData ?? null
+  const ocrPreview = location.state?.ocrPreview ?? null
 
   // Paso 1b — Hooks de mutación (creación y edición)
   // useCreateInvoice y useUpdateInvoice encapsulan la llamada a Supabase y el
@@ -230,8 +232,10 @@ export default function NewInvoicePage() {
     )
   }
 
+  const hasOcrPreview = Boolean(ocrPreview && !isEditMode)
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className={hasOcrPreview ? 'p-6 max-w-7xl mx-auto space-y-6' : 'p-6 max-w-4xl mx-auto space-y-6'}>
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
@@ -248,7 +252,6 @@ export default function NewInvoicePage() {
         </div>
       </div>
 
-      {/* Banner OCR — avisamos que los datos vienen pre-cargados */}
       {ocrData && !isEditMode && (
         <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
           <span>✨</span>
@@ -259,11 +262,26 @@ export default function NewInvoicePage() {
         </div>
       )}
 
-      <InvoiceForm
-        defaultValues={getDefaultValues()}
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-      />
+      <div className={hasOcrPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 items-start' : undefined}>
+        {hasOcrPreview && (
+          <div className="lg:sticky lg:top-6">
+            <ZoomPanImageViewer
+              src={ocrPreview}
+              alt="Factura escaneada"
+              className="h-[calc(100vh-12rem)] min-h-[400px]"
+              minHeight={400}
+            />
+          </div>
+        )}
+
+        <div className={hasOcrPreview ? 'min-w-0' : undefined}>
+          <InvoiceForm
+            defaultValues={getDefaultValues()}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import { ocrService } from '../services/ocrService'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -98,12 +99,11 @@ export default function OcrPage() {
   const handleUseData = () => {
     if (!result) return
     const { normalized } = result
-    // Navegar a nueva factura con datos pre-cargados via state
-    navigate('/invoices/new', { state: { ocrData: normalized } })
+    navigate('/invoices/new', { state: { ocrData: normalized, ocrPreview: preview } })
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Escanear factura</h1>
         <p className="text-sm text-gray-500 mt-0.5">
@@ -122,7 +122,16 @@ export default function OcrPage() {
               <CardDescription>Factura, nota de crédito, débito, recibo o ticket</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <DropZone onFile={handleFile} disabled={processing} />
+              {preview ? (
+                <ZoomPanImageViewer
+                  src={preview}
+                  alt={file?.name ?? 'Factura'}
+                  className="h-[calc(100vh-22rem)] min-h-[360px]"
+                  minHeight={360}
+                />
+              ) : (
+                <DropZone onFile={handleFile} disabled={processing} />
+              )}
 
               {file && (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -131,15 +140,22 @@ export default function OcrPage() {
                     <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
                     <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs shrink-0"
+                    disabled={processing}
+                    onClick={() => {
+                      setFile(null)
+                      setPreview(null)
+                      setResult(null)
+                      setError(null)
+                    }}
+                  >
+                    Cambiar
+                  </Button>
                 </div>
-              )}
-
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="w-full rounded-lg border border-gray-100 max-h-48 object-contain"
-                />
               )}
 
               <Button
