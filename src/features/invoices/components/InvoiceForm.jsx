@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
+import ItemSearchInput from './ItemSearchInput'
 
 const defaultItem = { descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }
 
@@ -370,6 +371,104 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
                   {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
                 </div>
 
+              <div className="space-y-1.5">
+                <Label>Domicilio</Label>
+                <Input placeholder={esExportacion ? '123 Main St, New York' : 'Av. Santa Fe 5678, CABA'} {...register('receptor_domicilio')} />
+              </div>
+            </>
+          )}
+
+          {/* Vínculos con clientes/proveedores registrados */}
+          {clients.length > 0 && !esExportacion && (
+            <div className="space-y-1.5">
+              <Label>Vincular cliente</Label>
+              <Controller name="client_id" control={control} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )} />
+            </div>
+          )}
+          {providers.length > 0 && !esExportacion && (
+            <div className="space-y-1.5">
+              <Label>Vincular proveedor</Label>
+              <Controller name="provider_id" control={control} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar proveedor" /></SelectTrigger>
+                  <SelectContent>
+                    {providers.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Ítems ────────────────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Ítems</CardTitle>
+          <Button type="button" variant="outline" size="sm" onClick={() => append(defaultItem)}>
+            <Plus className="h-4 w-4 mr-1" /> Agregar ítem
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+
+          {/* Cabecera de columnas */}
+          <div className={`hidden sm:grid gap-2 px-0.5 ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
+            <div className="col-span-4 text-xs font-medium text-gray-400 uppercase tracking-wide">Descripción</div>
+            <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Cantidad</div>
+            <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Unidad</div>
+            <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Precio unit.</div>
+            {/* Columna IVA solo en facturas con IVA discriminado (A, M) */}
+            {discriminaIva && (
+              <div className="col-span-1 text-xs font-medium text-gray-400 uppercase tracking-wide">IVA</div>
+            )}
+            <div className="col-span-1" />
+          </div>
+
+          {fields.map((field, index) => (
+            <div key={field.id} className={`grid gap-2 items-start ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
+              <div className="col-span-12 sm:col-span-4">
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Descripción</label>
+                <Controller
+                  name={`items.${index}.descripcion`}
+                  control={control}
+                  render={({ field }) => (
+                    <ItemSearchInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="Buscar ítem (ej. mo → Motor)"
+                      error={errors.items?.[index]?.descripcion?.message}
+                      onSelectItem={(catalogItem) => {
+                        setValue(`items.${index}.descripcion`, catalogItem.descripcion)
+                        setValue(`items.${index}.unidad`, catalogItem.unidad)
+                        setValue(`items.${index}.precio_unitario`, catalogItem.precio_unitario)
+                        if (discriminaIva) {
+                          setValue(`items.${index}.alicuota_iva`, catalogItem.alicuota_iva)
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              <div className="col-span-3 sm:col-span-2">
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Cantidad</label>
+                <Input type="number" placeholder="1" step="0.0001" min="0" {...register(`items.${index}.cantidad`)} />
+              </div>
+              <div className="col-span-3 sm:col-span-2">
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Unidad</label>
+                <Input placeholder="hs, kg, un" {...register(`items.${index}.unidad`)} />
+              </div>
+              <div className="col-span-3 sm:col-span-2">
+                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Precio unitario</label>
+                <Input type="number" placeholder="0.00" step="0.01" min="0" {...register(`items.${index}.precio_unitario`)} />
+              </div>
                 {!config.esExportacion && config.requiereReceptorCondicionIVA && (
                   <div className="space-y-1.5">
                     <Label>
