@@ -19,6 +19,7 @@ import { afipService } from '../services/afipService'
 import { formatCurrency, formatDate, formatDateLong } from '@/lib/utils'
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { getComprobanteConfig } from '@/constants/comprobanteConfig'
 
 // ── Schema de pago ────────────────────────────────────────────────────────────
 const paymentSchema = z.object({
@@ -148,6 +149,22 @@ export default function InvoiceDetailPage() {
   const invoiceNumber = invoice.invoice_number ||
     `${String(invoice.punto_de_venta ?? 0).padStart(4, '0')}-${String(invoice.numero_comprobante ?? 0).padStart(8, '0')}`
 
+  const config = getComprobanteConfig(invoice.tipo_comprobante)
+  const tieneReceptor = config.muestraSeccionReceptor && (
+    invoice.receptor_razon_social ||
+    invoice.receptor_cuit ||
+    invoice.receptor_condicion_iva ||
+    invoice.receptor_domicilio ||
+    invoice.clients?.name ||
+    invoice.providers?.name
+  )
+  const muestraIVA = config.permiteIVA && (
+    config.discriminaIVA ||
+    (invoice.iva_105 ?? 0) > 0 ||
+    (invoice.iva_21 ?? 0) > 0 ||
+    (invoice.iva_27 ?? 0) > 0
+  )
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
 
@@ -192,88 +209,126 @@ export default function InvoiceDetailPage() {
           {/* Emisor y Receptor */}
           <Card>
             <CardHeader><CardTitle>Partes del comprobante</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+            <CardContent className={`grid grid-cols-1 gap-6 text-sm ${tieneReceptor ? 'sm:grid-cols-2' : ''}`}>
               <div>
                 <p className="font-semibold text-gray-700 mb-2">Emisor</p>
                 <p className="font-medium">{invoice.emisor_razon_social || '-'}</p>
                 <p className="text-gray-500">{invoice.emisor_cuit || '-'}</p>
                 <p className="text-gray-500">{invoice.emisor_condicion_iva || '-'}</p>
-                <p className="text-gray-400 text-xs mt-1">{invoice.emisor_domicilio || ''}</p>
+                {invoice.emisor_domicilio && (
+                  <p className="text-gray-400 text-xs mt-1">{invoice.emisor_domicilio}</p>
+                )}
               </div>
-              <div>
-                <p className="font-semibold text-gray-700 mb-2">Receptor</p>
-                <p className="font-medium">{invoice.receptor_razon_social || invoice.clients?.name || invoice.providers?.name || '-'}</p>
-                <p className="text-gray-500">{invoice.receptor_cuit || invoice.clients?.cuit || invoice.providers?.cuit || '-'}</p>
-                <p className="text-gray-500">{invoice.receptor_condicion_iva || '-'}</p>
-                <p className="text-gray-400 text-xs mt-1">{invoice.receptor_domicilio || ''}</p>
-              </div>
+              {tieneReceptor && (
+                <div>
+                  <p className="font-semibold text-gray-700 mb-2">
+                    {config.esExportacion ? 'Destinatario' : 'Receptor'}
+                  </p>
+                  <p className="font-medium">{invoice.receptor_razon_social || invoice.clients?.name || invoice.providers?.name || '-'}</p>
+                  <p className="text-gray-500">
+                    {config.esExportacion
+                      ? (invoice.receptor_id_impositivo || '-')
+                      : (invoice.receptor_cuit || invoice.clients?.cuit || invoice.providers?.cuit || '-')
+                    }
+                  </p>
+                  {invoice.receptor_condicion_iva && (
+                    <p className="text-gray-500">{invoice.receptor_condicion_iva}</p>
+                  )}
+                  {invoice.receptor_domicilio && (
+                    <p className="text-gray-400 text-xs mt-1">{invoice.receptor_domicilio}</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Ítems */}
-          <Card>
-            <CardHeader><CardTitle>Ítems</CardTitle></CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left py-2 text-gray-500 font-medium">Descripción</th>
-                      <th className="text-right py-2 text-gray-500 font-medium">Cant.</th>
-                      <th className="text-right py-2 text-gray-500 font-medium">Precio unit.</th>
-                      <th className="text-right py-2 text-gray-500 font-medium">IVA</th>
-                      <th className="text-right py-2 text-gray-500 font-medium">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {(invoice.invoice_items ?? []).map((item, i) => (
-                      <tr key={item.id ?? i}>
-                        <td className="py-2.5">{item.descripcion}</td>
-                        <td className="py-2.5 text-right">{item.cantidad}</td>
-                        <td className="py-2.5 text-right">{formatCurrency(item.precio_unitario)}</td>
-                        <td className="py-2.5 text-right">{item.alicuota_iva}%</td>
-                        <td className="py-2.5 text-right font-medium">{formatCurrency(item.subtotal_neto + item.subtotal_iva)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {/* Ítems o importe total */}
+          {config.permiteItems ? (
+            <Card>
+              <CardHeader><CardTitle>Ítems</CardTitle></CardHeader>
+              <CardContent>
+                {(invoice.invoice_items ?? []).length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-2 text-gray-500 font-medium">Descripción</th>
+                          <th className="text-right py-2 text-gray-500 font-medium">Cant.</th>
+                          <th className="text-right py-2 text-gray-500 font-medium">Precio unit.</th>
+                          {muestraIVA && config.discriminaIVA && (
+                            <th className="text-right py-2 text-gray-500 font-medium">IVA</th>
+                          )}
+                          <th className="text-right py-2 text-gray-500 font-medium">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {(invoice.invoice_items ?? []).map((item, i) => (
+                          <tr key={item.id ?? i}>
+                            <td className="py-2.5">{item.descripcion}</td>
+                            <td className="py-2.5 text-right">{item.cantidad}</td>
+                            <td className="py-2.5 text-right">{formatCurrency(item.precio_unitario)}</td>
+                            {muestraIVA && config.discriminaIVA && (
+                              <td className="py-2.5 text-right">{item.alicuota_iva}%</td>
+                            )}
+                            <td className="py-2.5 text-right font-medium">
+                              {formatCurrency((item.subtotal_neto ?? 0) + (item.subtotal_iva ?? 0))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400">Sin ítems registrados</p>
+                )}
 
-              <Separator className="my-4" />
+                <Separator className="my-4" />
 
-              <div className="flex flex-col items-end gap-1 text-sm">
-                <div className="flex gap-8">
-                  <span className="text-gray-500">Neto gravado</span>
-                  <span className="w-32 text-right">{formatCurrency(invoice.neto_gravado)}</span>
+                <div className="flex flex-col items-end gap-1 text-sm">
+                  {muestraIVA && config.discriminaIVA && (
+                    <>
+                      <div className="flex gap-8">
+                        <span className="text-gray-500">Neto gravado</span>
+                        <span className="w-32 text-right">{formatCurrency(invoice.neto_gravado)}</span>
+                      </div>
+                      {invoice.iva_105 > 0 && (
+                        <div className="flex gap-8">
+                          <span className="text-gray-500">IVA 10.5%</span>
+                          <span className="w-32 text-right">{formatCurrency(invoice.iva_105)}</span>
+                        </div>
+                      )}
+                      {invoice.iva_21 > 0 && (
+                        <div className="flex gap-8">
+                          <span className="text-gray-500">IVA 21%</span>
+                          <span className="w-32 text-right">{formatCurrency(invoice.iva_21)}</span>
+                        </div>
+                      )}
+                      {invoice.iva_27 > 0 && (
+                        <div className="flex gap-8">
+                          <span className="text-gray-500">IVA 27%</span>
+                          <span className="w-32 text-right">{formatCurrency(invoice.iva_27)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <Separator className="w-52 my-1" />
+                  <div className="flex gap-8">
+                    <span className="font-bold text-gray-900">Total</span>
+                    <span className="font-bold text-gray-900 w-32 text-right text-base">
+                      {formatCurrency(invoice.total_amount)}
+                    </span>
+                  </div>
                 </div>
-                {invoice.iva_105 > 0 && (
-                  <div className="flex gap-8">
-                    <span className="text-gray-500">IVA 10.5%</span>
-                    <span className="w-32 text-right">{formatCurrency(invoice.iva_105)}</span>
-                  </div>
-                )}
-                {invoice.iva_21 > 0 && (
-                  <div className="flex gap-8">
-                    <span className="text-gray-500">IVA 21%</span>
-                    <span className="w-32 text-right">{formatCurrency(invoice.iva_21)}</span>
-                  </div>
-                )}
-                {invoice.iva_27 > 0 && (
-                  <div className="flex gap-8">
-                    <span className="text-gray-500">IVA 27%</span>
-                    <span className="w-32 text-right">{formatCurrency(invoice.iva_27)}</span>
-                  </div>
-                )}
-                <Separator className="w-52 my-1" />
-                <div className="flex gap-8">
-                  <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-bold text-gray-900 w-32 text-right text-base">
-                    {formatCurrency(invoice.total_amount)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader><CardTitle>Importe total</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(invoice.total_amount)}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Pagos — Req 5.4 */}
           <Card>

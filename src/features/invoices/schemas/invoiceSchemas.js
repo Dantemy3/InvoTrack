@@ -1,50 +1,13 @@
 import { z } from 'zod'
 import { IVA_VALID_RATES, SUPPORTED_CURRENCIES } from '@/lib/constants'
 import { cuitSchema } from '@/features/auth/schemas/authSchemas'
+import {
+  TIPOS_COMPROBANTE,
+  getComprobanteConfig,
+} from '@/constants/comprobanteConfig'
 
-// ── Tipos de comprobante AFIP/ARCA ────────────────────────────────────────────
-export const TIPOS_COMPROBANTE = [
-  'Factura A', 'Factura B', 'Factura C', 'Factura M', 'Factura E',
-  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
-  'Nota de Débito A', 'Nota de Débito B', 'Nota de Débito C',
-  'Recibo',
-]
-
-// Tipos disponibles según la condición IVA del emisor.
-// RI → puede emitir A, B, M, E. MO/EX → solo C, E.
-export const TIPOS_PARA_RI    = ['Factura A', 'Factura B', 'Factura M', 'Factura E']
-export const TIPOS_PARA_MO_EX = ['Factura C', 'Factura E']
-
-// Tipos que exigen identificar completamente al receptor (CUIT + razón social + condición).
-export const TIPOS_RECEPTOR_IDENTIFICADO = [
-  'Factura A', 'Factura M',
-  'Nota de Crédito A', 'Nota de Débito A',
-]
-
-// Tipos de exportación: receptor extranjero, moneda libre, sin CUIT arg.
-export const TIPOS_EXPORTACION = ['Factura E']
-
-// Tipos donde el IVA se discrimina en el comprobante (solo RI).
-export const TIPOS_CON_IVA_DISCRIMINADO = [
-  'Factura A', 'Factura M',
-  'Nota de Crédito A', 'Nota de Débito A',
-]
-
-// Tipos donde el receptor puede ser Consumidor Final anónimo.
-export const TIPOS_RECEPTOR_OPCIONAL = [
-  'Factura B', 'Factura C',
-  'Nota de Crédito B', 'Nota de Débito B',
-  'Nota de Crédito C', 'Nota de Débito C',
-  'Recibo',
-]
-
-// Tipos sin fecha de vencimiento propia.
-export const TIPOS_SIN_VENCIMIENTO = [
-  'Factura C', 'Factura E',
-  'Recibo',
-  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
-  'Nota de Débito A',  'Nota de Débito B',  'Nota de Débito C',
-]
+// Re-exportar para compatibilidad con imports existentes
+export { TIPOS_COMPROBANTE, getComprobanteConfig } from '@/constants/comprobanteConfig'
 
 // Umbral ARCA para identificar al receptor en Factura B/C (en ARS).
 export const UMBRAL_CF_ARS = 100_000
@@ -151,22 +114,17 @@ export const invoiceSchema = z.object({
     .positive('El tipo de cambio debe ser mayor a 0')
     .default(1.0),
 
-  // País de destino — solo para Factura E
+  // País de destino — solo para exportación
   pais_destino: z.string().optional().nullable(),
 
-  // Emisor — siempre obligatorio
-  emisor_cuit: cuitSchema.or(z.literal('')).refine(
-    (v) => v && v.trim() !== '',
-    { message: 'El CUIT del emisor es requerido' }
-  ),
-  emisor_razon_social: z.string().min(1, 'La razón social del emisor es requerida'),
-  emisor_condicion_iva: z.enum(TAX_CONDITION_VALUES, {
-    errorMap: () => ({ message: 'Seleccioná la condición de IVA del emisor' }),
-  }),
+  // Emisor
+  emisor_cuit: cuitSchema.or(z.literal('')).optional(),
+  emisor_razon_social: z.string().optional(),
+  emisor_condicion_iva: z.enum(TAX_CONDITION_VALUES).optional(),
   emisor_domicilio: z.string().optional().nullable(),
 
   // Receptor — obligatoriedad condicional resuelta en superRefine
-  receptor_id_impositivo: z.string().optional().nullable(), // para exportación
+  receptor_id_impositivo: z.string().optional().nullable(),
   receptor_cuit:           z.string().optional().nullable(),
   receptor_razon_social:   z.string().optional().nullable(),
   receptor_condicion_iva:  z.enum(TAX_CONDITION_VALUES).optional().nullable(),
@@ -196,22 +154,25 @@ export const invoiceSchema = z.object({
   // Notas
   notes: z.string().optional().nullable(),
 
-  // Ítems
-  items: z.array(invoiceItemSchema).min(1, 'La factura debe tener al menos un ítem'),
+  // Ítems — obligatoriedad condicional resuelta en superRefine
+  items: z.array(invoiceItemSchema).default([]),
 
 }).superRefine((data, ctx) => {
   const tipo   = data.tipo_comprobante
+  const config = getComprobanteConfig(tipo)
   const emisor = data.emisor_condicion_iva
 
   // ── 1. Tipos permitidos según condición del emisor ──────────────────────
-  if ((emisor === 'MO' || emisor === 'EX') && !TIPOS_PARA_MO_EX.includes(tipo)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['tipo_comprobante'],
-      message: `Un emisor ${emisor === 'MO' ? 'Monotributista' : 'Exento'} solo puede emitir: ${TIPOS_PARA_MO_EX.join(', ')}`,
-    })
+  if (emisor === 'MO' || emisor === 'EX') {
+    if (!config.disponibleParaMOEX) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['tipo_comprobante'],
+        message: `Un emisor ${emisor === 'MO' ? 'Monotributista' : 'Exento'} no puede emitir ${tipo}`,
+      })
+    }
   }
-  if (emisor === 'RI' && !TIPOS_PARA_RI.includes(tipo) && !tipo.startsWith('Nota') && tipo !== 'Recibo') {
+  if (emisor === 'RI' && !config.disponibleParaRI) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['tipo_comprobante'],
@@ -219,8 +180,44 @@ export const invoiceSchema = z.object({
     })
   }
 
-  // ── 2. Fecha de vencimiento condicional ─────────────────────────────────
-  if (!TIPOS_SIN_VENCIMIENTO.includes(tipo) &&
+  // ── 2. Emisor ───────────────────────────────────────────────────────────
+  if (config.requiereEmisorCUIT && (!data.emisor_cuit || data.emisor_cuit.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['emisor_cuit'],
+      message: 'El CUIT del emisor es requerido',
+    })
+  } else if (config.requiereEmisorCUIT && data.emisor_cuit && !/^\d{2}-\d{8}-\d$/.test(data.emisor_cuit.trim())) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['emisor_cuit'],
+      message: 'CUIT inválido. Formato esperado: XX-XXXXXXXX-X',
+    })
+  }
+  if (config.requiereEmisorRazonSocial && (!data.emisor_razon_social || data.emisor_razon_social.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['emisor_razon_social'],
+      message: 'La razón social del emisor es requerida',
+    })
+  }
+  if (config.requiereEmisorCondicionIVA && !data.emisor_condicion_iva) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['emisor_condicion_iva'],
+      message: 'Seleccioná la condición de IVA del emisor',
+    })
+  }
+  if (config.requiereEmisorDomicilio && (!data.emisor_domicilio || data.emisor_domicilio.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['emisor_domicilio'],
+      message: 'El domicilio del emisor es requerido',
+    })
+  }
+
+  // ── 3. Fecha de vencimiento ─────────────────────────────────────────────
+  if (config.requiereFechaVencimiento &&
       (!data.fecha_vencimiento || data.fecha_vencimiento.trim() === '')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -229,89 +226,124 @@ export const invoiceSchema = z.object({
     })
   }
 
-  // ── 3. Receptor en Factura A / M ────────────────────────────────────────
-  if (TIPOS_RECEPTOR_IDENTIFICADO.includes(tipo)) {
-    if (!data.receptor_cuit || data.receptor_cuit.trim() === '') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['receptor_cuit'],
-        message: `El CUIT del receptor es obligatorio para ${tipo}`,
-      })
-    } else if (!/^\d{2}-\d{8}-\d$/.test(data.receptor_cuit.trim())) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['receptor_cuit'],
-        message: 'CUIT inválido. Formato esperado: XX-XXXXXXXX-X',
-      })
+  // ── 4. Receptor ─────────────────────────────────────────────────────────
+  const esAnonimo = data.consumidor_final_anonimo === true
+  const superaUmbral = (data.total_amount ?? 0) >= UMBRAL_CF_ARS
+  const puedeSerAnonimo = config.permiteConsumidorFinalAnonimo && !superaUmbral && esAnonimo
+
+  if (!puedeSerAnonimo) {
+    if (config.requiereReceptorCUIT) {
+      if (!data.receptor_cuit || data.receptor_cuit.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['receptor_cuit'],
+          message: `El CUIT del receptor es obligatorio para ${tipo}`,
+        })
+      } else if (!/^\d{2}-\d{8}-\d$/.test(data.receptor_cuit.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['receptor_cuit'],
+          message: 'CUIT inválido. Formato esperado: XX-XXXXXXXX-X',
+        })
+      }
     }
-    if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
+
+    if (config.requiereReceptorRazonSocial && (!data.receptor_razon_social || data.receptor_razon_social.trim() === '')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['receptor_razon_social'],
         message: `La razón social del receptor es obligatoria para ${tipo}`,
       })
     }
-    if (!data.receptor_condicion_iva || !TAX_CONDITION_RECEPTOR_AM.includes(data.receptor_condicion_iva)) {
+
+    if (config.requiereReceptorCondicionIVA) {
+      if (!data.receptor_condicion_iva || !TAX_CONDITION_RECEPTOR_AM.includes(data.receptor_condicion_iva)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['receptor_condicion_iva'],
+          message: `Para ${tipo} el receptor debe ser Responsable Inscripto o Responsable Sustituto`,
+        })
+      }
+    }
+
+    if (config.requiereReceptorDomicilio && (!data.receptor_domicilio || data.receptor_domicilio.trim() === '')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['receptor_condicion_iva'],
-        message: `Para ${tipo} el receptor debe ser Responsable Inscripto o Responsable Sustituto`,
+        path: ['receptor_domicilio'],
+        message: `El domicilio del receptor es obligatorio para ${tipo}`,
       })
     }
-  }
 
-  // ── 4. Receptor en Factura B / C — umbral $100.000 ──────────────────────
-  if (TIPOS_RECEPTOR_OPCIONAL.includes(tipo) && tipo !== 'Recibo') {
-    const superaUmbral = (data.total_amount ?? 0) >= UMBRAL_CF_ARS
-    const esCF = data.consumidor_final_anonimo === true
-
-    if (superaUmbral || !esCF) {
-      if (!data.receptor_cuit && !data.receptor_razon_social) {
-        // Solo advertimos si el total supera el umbral; si no, es libre.
-        if (superaUmbral) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['receptor_razon_social'],
-            message: `Para ${tipo} con total ≥ $${UMBRAL_CF_ARS.toLocaleString('es-AR')} el receptor debe estar identificado`,
-          })
-        }
+    // Factura B/C: umbral $100.000 — razón social obligatoria si supera umbral
+    if (config.permiteConsumidorFinalAnonimo && superaUmbral) {
+      if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['receptor_razon_social'],
+          message: `Para ${tipo} con total ≥ $${UMBRAL_CF_ARS.toLocaleString('es-AR')} el receptor debe estar identificado`,
+        })
       }
     }
   }
 
-  // ── 5. Factura E — validaciones de exportación ──────────────────────────
-  if (TIPOS_EXPORTACION.includes(tipo)) {
+  // ── 5. Exportación (Factura E y derivados) ──────────────────────────────
+  if (config.esExportacion) {
     if (!data.receptor_id_impositivo || data.receptor_id_impositivo.trim() === '') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['receptor_id_impositivo'],
-        message: 'El ID impositivo extranjero es obligatorio para Factura E',
+        message: 'El ID impositivo extranjero es obligatorio para comprobantes de exportación',
       })
     }
     if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['receptor_razon_social'],
-        message: 'La razón social del destinatario es obligatoria para Factura E',
+        message: 'La razón social del destinatario es obligatoria para comprobantes de exportación',
       })
     }
     if (!data.pais_destino) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['pais_destino'],
-        message: 'El país de destino es obligatorio para Factura E',
+        message: 'El país de destino es obligatorio para comprobantes de exportación',
       })
     }
     if (data.moneda !== 'ARS' && (!data.tipo_cambio || data.tipo_cambio <= 1)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['tipo_cambio'],
-        message: 'Para Factura E en moneda extranjera el tipo de cambio debe ser mayor a 1',
+        message: 'Para exportación en moneda extranjera el tipo de cambio debe ser mayor a 1',
       })
     }
   }
 
-  // ── 6. Tipo de cambio obligatorio cuando moneda ≠ ARS ───────────────────
+  // ── 6. CAE ──────────────────────────────────────────────────────────────
+  if (config.requiereCAE && (!data.cae || data.cae.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cae'],
+      message: `El CAE es obligatorio para ${tipo}`,
+    })
+  }
+  if (config.requiereVencimientoCAE && (!data.cae_vencimiento || data.cae_vencimiento.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cae_vencimiento'],
+      message: `El vencimiento del CAE es obligatorio para ${tipo}`,
+    })
+  }
+
+  // ── 7. Ítems ────────────────────────────────────────────────────────────
+  if (config.permiteItems && (!data.items || data.items.length === 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['items'],
+      message: `${tipo} debe tener al menos un ítem`,
+    })
+  }
+
+  // ── 8. Tipo de cambio obligatorio cuando moneda ≠ ARS ───────────────────
   if (data.moneda !== 'ARS' && (!data.tipo_cambio || data.tipo_cambio <= 0)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
