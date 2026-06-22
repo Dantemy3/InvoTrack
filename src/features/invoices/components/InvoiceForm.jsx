@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
+import ItemSearchInput from './ItemSearchInput'
 
 const defaultItem = { descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }
 
@@ -442,10 +443,27 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             <div key={field.id} className={`grid gap-2 items-start ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
               <div className="col-span-12 sm:col-span-4">
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Descripción</label>
-                <Input placeholder="Motor" {...register(`items.${index}.descripcion`)} />
-                {errors.items?.[index]?.descripcion && (
-                  <p className="text-xs text-red-500 mt-0.5">{errors.items[index].descripcion.message}</p>
-                )}
+                <Controller
+                  name={`items.${index}.descripcion`}
+                  control={control}
+                  render={({ field }) => (
+                    <ItemSearchInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="Buscar ítem (ej. mo → Motor)"
+                      error={errors.items?.[index]?.descripcion?.message}
+                      onSelectItem={(catalogItem) => {
+                        setValue(`items.${index}.descripcion`, catalogItem.descripcion)
+                        setValue(`items.${index}.unidad`, catalogItem.unidad)
+                        setValue(`items.${index}.precio_unitario`, catalogItem.precio_unitario)
+                        if (discriminaIva) {
+                          setValue(`items.${index}.alicuota_iva`, catalogItem.alicuota_iva)
+                        }
+                      }}
+                    />
+                  )}
+                />
               </div>
               <div className="col-span-3 sm:col-span-2">
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Cantidad</label>

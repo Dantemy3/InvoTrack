@@ -46,7 +46,7 @@ export default function AppLayout() {
   const displayName = user?.user_metadata?.full_name || user?.email || 'Usuario'
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="fixed inset-0 flex bg-gray-50 overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -58,7 +58,7 @@ export default function AppLayout() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 w-60 bg-white border-r border-gray-100 flex flex-col transition-transform duration-200 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-30 w-60 bg-white border-r border-gray-100 flex flex-col min-h-0 overflow-hidden transition-transform duration-200 lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -136,7 +136,7 @@ export default function AppLayout() {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-gray-100 flex items-center px-4 gap-4 flex-shrink-0">
           <button
@@ -160,7 +160,7 @@ export default function AppLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto overscroll-none">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-none">
           <Outlet />
         </main>
       </div>

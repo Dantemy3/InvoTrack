@@ -71,6 +71,7 @@ src/components/ui/separator.jsx
 src/components/ui/skeleton.jsx
 src/components/ui/tabs.jsx
 src/components/ui/toast.jsx
+src/components/ZoomPanImageViewer.jsx
 src/features/alerts/__tests__/.gitkeep
 src/features/alerts/hooks/useAlerts.js
 src/features/alerts/pages/AlertsPage.jsx
@@ -170,956 +171,6 @@ vitest.config.js
 
 <files>
 This section contains the contents of the repository's files.
-
-<file path="src/features/landing/LandingPage.css">
-/* ─────────────────────────────────────────────────────────────────────────────
-   LandingPage.css
-   Todos los estilos usan el prefijo "lp-" para no colisionar con Tailwind
-   ni con los componentes del resto de la app.
-   ───────────────────────────────────────────────────────────────────────────── */
-
-/* ── FUENTES ─────────────────────────────────────────────────────────────────
-   Pegá esto en tu index.html dentro de <head> si no lo tenés ya:
-
-   <link rel="preconnect" href="https://fonts.googleapis.com" />
-   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
-   ──────────────────────────────────────────────────────────────────────────── */
-
-/* ── TOKENS ──────────────────────────────────────────────────────────────────
-   Cambiá estos valores para modificar la paleta completa de la landing.
-   ──────────────────────────────────────────────────────────────────────────── */
-.lp-root {
-  --lp-navy:          #042C53;
-  --lp-navy-mid:      #185FA5;
-  --lp-blue:          #378ADD;
-  --lp-blue-light:    #B5D4F4;
-  --lp-blue-pale:     #E6F1FB;
-  --lp-emerald:       #0F6E56;
-  --lp-emerald-light: #E1F5EE;
-  --lp-emerald-mid:   #1D9E75;
-  --lp-gray-900:      #2C2C2A;
-  --lp-gray-700:      #5F5E5A;
-  --lp-gray-400:      #888780;
-  --lp-gray-100:      #D3D1C7;
-  --lp-gray-50:       #F1EFE8;
-  --lp-white:         #ffffff;
-
-  --lp-font-body:    'Inter', system-ui, sans-serif;
-  --lp-font-display: 'Syne', system-ui, sans-serif;
-
-  font-family: var(--lp-font-body);
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--lp-gray-900);
-  background: var(--lp-white);
-  -webkit-font-smoothing: antialiased;
-  /* Sin overflow ni height — el scroll lo maneja el body normalmente */
-}
-
-/* ── NAV ─────────────────────────────────────────────────────────────────────*/
-.lp-nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--lp-gray-100);
-  padding: 0 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-}
-
-.lp-nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-
-.lp-logo-mark {
-  width: 32px;
-  height: 32px;
-  background: var(--lp-navy);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lp-logo-text {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--lp-navy);
-  letter-spacing: -0.3px;
-}
-
-.lp-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.lp-nav-links a {
-  text-decoration: none;
-  color: var(--lp-gray-700);
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.15s;
-}
-
-.lp-nav-links a:hover { color: var(--lp-navy); }
-
-.lp-nav-cta {
-  background: var(--lp-navy);
-  color: var(--lp-white);
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.lp-nav-cta:hover { background: var(--lp-navy-mid); }
-
-/* ── HERO ────────────────────────────────────────────────────────────────────*/
-.lp-hero {
-  padding: 5rem 2rem 4rem;
-  max-width: 1140px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-}
-
-.lp-hero-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--lp-emerald-light);
-  color: var(--lp-emerald);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  border-radius: 100px;
-  margin-bottom: 1.25rem;
-}
-
-.lp-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--lp-emerald-mid);
-  border-radius: 50%;
-  animation: lp-pulse 2s ease-in-out infinite;
-}
-
-@keyframes lp-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.8); }
-}
-
-/* ── TIPOGRAFÍA DE TÍTULOS ────────────────────────────────────────────────────
-   Cambiá font-size y letter-spacing para ajustar el peso visual del hero.
-   ──────────────────────────────────────────────────────────────────────────── */
-.lp-hero-title {
-  font-family: var(--lp-font-display);
-  font-weight: 800;
-  font-size: 3rem;           /* ← cambiá esto para agrandar/achicar el hero */
-  line-height: 1.1;
-  letter-spacing: -1.5px;   /* ← letra más junta da sensación de marca */
-  color: var(--lp-navy);
-  margin-bottom: 1.25rem;
-}
-
-.lp-hero-title em {
-  font-style: normal;
-  color: var(--lp-blue);
-}
-
-.lp-hero-sub {
-  font-size: 1.1rem;
-  color: var(--lp-gray-700);
-  line-height: 1.7;
-  margin-bottom: 2rem;
-  max-width: 420px;
-}
-
-.lp-hero-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-/* ── BOTONES ─────────────────────────────────────────────────────────────────*/
-.lp-btn-primary {
-  background: var(--lp-navy);
-  color: var(--lp-white);
-  padding: 13px 24px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-}
-
-.lp-btn-primary:hover { background: var(--lp-navy-mid); transform: translateY(-1px); }
-
-.lp-btn-secondary {
-  background: transparent;
-  color: var(--lp-gray-700);
-  padding: 13px 20px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1.5px solid var(--lp-gray-100);
-}
-
-.lp-btn-secondary:hover { background: var(--lp-gray-50); }
-
-.lp-btn-white {
-  background: var(--lp-white);
-  color: var(--lp-navy);
-  padding: 13px 24px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.lp-btn-white:hover { background: var(--lp-blue-pale); }
-
-.lp-btn-ghost-white {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 13px 20px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
-  text-decoration: none;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.lp-btn-ghost-white:hover { border-color: rgba(255, 255, 255, 0.5); color: var(--lp-white); }
-
-/* ── HERO PROOF ──────────────────────────────────────────────────────────────*/
-.lp-hero-proof {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 1.5rem;
-}
-
-.lp-avatars { display: flex; }
-
-.lp-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid var(--lp-white);
-  margin-right: -8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--lp-white);
-}
-
-.lp-proof-text { font-size: 13px; color: var(--lp-gray-700); }
-.lp-proof-text strong { color: var(--lp-gray-900); }
-
-/* ── HERO VISUAL (mockup factura) ────────────────────────────────────────────*/
-.lp-hero-visual {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lp-invoice-card {
-  background: var(--lp-white);
-  border: 1px solid var(--lp-gray-100);
-  border-radius: 16px;
-  padding: 24px;
-  width: 340px;
-  box-shadow: 0 4px 40px rgba(4, 44, 83, 0.10);
-  position: relative;
-  z-index: 2;
-  overflow: hidden;
-}
-
-.lp-scan-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--lp-blue), transparent);
-  animation: lp-scan 2.5s ease-in-out infinite;
-  z-index: 10;
-}
-
-@keyframes lp-scan {
-  0%   { top: 0; opacity: 1; }
-  50%  { top: 100%; opacity: 0.7; }
-  100% { top: 0; opacity: 1; }
-}
-
-.lp-invoice-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.lp-invoice-type {
-  background: var(--lp-navy);
-  color: var(--lp-white);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
-  letter-spacing: 0.04em;
-}
-
-.lp-invoice-num { font-size: 11px; color: var(--lp-gray-400); }
-
-.lp-invoice-company {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--lp-navy);
-  margin-bottom: 4px;
-}
-
-.lp-invoice-cuit { font-size: 11px; color: var(--lp-gray-400); margin-bottom: 16px; }
-
-.lp-invoice-divider { border: none; border-top: 1px solid var(--lp-gray-100); margin: 12px 0; }
-
-.lp-invoice-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--lp-gray-700);
-  padding: 3px 0;
-}
-
-.lp-invoice-total { font-weight: 600; font-size: 14px; color: var(--lp-navy); margin-top: 4px; }
-
-.lp-extracted-badge {
-  position: absolute;
-  right: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--lp-emerald-light);
-  border: 1px solid var(--lp-emerald-mid);
-  border-radius: 10px;
-  padding: 10px 14px;
-  min-width: 150px;
-  z-index: 3;
-}
-
-.lp-extracted-badge > p {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--lp-emerald);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
-}
-
-.lp-extracted-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--lp-emerald);
-  padding: 2px 0;
-}
-
-.lp-extracted-row span:first-child { color: var(--lp-gray-700); }
-
-.lp-check-icon {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 22px;
-  height: 22px;
-  background: var(--lp-emerald-mid);
-  border-radius: 50%;
-  border: 2px solid var(--lp-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ── LOGOS BAR ───────────────────────────────────────────────────────────────*/
-.lp-logos-bar {
-  background: var(--lp-gray-50);
-  padding: 1.5rem 2rem;
-  text-align: center;
-  border-top: 1px solid var(--lp-gray-100);
-  border-bottom: 1px solid var(--lp-gray-100);
-}
-
-.lp-logos-bar > p {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--lp-gray-400);
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.lp-logos-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3rem;
-  flex-wrap: wrap;
-}
-
-.lp-logos-row span {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--lp-gray-400);
-}
-
-/* ── SECCIÓN GENÉRICA ────────────────────────────────────────────────────────*/
-.lp-section {
-  padding: 5rem 2rem;
-  max-width: 1140px;
-  margin: 0 auto;
-}
-
-/* ── TIPOGRAFÍA DE SECCIONES ─────────────────────────────────────────────────
-   Cambiá estos tres bloques para redefinir toda la tipografía de secciones.
-   ──────────────────────────────────────────────────────────────────────────── */
-.lp-section-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--lp-blue);
-  margin-bottom: 0.75rem;
-}
-
-.lp-section-title {
-  font-family: var(--lp-font-display);
-  font-weight: 800;
-  font-size: 2.2rem;       /* ← cambiá para agrandar los títulos de sección */
-  letter-spacing: -1px;
-  color: var(--lp-navy);
-  margin-bottom: 0.75rem;
-  line-height: 1.15;
-}
-
-.lp-section-sub {
-  font-size: 1rem;
-  color: var(--lp-gray-700);
-  max-width: 520px;
-  margin-bottom: 3rem;
-}
-
-/* ── FEATURES GRID ───────────────────────────────────────────────────────────*/
-.lp-features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-}
-
-.lp-feature-card {
-  background: var(--lp-white);
-  border: 1px solid var(--lp-gray-100);
-  border-radius: 14px;
-  padding: 1.5rem;
-  transition: border-color 0.2s, transform 0.15s;
-}
-
-.lp-feature-card:hover {
-  border-color: var(--lp-blue-light);
-  transform: translateY(-2px);
-}
-
-.lp-feature-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.lp-feature-title {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--lp-navy);
-  margin-bottom: 0.4rem;
-}
-
-.lp-feature-desc { font-size: 14px; color: var(--lp-gray-700); line-height: 1.6; }
-
-/* ── HOW IT WORKS ────────────────────────────────────────────────────────────*/
-.lp-how-section { background: var(--lp-navy); padding: 5rem 2rem; }
-.lp-how-inner   { max-width: 1140px; margin: 0 auto; }
-
-.lp-steps-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  position: relative;
-}
-
-.lp-steps-row::before {
-  content: '';
-  position: absolute;
-  top: 28px;
-  left: calc(33.33% / 2);
-  right: calc(33.33% / 2);
-  height: 1px;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.lp-step { text-align: center; position: relative; z-index: 1; }
-
-.lp-step-num {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.25rem;
-  font-family: var(--lp-font-display);
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--lp-white);
-}
-
-.lp-step-num-active { background: var(--lp-blue); border-color: var(--lp-blue); }
-
-.lp-step h3 {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--lp-white);
-  margin-bottom: 0.5rem;
-}
-
-.lp-step p { font-size: 14px; color: rgba(255, 255, 255, 0.6); line-height: 1.6; }
-
-/* ── METRICS ─────────────────────────────────────────────────────────────────*/
-.lp-metrics-section {
-  background: var(--lp-blue-pale);
-  padding: 4rem 2rem;
-  border-top: 1px solid var(--lp-blue-light);
-  border-bottom: 1px solid var(--lp-blue-light);
-}
-
-.lp-metrics-inner {
-  max-width: 1140px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  text-align: center;
-}
-
-.lp-metric-val {
-  font-family: var(--lp-font-display);
-  font-weight: 800;
-  font-size: 2.8rem;         /* ← cambiá para ajustar el tamaño de las métricas */
-  color: var(--lp-navy);
-  line-height: 1;
-  margin-bottom: 0.4rem;
-  letter-spacing: -2px;
-}
-
-.lp-metric-label { font-size: 14px; color: var(--lp-gray-700); line-height: 1.4; }
-
-/* ── TESTIMONIAL ─────────────────────────────────────────────────────────────*/
-.lp-testimonial-section {
-  padding: 5rem 2rem;
-  max-width: 900px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.lp-stars {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.lp-testimonial-quote {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: var(--lp-navy);
-  line-height: 1.4;
-  letter-spacing: -0.5px;
-  margin-bottom: 1.5rem;
-}
-
-.lp-testimonial-author {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.lp-author-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--lp-navy);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--lp-white);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-/* ── ROLES ───────────────────────────────────────────────────────────────────*/
-.lp-roles-section {
-  background: var(--lp-gray-50);
-  padding: 5rem 2rem;
-  border-top: 1px solid var(--lp-gray-100);
-  border-bottom: 1px solid var(--lp-gray-100);
-}
-
-.lp-roles-inner {
-  max-width: 1140px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-}
-
-.lp-roles-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
-
-.lp-role-item { display: flex; gap: 14px; align-items: flex-start; }
-
-.lp-role-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-top: 7px;
-  flex-shrink: 0;
-}
-
-.lp-role-name { font-weight: 600; font-size: 14px; color: var(--lp-navy); margin-bottom: 2px; }
-.lp-role-desc { font-size: 13px; color: var(--lp-gray-700); line-height: 1.5; }
-
-.lp-roles-visual {
-  background: var(--lp-white);
-  border: 1px solid var(--lp-gray-100);
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.lp-roles-vis-header {
-  background: var(--lp-navy);
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.lp-vis-dots { display: flex; gap: 6px; }
-
-.lp-vis-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-.lp-vis-title { font-size: 12px; color: rgba(255, 255, 255, 0.6); font-weight: 500; }
-
-.lp-roles-vis-body { padding: 16px; }
-
-.lp-role-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  transition: background 0.1s;
-}
-
-.lp-role-row:last-child { margin-bottom: 0; }
-.lp-role-row:hover { background: var(--lp-gray-50); }
-
-.lp-role-user { display: flex; align-items: center; gap: 10px; }
-
-.lp-role-user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--lp-white);
-}
-
-.lp-role-user-name { font-size: 13px; font-weight: 500; color: var(--lp-navy); }
-.lp-role-user-email { font-size: 11px; color: var(--lp-gray-400); }
-
-.lp-role-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 100px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* ── PRICING ─────────────────────────────────────────────────────────────────*/
-.lp-pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-}
-
-.lp-pricing-card {
-  border: 1px solid var(--lp-gray-100);
-  border-radius: 16px;
-  padding: 2rem 1.5rem;
-  position: relative;
-  background: var(--lp-white);
-  transition: border-color 0.2s;
-}
-
-.lp-featured { border: 2px solid var(--lp-navy-mid); }
-
-.lp-featured-tag {
-  position: absolute;
-  top: -13px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--lp-navy);
-  color: var(--lp-white);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 14px;
-  border-radius: 100px;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-
-.lp-plan-name {
-  font-family: var(--lp-font-display);
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--lp-navy);
-  margin-bottom: 0.5rem;
-}
-
-.lp-plan-price {
-  font-family: var(--lp-font-display);
-  font-weight: 800;
-  font-size: 2.4rem;
-  color: var(--lp-navy);
-  letter-spacing: -1.5px;
-  margin-bottom: 0.2rem;
-  line-height: 1;
-}
-
-.lp-plan-price span { font-size: 14px; font-weight: 500; color: var(--lp-gray-400); letter-spacing: 0; }
-
-.lp-plan-desc {
-  font-size: 13px;
-  color: var(--lp-gray-700);
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--lp-gray-100);
-}
-
-.lp-plan-features {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 1.5rem;
-}
-
-.lp-plan-features li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--lp-gray-700);
-}
-
-.lp-plan-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  display: block;
-  transition: background 0.15s, border-color 0.15s;
-  font-family: var(--lp-font-body);
-}
-
-.lp-plan-btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--lp-gray-100);
-  color: var(--lp-navy);
-}
-
-.lp-plan-btn-outline:hover { border-color: var(--lp-navy); background: var(--lp-gray-50); }
-
-.lp-plan-btn-solid {
-  background: var(--lp-navy);
-  border: 1.5px solid var(--lp-navy);
-  color: var(--lp-white);
-}
-
-.lp-plan-btn-solid:hover { background: var(--lp-navy-mid); border-color: var(--lp-navy-mid); }
-
-/* ── CTA FINAL ───────────────────────────────────────────────────────────────*/
-.lp-cta-section { background: var(--lp-navy); padding: 5rem 2rem; text-align: center; }
-
-.lp-cta-title {
-  font-family: var(--lp-font-display);
-  font-weight: 800;
-  font-size: 2.5rem;
-  color: var(--lp-white);
-  letter-spacing: -1.5px;
-  margin-bottom: 1rem;
-  line-height: 1.1;
-}
-
-.lp-cta-sub {
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 1rem;
-  margin-bottom: 2rem;
-  max-width: 440px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.lp-cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
-/* ── FOOTER ──────────────────────────────────────────────────────────────────*/
-.lp-footer {
-  background: var(--lp-navy);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.lp-footer-brand { font-family: var(--lp-font-display); font-weight: 700; font-size: 16px; color: var(--lp-white); }
-.lp-footer-copy  { font-size: 13px; color: rgba(255, 255, 255, 0.4); }
-
-.lp-footer-links { display: flex; gap: 1.5rem; }
-
-.lp-footer-links a {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.lp-footer-links a:hover { color: rgba(255, 255, 255, 0.9); }
-
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────────*/
-@media (max-width: 900px) {
-  .lp-hero            { grid-template-columns: 1fr; gap: 3rem; }
-  .lp-hero-visual     { order: -1; }
-  .lp-extracted-badge { display: none; }
-  .lp-features-grid   { grid-template-columns: 1fr 1fr; }
-  .lp-steps-row       { grid-template-columns: 1fr; }
-  .lp-steps-row::before { display: none; }
-  .lp-metrics-inner   { grid-template-columns: repeat(2, 1fr); }
-  .lp-roles-inner     { grid-template-columns: 1fr; }
-  .lp-pricing-grid    { grid-template-columns: 1fr; }
-  .lp-nav-links       { display: none; }
-  .lp-hero-title      { font-size: 2.2rem; }
-}
-
-@media (max-width: 600px) {
-  .lp-features-grid { grid-template-columns: 1fr; }
-  .lp-metrics-inner { grid-template-columns: 1fr 1fr; }
-}
-</file>
-
-<file path="src/layouts/LandingGuard.jsx">
-import { Outlet, Navigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
-import { useAuth } from '@/features/auth/context/AuthContext'
-
-// Guard exclusivo para la ruta raíz (/).
-// - Cargando → spinner centrado (evita parpadeo de la landing).
-// - Autenticado → redirige directo al dashboard.
-// - No autenticado → muestra la landing (Outlet).
-export default function LandingGuard() {
-  const { isAuthenticated, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    )
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
-  }
-
-  return <Outlet />
-}
-</file>
 
 <file path=".kiro/specs/invotrack-master-spec/design.md">
 # Design Document — InvoTrack Master Spec
@@ -2398,6 +1449,164 @@ export default defineConfig([
 <svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
 </file>
 
+<file path="src/components/ZoomPanImageViewer.jsx">
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { ZoomIn, ZoomOut, RotateCcw, Move } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+const MIN_SCALE = 0.5
+const MAX_SCALE = 5
+const ZOOM_STEP = 0.25
+
+export default function ZoomPanImageViewer({
+  src,
+  alt = 'Factura',
+  className,
+  minHeight = 320,
+}) {
+  const viewportRef = useRef(null)
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  const dragRef = useRef({ isDragging: false, startX: 0, startY: 0, posX: 0, posY: 0 })
+
+  const clampScale = (value) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, value))
+
+  const resetView = useCallback(() => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }, [])
+
+  const zoomIn = () => setScale((s) => clampScale(s + ZOOM_STEP))
+  const zoomOut = () => setScale((s) => clampScale(s - ZOOM_STEP))
+
+  const startDrag = useCallback((clientX, clientY) => {
+    dragRef.current = {
+      isDragging: true,
+      startX: clientX,
+      startY: clientY,
+      posX: position.x,
+      posY: position.y,
+    }
+    setDragging(true)
+  }, [position.x, position.y])
+
+  const moveDrag = useCallback((clientX, clientY) => {
+    if (!dragRef.current.isDragging) return
+    const { startX, startY, posX, posY } = dragRef.current
+    setPosition({
+      x: posX + (clientX - startX),
+      y: posY + (clientY - startY),
+    })
+  }, [])
+
+  const endDrag = useCallback(() => {
+    dragRef.current.isDragging = false
+    setDragging(false)
+  }, [])
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    startDrag(e.clientX, e.clientY)
+  }
+
+  const handleMouseMove = (e) => moveDrag(e.clientX, e.clientY)
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return
+    startDrag(e.touches[0].clientX, e.touches[0].clientY)
+  }
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length !== 1) return
+    e.preventDefault()
+    moveDrag(e.touches[0].clientX, e.touches[0].clientY)
+  }
+
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+
+    const onWheel = (e) => {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
+      setScale((s) => clampScale(s + delta))
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
+  useEffect(() => {
+    resetView()
+  }, [src, resetView])
+
+  if (!src) return null
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-gray-50',
+        className
+      )}
+    >
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-white border-b border-gray-100">
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <Move className="h-3.5 w-3.5" />
+          <span>Arrastrá para mover · rueda del mouse para zoom</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut} title="Alejar">
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <span className="text-xs text-gray-500 w-10 text-center tabular-nums">
+            {Math.round(scale * 100)}%
+          </span>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn} title="Acercar">
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={resetView} title="Restablecer">
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div
+        ref={viewportRef}
+        className={cn(
+          'relative flex-1 overflow-hidden select-none',
+          dragging ? 'cursor-grabbing' : 'cursor-grab'
+        )}
+        style={{ minHeight }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={endDrag}
+        onMouseLeave={endDrag}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={endDrag}
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            src={src}
+            alt={alt}
+            draggable={false}
+            className="max-h-full max-w-full object-contain pointer-events-none"
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              transformOrigin: 'center center',
+              transition: dragging ? 'none' : 'transform 0.05s ease-out',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/features/alerts/__tests__/.gitkeep">
 
 </file>
@@ -3159,387 +2368,6 @@ export const afipService = {
 }
 </file>
 
-<file path="src/features/landing/LandingPage.jsx">
-import { useNavigate } from 'react-router-dom'
-import './LandingPage.css'
-
-// ── Íconos inline simples ─────────────────────────────────────────────────────
-const IconPlay = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>
-)
-const IconStar = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="#BA7517"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-)
-const IconCheck = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-)
-
-// ── Componente principal ──────────────────────────────────────────────────────
-export default function LandingPage() {
-  const navigate = useNavigate()
-
-  return (
-    <div className="lp-root">
-
-      {/* NAV */}
-      <nav className="lp-nav">
-        <a href="/" className="lp-nav-logo">
-          <div className="lp-logo-mark">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="2" y="2" width="14" height="14" rx="2" stroke="white" strokeWidth="1.4"/>
-              <path d="M5 6h8M5 9h6M5 12h4" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-              <circle cx="14" cy="4" r="3" fill="#1D9E75"/>
-              <path d="M12.7 4l.9.9 1.5-1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className="lp-logo-text">InvoTrack</span>
-        </a>
-        <ul className="lp-nav-links">
-          <li><a href="#features">Funcionalidades</a></li>
-          <li><a href="#como-funciona">Cómo funciona</a></li>
-          <li><a href="#precios">Precios</a></li>
-          <li>
-            <button className="lp-nav-cta" onClick={() => navigate('/register')}>
-              Empezar gratis
-            </button>
-          </li>
-        </ul>
-      </nav>
-
-      {/* HERO */}
-      <section className="lp-hero">
-        <div className="lp-hero-content">
-          <div className="lp-hero-eyebrow">
-            <span className="lp-dot" />
-            OCR con IA — Facturas en segundos
-          </div>
-          <h1 className="lp-hero-title">
-            Controlá tus facturas sin <em>perder tiempo</em>
-          </h1>
-          <p className="lp-hero-sub">
-            Escaneá, registrá y organizá todas las facturas de tu negocio desde el celular. InvoTrack extrae los datos automáticamente y lleva el control por vos.
-          </p>
-          <div className="lp-hero-actions">
-            <button className="lp-btn-primary" onClick={() => navigate('/register')}>
-              <IconPlay /> Probar gratis
-            </button>
-            <a href="#como-funciona" className="lp-btn-secondary">
-              Ver cómo funciona
-            </a>
-          </div>
-          <div className="lp-hero-proof">
-            <div className="lp-avatars">
-              <div className="lp-avatar" style={{ background: '#185FA5' }}>DM</div>
-              <div className="lp-avatar" style={{ background: '#1D9E75' }}>CP</div>
-              <div className="lp-avatar" style={{ background: '#993C1D' }}>RP</div>
-            </div>
-            <p className="lp-proof-text"><strong>PyMEs argentinas</strong> ya usan InvoTrack</p>
-          </div>
-        </div>
-
-        <div className="lp-hero-visual">
-          <div className="lp-invoice-card">
-            <div className="lp-scan-overlay" />
-            <div className="lp-invoice-header">
-              <span className="lp-invoice-type">FACTURA A</span>
-              <span className="lp-invoice-num">0003-00004521</span>
-            </div>
-            <p className="lp-invoice-company">Tech Solutions S.A.</p>
-            <p className="lp-invoice-cuit">CUIT: 30-71234567-8 · Resp. Inscripto</p>
-            <hr className="lp-invoice-divider" />
-            <div className="lp-invoice-row"><span>Consultoría IT (10 hs)</span><span>$125.000</span></div>
-            <div className="lp-invoice-row"><span>Licencia software anual</span><span>$90.000</span></div>
-            <hr className="lp-invoice-divider" />
-            <div className="lp-invoice-row"><span>Neto gravado</span><span>$215.000</span></div>
-            <div className="lp-invoice-row"><span>IVA 21%</span><span>$45.150</span></div>
-            <div className="lp-invoice-row lp-invoice-total"><span>Total</span><span>$260.150</span></div>
-            <hr className="lp-invoice-divider" />
-            <div className="lp-invoice-row">
-              <span style={{ fontSize: '10px', color: '#888780' }}>CAE: 74123456789012 · Venc: 22/06/2025</span>
-            </div>
-          </div>
-          <div className="lp-extracted-badge">
-            <div className="lp-check-icon">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-5"/></svg>
-            </div>
-            <p>Datos extraídos</p>
-            <div className="lp-extracted-row"><span>Emisor</span><span>Detectado ✓</span></div>
-            <div className="lp-extracted-row"><span>Monto</span><span>$260.150 ✓</span></div>
-            <div className="lp-extracted-row"><span>CAE</span><span>Válido ✓</span></div>
-            <div className="lp-extracted-row"><span>IVA 21%</span><span>$45.150 ✓</span></div>
-          </div>
-        </div>
-      </section>
-
-      {/* LOGOS BAR */}
-      <div className="lp-logos-bar">
-        <p>Integrado con los sistemas que ya usás</p>
-        <div className="lp-logos-row">
-          {['AFIP / ARCA', 'Google Doc AI', 'GPT-4 Vision', 'Supabase', 'Resend'].map((name) => (
-            <span key={name}>{name}</span>
-          ))}
-        </div>
-      </div>
-
-      {/* FEATURES */}
-      <section id="features" className="lp-section">
-        <p className="lp-section-label">Funcionalidades</p>
-        <h2 className="lp-section-title">Todo lo que necesitás, nada de lo que no</h2>
-        <p className="lp-section-sub">Diseñado para comercios y PyMEs que necesitan control financiero sin complejidad contable.</p>
-        <div className="lp-features-grid">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="lp-feature-card">
-              <div className="lp-feature-icon" style={{ background: f.iconBg }}>
-                <f.Icon color={f.iconColor} />
-              </div>
-              <p className="lp-feature-title">{f.title}</p>
-              <p className="lp-feature-desc">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="como-funciona" className="lp-how-section">
-        <div className="lp-how-inner">
-          <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Cómo funciona</p>
-          <h2 className="lp-section-title" style={{ color: 'white' }}>Tres pasos. Sin complicaciones.</h2>
-          <p className="lp-section-sub" style={{ color: 'rgba(255,255,255,0.65)', marginBottom: '3rem' }}>
-            Sin conocimientos contables. Sin configuración compleja. Empezás en minutos.
-          </p>
-          <div className="lp-steps-row">
-            {STEPS.map((step, i) => (
-              <div key={step.title} className="lp-step">
-                <div className={`lp-step-num${i === 0 ? ' lp-step-num-active' : ''}`}>{i + 1}</div>
-                <h3>{step.title}</h3>
-                <p>{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* METRICS */}
-      <section className="lp-metrics-section">
-        <div className="lp-metrics-inner">
-          {METRICS.map((m) => (
-            <div key={m.label} className="lp-metric">
-              <p className="lp-metric-val">{m.val}</p>
-              <p className="lp-metric-label">{m.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* TESTIMONIAL */}
-      <section className="lp-testimonial-section">
-        <div className="lp-stars">
-          {[...Array(5)].map((_, i) => <IconStar key={i} />)}
-        </div>
-        <p className="lp-testimonial-quote">
-          "Nos ahorraría muchísimo tiempo operativo. La persona que ingresa facturas tarda una semana entera. Esto cambiaría todo."
-        </p>
-        <div className="lp-testimonial-author">
-          <div className="lp-author-avatar">RP</div>
-          <div>
-            <p style={{ fontWeight: 600, fontSize: 14, color: '#042C53' }}>Roberto P.</p>
-            <p style={{ fontSize: 13, color: '#888780' }}>Empresa de repuestos Iveco, Buenos Aires</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ROLES */}
-      <section className="lp-roles-section">
-        <div className="lp-roles-inner">
-          <div>
-            <p className="lp-section-label">Control por roles</p>
-            <h2 className="lp-section-title">Cada persona hace lo suyo</h2>
-            <p className="lp-section-sub">Un sistema de permisos pensado para negocios reales.</p>
-            <div className="lp-roles-list">
-              {ROLES.map((r) => (
-                <div key={r.name} className="lp-role-item">
-                  <div className="lp-role-dot" style={{ background: r.color }} />
-                  <div>
-                    <p className="lp-role-name">{r.name}</p>
-                    <p className="lp-role-desc">{r.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="lp-roles-visual">
-            <div className="lp-roles-vis-header">
-              <div className="lp-vis-dots">
-                <div className="lp-vis-dot" style={{ background: '#E24B4A' }} />
-                <div className="lp-vis-dot" style={{ background: '#EF9F27' }} />
-                <div className="lp-vis-dot" style={{ background: '#1D9E75' }} />
-              </div>
-              <span className="lp-vis-title">Gestión de usuarios — Empresa</span>
-            </div>
-            <div className="lp-roles-vis-body">
-              {ROLE_USERS.map((u) => (
-                <div key={u.name} className="lp-role-row">
-                  <div className="lp-role-user">
-                    <div className="lp-role-user-avatar" style={{ background: u.color }}>{u.initials}</div>
-                    <div>
-                      <p className="lp-role-user-name">{u.name}</p>
-                      <p className="lp-role-user-email">{u.email}</p>
-                    </div>
-                  </div>
-                  <span className="lp-role-badge" style={{ background: u.badgeBg, color: u.badgeColor }}>
-                    {u.role}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section id="precios" className="lp-section">
-        <p className="lp-section-label">Precios</p>
-        <h2 className="lp-section-title">Simple, predecible, sin sorpresas</h2>
-        <p className="lp-section-sub">Empezá gratis y escalá cuando tu negocio lo necesite.</p>
-        <div className="lp-pricing-grid">
-          {PLANS.map((plan) => (
-            <div key={plan.name} className={`lp-pricing-card${plan.featured ? ' lp-featured' : ''}`}>
-              {plan.featured && <div className="lp-featured-tag">Más popular</div>}
-              <p className="lp-plan-name">{plan.name}</p>
-              <p className="lp-plan-price">{plan.price} <span>/ mes</span></p>
-              <p className="lp-plan-desc">{plan.desc}</p>
-              <ul className="lp-plan-features">
-                {plan.features.map((f) => (
-                  <li key={f}><IconCheck /> {f}</li>
-                ))}
-              </ul>
-              <button
-                className={`lp-plan-btn ${plan.featured ? 'lp-plan-btn-solid' : 'lp-plan-btn-outline'}`}
-                onClick={() => plan.href ? window.location.href = plan.href : navigate('/register')}
-              >
-                {plan.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section className="lp-cta-section">
-        <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Empezá hoy</p>
-        <h2 className="lp-cta-title">Escaneá. Registrá. Controlá.</h2>
-        <p className="lp-cta-sub">Registrate gratis y en minutos tenés tu primera factura cargada. Sin tarjeta de crédito.</p>
-        <div className="lp-cta-actions">
-          <button className="lp-btn-white" onClick={() => navigate('/register')}>
-            <IconPlay /> Crear cuenta gratis
-          </button>
-          <a href="mailto:hola@invotrack.app" className="lp-btn-ghost-white">
-            Contactar al equipo →
-          </a>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="lp-footer">
-        <span className="lp-footer-brand">InvoTrack</span>
-        <span className="lp-footer-copy">© 2025 InvoTrack · Hecho en Argentina 🇦🇷</span>
-        <div className="lp-footer-links">
-          <a href="#">Privacidad</a>
-          <a href="#">Términos</a>
-          <a href="mailto:hola@invotrack.app">Contacto</a>
-        </div>
-      </footer>
-
-    </div>
-  )
-}
-
-// ── Datos ─────────────────────────────────────────────────────────────────────
-
-const ScanIcon = ({ color }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 8h10M7 12h6M7 16h4"/><path d="M18 3l3 3-3 3"/>
-  </svg>
-)
-const DashIcon = ({ color }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M9 21V9"/>
-  </svg>
-)
-const BellIcon = ({ color }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-  </svg>
-)
-const UsersIcon = ({ color }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-  </svg>
-)
-const PaymentIcon = ({ color }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-  </svg>
-)
-const ExportIcon = ({ color }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
-  </svg>
-)
-
-const FEATURES = [
-  { title: 'Escaneo OCR con IA', desc: 'Sacás foto y la app extrae emisor, receptor, CUIT, montos, IVA y CAE. Compatible con PDF, JPG y PNG.', iconBg: '#E1F5EE', iconColor: '#0F6E56', Icon: ScanIcon },
-  { title: 'Dashboard financiero', desc: 'Resultado neto, dinero cobrado, gastos del mes y evolución de ingresos en un panel actualizado en tiempo real.', iconBg: '#E6F1FB', iconColor: '#185FA5', Icon: DashIcon },
-  { title: 'Alertas de vencimiento', desc: 'Te avisamos antes de que venza una factura para que nunca pierdas un cobro ni una deuda. Notificaciones por email.', iconBg: '#FAECE7', iconColor: '#993C1D', Icon: BellIcon },
-  { title: 'Gestión de roles', desc: 'Administrador, contador y visualizador. Cada usuario ve y hace solo lo que le corresponde.', iconBg: '#EEEDFE', iconColor: '#534AB7', Icon: UsersIcon },
-  { title: 'Pagos parciales', desc: 'Registrá pagos en cuotas. El estado de la factura se actualiza automáticamente según lo cobrado.', iconBg: '#FAEEDA', iconColor: '#BA7517', Icon: PaymentIcon },
-  { title: 'Exportación a CSV', desc: 'Descargá reportes de ingresos y gastos por período para compartir con tu contador sin intermediarios.', iconBg: '#EAF3DE', iconColor: '#3B6D11', Icon: ExportIcon },
-]
-
-const STEPS = [
-  { title: 'Escaneá la factura', desc: 'Subís una foto o PDF. El OCR con IA lee todos los campos: CUIT, montos, IVA, CAE y vencimiento.' },
-  { title: 'Revisás y guardás', desc: 'Los datos aparecen pre-completados con indicadores de confianza. Corregís lo que necesites y guardás en un click.' },
-  { title: 'Controlás tus finanzas', desc: 'El dashboard te muestra qué cobrar, qué pagar, alertas de vencimiento y el resultado del mes.' },
-]
-
-const METRICS = [
-  { val: '-80%', label: 'Menos tiempo cargando facturas manualmente' },
-  { val: '11', label: 'Tipos de comprobante AFIP soportados' },
-  { val: '0', label: 'Conocimientos contables necesarios para empezar' },
-  { val: 'ARS / USD / EUR', label: 'Multi-moneda con tipo de cambio' },
-]
-
-const ROLES = [
-  { name: 'Administrador', desc: 'Acceso total: facturas, usuarios, reportes y configuración.', color: '#185FA5' },
-  { name: 'Contador', desc: 'Puede cargar y editar facturas, registrar pagos y exportar datos.', color: '#0F6E56' },
-  { name: 'Visualizador', desc: 'Solo lectura. Consulta facturas y reportes sin modificar nada.', color: '#888780' },
-]
-
-const ROLE_USERS = [
-  { name: 'Dante Martínez', email: 'dante@empresa.com', initials: 'DM', color: '#185FA5', role: 'Admin', badgeBg: '#E6F1FB', badgeColor: '#0C447C' },
-  { name: 'Ciro Perazzo', email: 'ciro@empresa.com', initials: 'CP', color: '#0F6E56', role: 'Contador', badgeBg: '#E1F5EE', badgeColor: '#085041' },
-  { name: 'María González', email: 'maria@empresa.com', initials: 'MG', color: '#888780', role: 'Visualizador', badgeBg: '#F1EFE8', badgeColor: '#444441' },
-]
-
-const PLANS = [
-  {
-    name: 'Gratuito', price: '$0', desc: 'Para probar InvoTrack sin compromiso.',
-    features: ['Hasta 20 facturas por mes', '1 empresa', 'OCR con modo mock', 'Dashboard básico'],
-    cta: 'Empezar gratis', featured: false,
-  },
-  {
-    name: 'PyME', price: '$9.990', desc: 'Para negocios que procesan facturas todos los días.',
-    features: ['Facturas ilimitadas', 'OCR real con GPT-4 Vision', 'Alertas de vencimiento por email', 'Hasta 5 usuarios', 'Exportación CSV + reportes', 'Validación CAE con AFIP'],
-    cta: 'Probar 14 días gratis', featured: true,
-  },
-  {
-    name: 'Empresa', price: 'A medida', desc: 'Para operaciones con alto volumen o múltiples sucursales.',
-    features: ['Multi-empresa sin límite', 'Usuarios ilimitados', 'Google Document AI', 'SLA y soporte prioritario', 'API REST para integraciones'],
-    cta: 'Hablar con el equipo', featured: false, href: 'mailto:hola@invotrack.app',
-  },
-]
-</file>
-
 <file path="src/features/ocr/__tests__/.gitkeep">
 
 </file>
@@ -4137,6 +2965,34 @@ export const notificationService = {
     color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+}
+</file>
+
+<file path="src/layouts/LandingGuard.jsx">
+import { Outlet, Navigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/features/auth/context/AuthContext'
+
+// Guard exclusivo para la ruta raíz (/).
+// - Cargando → spinner centrado (evita parpadeo de la landing).
+// - Autenticado → redirige directo al dashboard.
+// - No autenticado → muestra la landing (Outlet).
+export default function LandingGuard() {
+  const { isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <Outlet />
 }
 </file>
 
@@ -7479,22 +6335,6 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
 9. THE System SHALL SIEMPRE pasar `company_id` como parámetro explícito a los services, nunca leerlo desde el contexto dentro del service.
 </file>
 
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>invotrack</title>
-  </head>
-  <body style="margin: 0;">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
-</file>
-
 <file path="package.json">
 {
   "name": "invotrack",
@@ -7529,6 +6369,7 @@ El proyecto ya cuenta con una base funcional en React + Vite (JSX) con Supabase.
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "express": "^5.2.1",
     "lucide-react": "^1.14.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -9351,6 +8192,931 @@ export const invoicePaymentService = {
 }
 </file>
 
+<file path="src/features/landing/LandingPage.css">
+/* ─────────────────────────────────────────────────────────────────────────────
+   LandingPage.css
+   Todos los estilos usan el prefijo "lp-" para no colisionar con Tailwind
+   ni con los componentes del resto de la app.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── FUENTES ─────────────────────────────────────────────────────────────────
+   Pegá esto en tu index.html dentro de <head> si no lo tenés ya:
+
+   <link rel="preconnect" href="https://fonts.googleapis.com" />
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── TOKENS ──────────────────────────────────────────────────────────────────
+   Cambiá estos valores para modificar la paleta completa de la landing.
+   ──────────────────────────────────────────────────────────────────────────── */
+.lp-root {
+  --lp-navy:          #042C53;
+  --lp-navy-mid:      #185FA5;
+  --lp-blue:          #378ADD;
+  --lp-blue-light:    #B5D4F4;
+  --lp-blue-pale:     #E6F1FB;
+  --lp-emerald:       #0F6E56;
+  --lp-emerald-light: #E1F5EE;
+  --lp-emerald-mid:   #1D9E75;
+  --lp-gray-900:      #2C2C2A;
+  --lp-gray-700:      #5F5E5A;
+  --lp-gray-400:      #888780;
+  --lp-gray-100:      #D3D1C7;
+  --lp-gray-50:       #F1EFE8;
+  --lp-white:         #ffffff;
+
+  --lp-font-body:    'Inter', system-ui, sans-serif;
+  --lp-font-display: 'Syne', system-ui, sans-serif;
+
+  font-family: var(--lp-font-body);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--lp-gray-900);
+  background: var(--lp-white);
+  -webkit-font-smoothing: antialiased;
+  /* Sin overflow ni height — el scroll lo maneja el body normalmente */
+}
+
+/* ── NAV ─────────────────────────────────────────────────────────────────────*/
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--lp-gray-100);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.lp-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.lp-logo-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--lp-navy);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-logo-text {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--lp-navy);
+  letter-spacing: -0.3px;
+}
+
+.lp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lp-nav-links a {
+  text-decoration: none;
+  color: var(--lp-gray-700);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.lp-nav-links a:hover { color: var(--lp-navy); }
+
+.lp-nav-cta {
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lp-nav-cta:hover { background: var(--lp-navy-mid); }
+
+/* ── HERO ────────────────────────────────────────────────────────────────────*/
+.lp-hero {
+  padding: 5rem 2rem 4rem;
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.lp-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lp-emerald-light);
+  color: var(--lp-emerald);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+}
+
+.lp-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--lp-emerald-mid);
+  border-radius: 50%;
+  animation: lp-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ── TIPOGRAFÍA DE TÍTULOS ────────────────────────────────────────────────────
+   Cambiá font-size y letter-spacing para ajustar el peso visual del hero.
+   ──────────────────────────────────────────────────────────────────────────── */
+.lp-hero-title {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 3rem;           /* ← cambiá esto para agrandar/achicar el hero */
+  line-height: 1.1;
+  letter-spacing: -1.5px;   /* ← letra más junta da sensación de marca */
+  color: var(--lp-navy);
+  margin-bottom: 1.25rem;
+}
+
+.lp-hero-title em {
+  font-style: normal;
+  color: var(--lp-blue);
+}
+
+.lp-hero-sub {
+  font-size: 1.1rem;
+  color: var(--lp-gray-700);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: 420px;
+}
+
+.lp-hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── BOTONES ─────────────────────────────────────────────────────────────────*/
+.lp-btn-primary {
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.lp-btn-primary:hover { background: var(--lp-navy-mid); transform: translateY(-1px); }
+
+.lp-btn-secondary {
+  background: transparent;
+  color: var(--lp-gray-700);
+  padding: 13px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--lp-gray-100);
+}
+
+.lp-btn-secondary:hover { background: var(--lp-gray-50); }
+
+.lp-btn-white {
+  background: var(--lp-white);
+  color: var(--lp-navy);
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lp-btn-white:hover { background: var(--lp-blue-pale); }
+
+.lp-btn-ghost-white {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 13px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.lp-btn-ghost-white:hover { border-color: rgba(255, 255, 255, 0.5); color: var(--lp-white); }
+
+/* ── HERO PROOF ──────────────────────────────────────────────────────────────*/
+.lp-hero-proof {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.lp-avatars { display: flex; }
+
+.lp-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--lp-white);
+  margin-right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lp-white);
+}
+
+.lp-proof-text { font-size: 13px; color: var(--lp-gray-700); }
+.lp-proof-text strong { color: var(--lp-gray-900); }
+
+/* ── HERO VISUAL (mockup factura) ────────────────────────────────────────────*/
+.lp-hero-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-invoice-card {
+  background: var(--lp-white);
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 16px;
+  padding: 24px;
+  width: 340px;
+  box-shadow: 0 4px 40px rgba(4, 44, 83, 0.10);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.lp-scan-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--lp-blue), transparent);
+  animation: lp-scan 2.5s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes lp-scan {
+  0%   { top: 0; opacity: 1; }
+  50%  { top: 100%; opacity: 0.7; }
+  100% { top: 0; opacity: 1; }
+}
+
+.lp-invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.lp-invoice-type {
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+.lp-invoice-num { font-size: 11px; color: var(--lp-gray-400); }
+
+.lp-invoice-company {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--lp-navy);
+  margin-bottom: 4px;
+}
+
+.lp-invoice-cuit { font-size: 11px; color: var(--lp-gray-400); margin-bottom: 16px; }
+
+.lp-invoice-divider { border: none; border-top: 1px solid var(--lp-gray-100); margin: 12px 0; }
+
+.lp-invoice-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--lp-gray-700);
+  padding: 3px 0;
+}
+
+.lp-invoice-total { font-weight: 600; font-size: 14px; color: var(--lp-navy); margin-top: 4px; }
+
+.lp-extracted-badge {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--lp-emerald-light);
+  border: 1px solid var(--lp-emerald-mid);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 150px;
+  z-index: 3;
+}
+
+.lp-extracted-badge > p {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--lp-emerald);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.lp-extracted-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--lp-emerald);
+  padding: 2px 0;
+}
+
+.lp-extracted-row span:first-child { color: var(--lp-gray-700); }
+
+.lp-check-icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  background: var(--lp-emerald-mid);
+  border-radius: 50%;
+  border: 2px solid var(--lp-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── LOGOS BAR ───────────────────────────────────────────────────────────────*/
+.lp-logos-bar {
+  background: var(--lp-gray-50);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  border-top: 1px solid var(--lp-gray-100);
+  border-bottom: 1px solid var(--lp-gray-100);
+}
+
+.lp-logos-bar > p {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lp-gray-400);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.lp-logos-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.lp-logos-row span {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--lp-gray-400);
+}
+
+/* ── SECCIÓN GENÉRICA ────────────────────────────────────────────────────────*/
+.lp-section {
+  padding: 5rem 2rem;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+/* ── TIPOGRAFÍA DE SECCIONES ─────────────────────────────────────────────────
+   Cambiá estos tres bloques para redefinir toda la tipografía de secciones.
+   ──────────────────────────────────────────────────────────────────────────── */
+.lp-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lp-blue);
+  margin-bottom: 0.75rem;
+}
+
+.lp-section-title {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.2rem;       /* ← cambiá para agrandar los títulos de sección */
+  letter-spacing: -1px;
+  color: var(--lp-navy);
+  margin-bottom: 0.75rem;
+  line-height: 1.15;
+}
+
+.lp-section-sub {
+  font-size: 1rem;
+  color: var(--lp-gray-700);
+  max-width: 520px;
+  margin-bottom: 3rem;
+}
+
+/* ── FEATURES GRID ───────────────────────────────────────────────────────────*/
+.lp-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.lp-feature-card {
+  background: var(--lp-white);
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.lp-feature-card:hover {
+  border-color: var(--lp-blue-light);
+  transform: translateY(-2px);
+}
+
+.lp-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.lp-feature-title {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--lp-navy);
+  margin-bottom: 0.4rem;
+}
+
+.lp-feature-desc { font-size: 14px; color: var(--lp-gray-700); line-height: 1.6; }
+
+/* ── HOW IT WORKS ────────────────────────────────────────────────────────────*/
+.lp-how-section { background: var(--lp-navy); padding: 5rem 2rem; }
+.lp-how-inner   { max-width: 1140px; margin: 0 auto; }
+
+.lp-steps-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  position: relative;
+}
+
+.lp-steps-row::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(33.33% / 2);
+  right: calc(33.33% / 2);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.lp-step { text-align: center; position: relative; z-index: 1; }
+
+.lp-step-num {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--lp-white);
+}
+
+.lp-step-num-active { background: var(--lp-blue); border-color: var(--lp-blue); }
+
+.lp-step h3 {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--lp-white);
+  margin-bottom: 0.5rem;
+}
+
+.lp-step p { font-size: 14px; color: rgba(255, 255, 255, 0.6); line-height: 1.6; }
+
+/* ── METRICS ─────────────────────────────────────────────────────────────────*/
+.lp-metrics-section {
+  background: var(--lp-blue-pale);
+  padding: 4rem 2rem;
+  border-top: 1px solid var(--lp-blue-light);
+  border-bottom: 1px solid var(--lp-blue-light);
+}
+
+.lp-metrics-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  text-align: center;
+}
+
+.lp-metric-val {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.8rem;         /* ← cambiá para ajustar el tamaño de las métricas */
+  color: var(--lp-navy);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  letter-spacing: -2px;
+}
+
+.lp-metric-label { font-size: 14px; color: var(--lp-gray-700); line-height: 1.4; }
+
+/* ── TESTIMONIAL ─────────────────────────────────────────────────────────────*/
+.lp-testimonial-section {
+  padding: 5rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.lp-stars {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.lp-testimonial-quote {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--lp-navy);
+  line-height: 1.4;
+  letter-spacing: -0.5px;
+  margin-bottom: 1.5rem;
+}
+
+.lp-testimonial-author {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.lp-author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--lp-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lp-white);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ── ROLES ───────────────────────────────────────────────────────────────────*/
+.lp-roles-section {
+  background: var(--lp-gray-50);
+  padding: 5rem 2rem;
+  border-top: 1px solid var(--lp-gray-100);
+  border-bottom: 1px solid var(--lp-gray-100);
+}
+
+.lp-roles-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.lp-roles-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+
+.lp-role-item { display: flex; gap: 14px; align-items: flex-start; }
+
+.lp-role-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.lp-role-name { font-weight: 600; font-size: 14px; color: var(--lp-navy); margin-bottom: 2px; }
+.lp-role-desc { font-size: 13px; color: var(--lp-gray-700); line-height: 1.5; }
+
+.lp-roles-visual {
+  background: var(--lp-white);
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lp-roles-vis-header {
+  background: var(--lp-navy);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-vis-dots { display: flex; gap: 6px; }
+
+.lp-vis-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.lp-vis-title { font-size: 12px; color: rgba(255, 255, 255, 0.6); font-weight: 500; }
+
+.lp-roles-vis-body { padding: 16px; }
+
+.lp-role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
+  transform-origin: left center;
+}
+
+.lp-role-row:last-child { margin-bottom: 0; }
+.lp-role-row:hover {
+  background: var(--lp-gray-50);
+  transform: scale(0.98);
+}
+
+.lp-role-user { display: flex; align-items: center; gap: 10px; }
+
+.lp-role-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--lp-white);
+}
+
+.lp-role-user-name { font-size: 13px; font-weight: 500; color: var(--lp-navy); }
+.lp-role-user-email { font-size: 11px; color: var(--lp-gray-400); }
+.lp-role-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── PRICING ─────────────────────────────────────────────────────────────────*/
+.lp-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.lp-pricing-card {
+  border: 1px solid var(--lp-gray-100);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  position: relative;
+  background: var(--lp-white);
+  transition: border-color 0.2s;
+}
+
+.lp-featured { border: 2px solid var(--lp-navy-mid); }
+
+.lp-featured-tag {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--lp-navy);
+  color: var(--lp-white);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.lp-plan-name {
+  font-family: var(--lp-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--lp-navy);
+  margin-bottom: 0.5rem;
+}
+
+.lp-plan-price {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.4rem;
+  color: var(--lp-navy);
+  letter-spacing: -1.5px;
+  margin-bottom: 0.2rem;
+  line-height: 1;
+}
+
+.lp-plan-price span { font-size: 14px; font-weight: 500; color: var(--lp-gray-400); letter-spacing: 0; }
+
+.lp-plan-desc {
+  font-size: 13px;
+  color: var(--lp-gray-700);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--lp-gray-100);
+}
+
+.lp-plan-features {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.lp-plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--lp-gray-700);
+}
+
+.lp-plan-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  display: block;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--lp-font-body);
+}
+
+.lp-plan-btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--lp-gray-100);
+  color: var(--lp-navy);
+}
+
+.lp-plan-btn-outline:hover { border-color: var(--lp-navy); background: var(--lp-gray-50); }
+
+.lp-plan-btn-solid {
+  background: var(--lp-navy);
+  border: 1.5px solid var(--lp-navy);
+  color: var(--lp-white);
+}
+
+.lp-plan-btn-solid:hover { background: var(--lp-navy-mid); border-color: var(--lp-navy-mid); }
+
+/* ── CTA FINAL ───────────────────────────────────────────────────────────────*/
+.lp-cta-section { background: var(--lp-navy); padding: 5rem 2rem; text-align: center; }
+
+.lp-cta-title {
+  font-family: var(--lp-font-display);
+  font-weight: 800;
+  font-size: 2.5rem;
+  color: var(--lp-white);
+  letter-spacing: -1.5px;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.lp-cta-sub {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lp-cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────────*/
+.lp-footer {
+  background: var(--lp-navy);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.lp-footer-brand { font-family: var(--lp-font-display); font-weight: 700; font-size: 16px; color: var(--lp-white); }
+.lp-footer-copy  { font-size: 13px; color: rgba(255, 255, 255, 0.4); }
+
+.lp-footer-links { display: flex; gap: 1.5rem; }
+
+.lp-footer-links a {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.lp-footer-links a:hover { color: rgba(255, 255, 255, 0.9); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────────*/
+@media (max-width: 900px) {
+  .lp-hero            { grid-template-columns: 1fr; gap: 3rem; }
+  .lp-hero-visual     { order: -1; }
+  .lp-extracted-badge { display: none; }
+  .lp-features-grid   { grid-template-columns: 1fr 1fr; }
+  .lp-steps-row       { grid-template-columns: 1fr; }
+  .lp-steps-row::before { display: none; }
+  .lp-metrics-inner   { grid-template-columns: repeat(2, 1fr); }
+  .lp-roles-inner     { grid-template-columns: 1fr; }
+  .lp-pricing-grid    { grid-template-columns: 1fr; }
+  .lp-nav-links       { display: none; }
+  .lp-hero-title      { font-size: 2.2rem; }
+}
+
+@media (max-width: 600px) {
+  .lp-features-grid { grid-template-columns: 1fr; }
+  .lp-metrics-inner { grid-template-columns: 1fr 1fr; }
+}
+</file>
+
 <file path="src/features/ocr/adapters/BaseOcrAdapter.js">
 /**
  * @fileoverview Clase base abstracta para adaptadores OCR.
@@ -10601,6 +10367,22 @@ dist-ssr
 *.sw?
 </file>
 
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>invotrack</title>
+  </head>
+  <body style="margin: 0;">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
 <file path="src/App.jsx">
 import { RouterProvider } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -11221,6 +11003,387 @@ export default function DashboardPage() {
     </div>
   )
 }
+</file>
+
+<file path="src/features/landing/LandingPage.jsx">
+import { useNavigate } from 'react-router-dom'
+import './LandingPage.css'
+
+// ── Íconos inline simples ─────────────────────────────────────────────────────
+const IconPlay = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+)
+const IconStar = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="#BA7517"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+)
+const IconCheck = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+)
+
+// ── Componente principal ──────────────────────────────────────────────────────
+export default function LandingPage() {
+  const navigate = useNavigate()
+
+  return (
+    <div className="lp-root">
+
+      {/* NAV */}
+      <nav className="lp-nav">
+        <a href="/" className="lp-nav-logo">
+          <div className="lp-logo-mark">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="2" y="2" width="14" height="14" rx="2" stroke="white" strokeWidth="1.4"/>
+              <path d="M5 6h8M5 9h6M5 12h4" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="14" cy="4" r="3" fill="#1D9E75"/>
+              <path d="M12.7 4l.9.9 1.5-1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span className="lp-logo-text">InvoTrack</span>
+        </a>
+        <ul className="lp-nav-links">
+          <li><a href="#features">Funcionalidades</a></li>
+          <li><a href="#como-funciona">Cómo funciona</a></li>
+          <li><a href="#precios">Precios</a></li>
+          <li>
+            <button className="lp-nav-cta" onClick={() => navigate('/register')}>
+              Empezar gratis
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      {/* HERO */}
+      <section className="lp-hero">
+        <div className="lp-hero-content">
+          <div className="lp-hero-eyebrow">
+            <span className="lp-dot" />
+            OCR con IA — Facturas en segundos
+          </div>
+          <h1 className="lp-hero-title">
+            Controlá tus facturas sin <em>perder tiempo</em>
+          </h1>
+          <p className="lp-hero-sub">
+            Escaneá, registrá y organizá todas las facturas de tu negocio desde el celular. InvoTrack extrae los datos automáticamente y lleva el control por vos.
+          </p>
+          <div className="lp-hero-actions">
+            <button className="lp-btn-primary" onClick={() => navigate('/register')}>
+              <IconPlay /> Probar gratis
+            </button>
+            <a href="#como-funciona" className="lp-btn-secondary">
+              Ver cómo funciona
+            </a>
+          </div>
+          <div className="lp-hero-proof">
+            <div className="lp-avatars">
+              <div className="lp-avatar" style={{ background: '#185FA5' }}>DM</div>
+              <div className="lp-avatar" style={{ background: '#1D9E75' }}>CP</div>
+              <div className="lp-avatar" style={{ background: '#993C1D' }}>RP</div>
+            </div>
+            <p className="lp-proof-text"><strong>PyMEs argentinas</strong> ya usan InvoTrack</p>
+          </div>
+        </div>
+
+        <div className="lp-hero-visual">
+          <div className="lp-invoice-card">
+            <div className="lp-scan-overlay" />
+            <div className="lp-invoice-header">
+              <span className="lp-invoice-type">FACTURA A</span>
+              <span className="lp-invoice-num">0003-00004521</span>
+            </div>
+            <p className="lp-invoice-company">Tech Solutions S.A.</p>
+            <p className="lp-invoice-cuit">CUIT: 30-71234567-8 · Resp. Inscripto</p>
+            <hr className="lp-invoice-divider" />
+            <div className="lp-invoice-row"><span>Consultoría IT (10 hs)</span><span>$125.000</span></div>
+            <div className="lp-invoice-row"><span>Licencia software anual</span><span>$90.000</span></div>
+            <hr className="lp-invoice-divider" />
+            <div className="lp-invoice-row"><span>Neto gravado</span><span>$215.000</span></div>
+            <div className="lp-invoice-row"><span>IVA 21%</span><span>$45.150</span></div>
+            <div className="lp-invoice-row lp-invoice-total"><span>Total</span><span>$260.150</span></div>
+            <hr className="lp-invoice-divider" />
+            <div className="lp-invoice-row">
+              <span style={{ fontSize: '10px', color: '#888780' }}>CAE: 74123456789012 · Venc: 22/06/2025</span>
+            </div>
+          </div>
+          <div className="lp-extracted-badge">
+            <div className="lp-check-icon">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-5"/></svg>
+            </div>
+            <p>Datos extraídos</p>
+            <div className="lp-extracted-row"><span>Emisor</span><span>Detectado ✓</span></div>
+            <div className="lp-extracted-row"><span>Monto</span><span>$260.150 ✓</span></div>
+            <div className="lp-extracted-row"><span>CAE</span><span>Válido ✓</span></div>
+            <div className="lp-extracted-row"><span>IVA 21%</span><span>$45.150 ✓</span></div>
+          </div>
+        </div>
+      </section>
+
+      {/* LOGOS BAR */}
+      <div className="lp-logos-bar">
+        <p>Integrado con los sistemas que ya usás</p>
+        <div className="lp-logos-row">
+          {['AFIP / ARCA', 'Google Doc AI', 'GPT-4 Vision', 'Supabase', 'Resend'].map((name) => (
+            <span key={name}>{name}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* FEATURES */}
+      <section id="features" className="lp-section">
+        <p className="lp-section-label">Funcionalidades</p>
+        <h2 className="lp-section-title">Todo lo que necesitás, nada de lo que no</h2>
+        <p className="lp-section-sub">Diseñado para comercios y PyMEs que necesitan control financiero sin complejidad contable.</p>
+        <div className="lp-features-grid">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="lp-feature-card">
+              <div className="lp-feature-icon" style={{ background: f.iconBg }}>
+                <f.Icon color={f.iconColor} />
+              </div>
+              <p className="lp-feature-title">{f.title}</p>
+              <p className="lp-feature-desc">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="como-funciona" className="lp-how-section">
+        <div className="lp-how-inner">
+          <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Cómo funciona</p>
+          <h2 className="lp-section-title" style={{ color: 'white' }}>Tres pasos. Sin complicaciones.</h2>
+          <p className="lp-section-sub" style={{ color: 'rgba(255,255,255,0.65)', marginBottom: '3rem' }}>
+            Sin conocimientos contables. Sin configuración compleja. Empezás en minutos.
+          </p>
+          <div className="lp-steps-row">
+            {STEPS.map((step, i) => (
+              <div key={step.title} className="lp-step">
+                <div className={`lp-step-num${i === 0 ? ' lp-step-num-active' : ''}`}>{i + 1}</div>
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* METRICS */}
+      <section className="lp-metrics-section">
+        <div className="lp-metrics-inner">
+          {METRICS.map((m) => (
+            <div key={m.label} className="lp-metric">
+              <p className="lp-metric-val">{m.val}</p>
+              <p className="lp-metric-label">{m.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIAL */}
+      <section className="lp-testimonial-section">
+        <div className="lp-stars">
+          {[...Array(5)].map((_, i) => <IconStar key={i} />)}
+        </div>
+        <p className="lp-testimonial-quote">
+          "Nos ahorraría muchísimo tiempo operativo. La persona que ingresa facturas tarda una semana entera. Esto cambiaría todo."
+        </p>
+        <div className="lp-testimonial-author">
+          <div className="lp-author-avatar">RP</div>
+          <div>
+            <p style={{ fontWeight: 600, fontSize: 14, color: '#042C53' }}>Roberto P.</p>
+            <p style={{ fontSize: 13, color: '#888780' }}>Empresa de repuestos Iveco, Buenos Aires</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ROLES */}
+      <section className="lp-roles-section">
+        <div className="lp-roles-inner">
+          <div>
+            <p className="lp-section-label">Control por roles</p>
+            <h2 className="lp-section-title">Cada persona hace lo suyo</h2>
+            <p className="lp-section-sub">Un sistema de permisos pensado para negocios reales.</p>
+            <div className="lp-roles-list">
+              {ROLES.map((r) => (
+                <div key={r.name} className="lp-role-item">
+                  <div className="lp-role-dot" style={{ background: r.color }} />
+                  <div>
+                    <p className="lp-role-name">{r.name}</p>
+                    <p className="lp-role-desc">{r.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lp-roles-visual">
+            <div className="lp-roles-vis-header">
+              <div className="lp-vis-dots">
+                <div className="lp-vis-dot" style={{ background: '#E24B4A' }} />
+                <div className="lp-vis-dot" style={{ background: '#EF9F27' }} />
+                <div className="lp-vis-dot" style={{ background: '#1D9E75' }} />
+              </div>
+              <span className="lp-vis-title">Gestión de usuarios — Empresa</span>
+            </div>
+            <div className="lp-roles-vis-body">
+              {ROLE_USERS.map((u) => (
+                <div key={u.name} className="lp-role-row">
+                  <div className="lp-role-user">
+                    <div className="lp-role-user-avatar" style={{ background: u.color }}>{u.initials}</div>
+                    <div>
+                      <p className="lp-role-user-name">{u.name}</p>
+                      <p className="lp-role-user-email">{u.email}</p>
+                    </div>
+                  </div>
+                  <span className="lp-role-badge" style={{ background: u.badgeBg, color: u.badgeColor }}>
+                    {u.role}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="precios" className="lp-section">
+        <p className="lp-section-label">Precios</p>
+        <h2 className="lp-section-title">Simple, predecible, sin sorpresas</h2>
+        <p className="lp-section-sub">Empezá gratis y escalá cuando tu negocio lo necesite.</p>
+        <div className="lp-pricing-grid">
+          {PLANS.map((plan) => (
+            <div key={plan.name} className={`lp-pricing-card${plan.featured ? ' lp-featured' : ''}`}>
+              {plan.featured && <div className="lp-featured-tag">Más popular</div>}
+              <p className="lp-plan-name">{plan.name}</p>
+              <p className="lp-plan-price">{plan.price} <span>/ mes</span></p>
+              <p className="lp-plan-desc">{plan.desc}</p>
+              <ul className="lp-plan-features">
+                {plan.features.map((f) => (
+                  <li key={f}><IconCheck /> {f}</li>
+                ))}
+              </ul>
+              <button
+                className={`lp-plan-btn ${plan.featured ? 'lp-plan-btn-solid' : 'lp-plan-btn-outline'}`}
+                onClick={() => plan.href ? window.location.href = plan.href : navigate('/register')}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="lp-cta-section">
+        <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Empezá hoy</p>
+        <h2 className="lp-cta-title">Escaneá. Registrá. Controlá.</h2>
+        <p className="lp-cta-sub">Registrate gratis y en minutos tenés tu primera factura cargada. Sin tarjeta de crédito.</p>
+        <div className="lp-cta-actions">
+          <button className="lp-btn-white" onClick={() => navigate('/register')}>
+            <IconPlay /> Crear cuenta gratis
+          </button>
+          <a href="mailto:hola@invotrack.app" className="lp-btn-ghost-white">
+            Contactar al equipo →
+          </a>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="lp-footer">
+        <span className="lp-footer-brand">InvoTrack</span>
+        <span className="lp-footer-copy">© 2025 InvoTrack · Hecho en Argentina 🇦🇷</span>
+        <div className="lp-footer-links">
+          <a href="#">Privacidad</a>
+          <a href="#">Términos</a>
+          <a href="mailto:hola@invotrack.app">Contacto</a>
+        </div>
+      </footer>
+
+    </div>
+  )
+}
+
+// ── Datos ─────────────────────────────────────────────────────────────────────
+
+const ScanIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 8h10M7 12h6M7 16h4"/><path d="M18 3l3 3-3 3"/>
+  </svg>
+)
+const DashIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M9 21V9"/>
+  </svg>
+)
+const BellIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+)
+const UsersIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+)
+const PaymentIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </svg>
+)
+const ExportIcon = ({ color }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
+  </svg>
+)
+
+const FEATURES = [
+  { title: 'Escaneo OCR con IA', desc: 'Sacás foto y la app extrae emisor, receptor, CUIT, montos, IVA y CAE. Compatible con PDF, JPG y PNG.', iconBg: '#E1F5EE', iconColor: '#0F6E56', Icon: ScanIcon },
+  { title: 'Dashboard financiero', desc: 'Resultado neto, dinero cobrado, gastos del mes y evolución de ingresos en un panel actualizado en tiempo real.', iconBg: '#E6F1FB', iconColor: '#185FA5', Icon: DashIcon },
+  { title: 'Alertas de vencimiento', desc: 'Te avisamos antes de que venza una factura para que nunca pierdas un cobro ni una deuda. Notificaciones por email.', iconBg: '#FAECE7', iconColor: '#993C1D', Icon: BellIcon },
+  { title: 'Gestión de roles', desc: 'Administrador, contador y visualizador. Cada usuario ve y hace solo lo que le corresponde.', iconBg: '#EEEDFE', iconColor: '#534AB7', Icon: UsersIcon },
+  { title: 'Pagos parciales', desc: 'Registrá pagos en cuotas. El estado de la factura se actualiza automáticamente según lo cobrado.', iconBg: '#FAEEDA', iconColor: '#BA7517', Icon: PaymentIcon },
+  { title: 'Exportación a CSV', desc: 'Descargá reportes de ingresos y gastos por período para compartir con tu contador sin intermediarios.', iconBg: '#EAF3DE', iconColor: '#3B6D11', Icon: ExportIcon },
+]
+
+const STEPS = [
+  { title: 'Escaneá la factura', desc: 'Subís una foto o PDF. El OCR con IA lee todos los campos: CUIT, montos, IVA, CAE y vencimiento.' },
+  { title: 'Revisás y guardás', desc: 'Los datos aparecen pre-completados con indicadores de confianza. Corregís lo que necesites y guardás en un click.' },
+  { title: 'Controlás tus finanzas', desc: 'El dashboard te muestra qué cobrar, qué pagar, alertas de vencimiento y el resultado del mes.' },
+]
+
+const METRICS = [
+  { val: '60%', label: 'Menos tiempo cargando facturas manualmente' },
+  { val: '11', label: 'Tipos de comprobante AFIP soportados' },
+  { val: '0', label: 'Conocimientos contables necesarios para empezar' },
+  { val: 'ARS / USD / EUR', label: 'Multi-moneda con tipo de cambio' },
+]
+
+const ROLES = [
+  { name: 'Administrador', desc: 'Acceso total: facturas, usuarios, reportes y configuración.', color: '#185FA5' },
+  { name: 'Contador', desc: 'Puede cargar y editar facturas, registrar pagos y exportar datos.', color: '#0F6E56' },
+  { name: 'Visualizador', desc: 'Solo lectura. Consulta facturas y reportes sin modificar nada.', color: '#888780' },
+]
+
+const ROLE_USERS = [
+  { name: 'Dante Martínez', email: 'dante@empresa.com', initials: 'DM', color: '#185FA5', role: 'Admin', badgeBg: '#E6F1FB', badgeColor: '#0C447C' },
+  { name: 'Ciro Perazzo', email: 'ciro@empresa.com', initials: 'CP', color: '#0F6E56', role: 'Contador', badgeBg: '#E1F5EE', badgeColor: '#085041' },
+  { name: 'María González', email: 'maria@empresa.com', initials: 'MG', color: '#888780', role: 'Visualizador', badgeBg: '#F1EFE8', badgeColor: '#444441' },
+]
+
+const PLANS = [
+  {
+    name: 'Gratuito', price: '$0', desc: 'Para probar InvoTrack sin compromiso.',
+    features: ['Hasta 20 facturas por mes', '1 empresa', 'OCR con modo mock', 'Dashboard básico'],
+    cta: 'Empezar gratis', featured: false,
+  },
+  {
+    name: 'PyME', price: '$9.990', desc: 'Para negocios que procesan facturas todos los días.',
+    features: ['Facturas ilimitadas', 'OCR real con GPT-4 Vision', 'Alertas de vencimiento por email', 'Hasta 5 usuarios', 'Exportación CSV + reportes', 'Validación CAE con AFIP'],
+    cta: 'Probar 14 días gratis', featured: true,
+  },
+  {
+    name: 'Empresa', price: 'A medida', desc: 'Para operaciones con alto volumen o múltiples sucursales.',
+    features: ['Multi-empresa sin límite', 'Usuarios ilimitados', 'Google Document AI', 'SLA y soporte prioritario', 'API REST para integraciones'],
+    cta: 'Hablar con el equipo', featured: false, href: 'mailto:hola@invotrack.app',
+  },
+]
 </file>
 
 <file path="src/features/ocr/adapters/Gpt4VisionAdapter.js">
@@ -13174,314 +13337,6 @@ export default function InvoicesPage() {
 }
 </file>
 
-<file path="src/features/ocr/pages/OcrPage.jsx">
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Upload, ScanLine, CheckCircle, AlertCircle, Loader2, FileImage, ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { ocrService } from '../services/ocrService'
-import { formatCurrency } from '@/lib/utils'
-import { cn } from '@/lib/utils'
-
-function ConfidenceBadge({ score }) {
-  if (score >= 0.8) return <Badge variant="success">Alta</Badge>
-  if (score >= 0.5) return <Badge variant="warning">Media</Badge>
-  return <Badge variant="destructive">Baja</Badge>
-}
-
-function DropZone({ onFile, disabled }) {
-  const inputRef = useRef()
-  const [dragging, setDragging] = useState(false)
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) onFile(file)
-  }
-
-  return (
-    <div
-      className={cn(
-        'border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer',
-        dragging ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50',
-        disabled && 'opacity-50 pointer-events-none'
-      )}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={handleDrop}
-      onClick={() => inputRef.current?.click()}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".pdf,image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={(e) => e.target.files[0] && onFile(e.target.files[0])}
-      />
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-          <Upload className="h-7 w-7 text-blue-500" />
-        </div>
-        <div>
-          <p className="font-semibold text-gray-700">Arrastrá tu factura aquí</p>
-          <p className="text-sm text-gray-400 mt-1">o hacé click para seleccionar</p>
-          <p className="text-xs text-gray-300 mt-2">JPG, PNG, PDF — máx. 10MB</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default function OcrPage() {
-  const navigate = useNavigate()
-  const [file, setFile] = useState(null)
-  const [preview, setPreview] = useState(null)
-  const [processing, setProcessing] = useState(false)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
-  const [provider, setProvider] = useState('gpt4v')
-
-  const handleFile = (f) => {
-    setFile(f)
-    setResult(null)
-    setError(null)
-    if (f.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = (e) => setPreview(e.target.result)
-      reader.readAsDataURL(f)
-    } else {
-      setPreview(null)
-    }
-  }
-
-  const handleProcess = async () => {
-    if (!file) return
-    setProcessing(true)
-    setError(null)
-    try {
-      const res = await ocrService.processInvoice(file, provider)
-      setResult(res)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setProcessing(false)
-    }
-  }
-
-  const handleUseData = () => {
-    if (!result) return
-    const { normalized } = result
-    // Navegar a nueva factura con datos pre-cargados via state
-    navigate('/invoices/new', { state: { ocrData: normalized } })
-  }
-
-  return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Escanear factura</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Subí una imagen y extraemos los datos automáticamente
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upload */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ScanLine className="h-4 w-4" /> Subir imagen
-              </CardTitle>
-              <CardDescription>Factura, nota de crédito, débito, recibo o ticket</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <DropZone onFile={handleFile} disabled={processing} />
-
-              {file && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <FileImage className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
-                    <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
-                  </div>
-                </div>
-              )}
-
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="w-full rounded-lg border border-gray-100 max-h-48 object-contain"
-                />
-              )}
-
-              <Button
-                className="w-full"
-                onClick={handleProcess}
-                disabled={!file || processing}
-              >
-                {processing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Procesando...</>
-                ) : (
-                  <><ScanLine className="h-4 w-4 mr-2" /> Extraer datos</>
-                )}
-              </Button>
-
-              {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg text-red-600 text-sm">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  {error}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Results */}
-        <div>
-          {!result ? (
-            <Card className="h-full">
-              <CardContent className="flex flex-col items-center justify-center h-full py-16 text-gray-300">
-                <ScanLine className="h-12 w-12 mb-3" />
-                <p className="text-sm">Los datos extraídos aparecerán aquí</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    Datos extraídos
-                  </CardTitle>
-                  <Badge variant="success">Completado</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Todos los campos extraídos con scores */}
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Identificación</p>
-                  {[
-                    { label: 'Tipo comprobante', value: result.normalized.invoice_type, key: 'invoice_type' },
-                    { label: 'Número', value: result.normalized.invoice_number, key: 'invoice_number' },
-                    { label: 'Fecha emisión', value: result.normalized.issue_date, key: 'issue_date' },
-                    { label: 'Vencimiento', value: result.normalized.due_date, key: 'due_date' },
-                    { label: 'CAE', value: result.normalized.cae, key: 'total_amount' },
-                    { label: 'Cond. pago', value: result.normalized.condicion_pago?.replace('_', ' '), key: 'subtotal' },
-                  ].map(({ label, value, key }) => (
-                    <div key={label} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
-                      <div className="flex items-center gap-2 flex-1 justify-end">
-                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
-                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Emisor (Vendedor)</p>
-                  {[
-                    { label: 'Razón social', value: result.normalized.seller_name, key: 'seller_name' },
-                    { label: 'CUIT', value: result.normalized.seller_cuit, key: 'seller_cuit' },
-                    { label: 'Domicilio', value: result.normalized.seller_address, key: 'seller_name' },
-                  ].map(({ label, value, key }) => (
-                    <div key={label} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
-                      <div className="flex items-center gap-2 flex-1 justify-end">
-                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
-                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Receptor (Comprador)</p>
-                  {[
-                    { label: 'Razón social', value: result.normalized.buyer_name, key: 'buyer_name' },
-                    { label: 'CUIT', value: result.normalized.buyer_cuit, key: 'buyer_cuit' },
-                    { label: 'Domicilio', value: result.normalized.buyer_address, key: 'buyer_name' },
-                  ].map(({ label, value, key }) => (
-                    <div key={label} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
-                      <div className="flex items-center gap-2 flex-1 justify-end">
-                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
-                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                {/* Montos */}
-                <div className="space-y-2 text-sm">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Importes</p>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Neto gravado</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{result.normalized.subtotal ? formatCurrency(result.normalized.subtotal) : '-'}</span>
-                      <ConfidenceBadge score={result.normalized.confidence.subtotal ?? 0.1} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">IVA</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{result.normalized.total_iva ? formatCurrency(result.normalized.total_iva) : '-'}</span>
-                      <ConfidenceBadge score={result.normalized.confidence.total_iva ?? 0.1} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between font-semibold">
-                    <span>Total</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-600">{result.normalized.total_amount ? formatCurrency(result.normalized.total_amount) : '-'}</span>
-                      <ConfidenceBadge score={result.normalized.confidence.total_amount ?? 0.1} />
-                    </div>
-                  </div>
-                </div>
-
-                {result.normalized.items?.length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Ítems detectados ({result.normalized.items.length})</p>
-                      <div className="space-y-1.5">
-                        {result.normalized.items.map((item, i) => (
-                          <div key={i} className="text-xs bg-gray-50 rounded-lg p-2">
-                            <p className="font-medium text-gray-800 truncate">{item.descripcion}</p>
-                            <p className="text-gray-500 mt-0.5">
-                              {item.cantidad} × {formatCurrency(item.precio_unitario)} · IVA {item.alicuota_iva}%
-                              {item.subtotal_neto ? ` = ${formatCurrency(item.subtotal_neto)}` : ''}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <Button className="w-full" onClick={handleUseData}>
-                  Usar estos datos <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-</file>
-
 <file path="src/features/ocr/parsers/invoiceParser.js">
 /**
  * invoiceParser — extrae campos estructurados del texto OCR crudo.
@@ -14502,108 +14357,6 @@ El lenguaje de implementación es **JavaScript (JSX/JS)** en todo el proyecto. N
 ```
 </file>
 
-<file path="src/app/router.jsx">
-import { lazy, Suspense } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
-import AppLayout from '@/layouts/AppLayout'
-import AuthLayout from '@/layouts/AuthLayout'
-import LandingGuard from '@/layouts/LandingGuard'
-import ProtectedLayout from '@/layouts/ProtectedLayout'
-import OnboardingGuard from '@/layouts/OnboardingGuard'
-
-// Lazy loaded pages
-const LandingPage = lazy(() => import('@/features/landing/LandingPage'))
-const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
-const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
-const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'))
-const OnboardingPage = lazy(() => import('@/features/companies/pages/OnboardingPage'))
-const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
-const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage'))
-const NewInvoicePage = lazy(() => import('@/features/invoices/pages/NewInvoicePage'))
-const InvoiceDetailPage = lazy(() => import('@/features/invoices/pages/InvoiceDetailPage'))
-const ClientsPage = lazy(() => import('@/features/clients/pages/ClientsPage'))
-const ProvidersPage = lazy(() => import('@/features/providers/pages/ProvidersPage'))
-const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
-const AlertsPage = lazy(() => import('@/features/alerts/pages/AlertsPage'))
-const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'))
-const OcrPage = lazy(() => import('@/features/ocr/pages/OcrPage'))
-
-// Spinner de carga que se muestra mientras una página lazy se está descargando.
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-full min-h-[400px]">
-    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-  </div>
-)
-
-// Envuelve un componente lazy en Suspense para mostrar el PageLoader mientras carga.
-const withSuspense = (Component) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
-)
-
-export const router = createBrowserRouter([
-  {
-    // Ruta raíz: landing para no logueados, redirige al dashboard si ya está autenticado.
-    element: <LandingGuard />,
-    children: [
-      { path: '/', element: withSuspense(LandingPage) },
-    ],
-  },
-  {
-    // Rutas públicas de auth: redirigen al dashboard si el usuario ya está logueado.
-    element: <AuthLayout />,
-    children: [
-      { path: '/login', element: withSuspense(LoginPage) },
-      { path: '/register', element: withSuspense(RegisterPage) },
-      // Callback de Supabase después de confirmar el email.
-      { path: '/auth/callback', element: withSuspense(AuthCallbackPage) },
-    ],
-  },
-  {
-    // Onboarding: requires authentication but NOT a company (OnboardingGuard handles this)
-    element: <OnboardingGuard />,
-    children: [
-      { path: '/onboarding', element: withSuspense(OnboardingPage) },
-    ],
-  },
-  {
-    element: <ProtectedLayout />,
-    children: [
-      {
-        element: <AppLayout />,
-        children: [
-          { path: '/dashboard', element: withSuspense(DashboardPage) },
-          { path: '/invoices', element: withSuspense(InvoicesPage) },
-          { path: '/invoices/new', element: withSuspense(NewInvoicePage) },
-          { path: '/invoices/:id', element: withSuspense(InvoiceDetailPage) },
-          { path: '/invoices/:id/edit', element: withSuspense(NewInvoicePage) },
-          { path: '/clients', element: withSuspense(ClientsPage) },
-          { path: '/providers', element: withSuspense(ProvidersPage) },
-          { path: '/reports', element: withSuspense(ReportsPage) },
-          { path: '/alerts', element: withSuspense(AlertsPage) },
-          { path: '/settings', element: withSuspense(SettingsPage) },
-          { path: '/ocr', element: withSuspense(OcrPage) },
-        ],
-      },
-    ],
-  },
-  {
-    path: '*',
-    element: (
-      <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
-        <p className="text-6xl font-bold text-gray-200">404</p>
-        <p className="mt-2">Página no encontrada</p>
-        <a href="/dashboard" className="mt-4 text-blue-600 hover:underline text-sm">
-          Volver al dashboard
-        </a>
-      </div>
-    ),
-  },
-])
-</file>
-
 <file path="src/features/auth/pages/RegisterPage.jsx">
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -14941,6 +14694,330 @@ export function useCompany() {
 }
 </file>
 
+<file path="src/features/ocr/pages/OcrPage.jsx">
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Upload, ScanLine, CheckCircle, AlertCircle, Loader2, FileImage, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
+import { ocrService } from '../services/ocrService'
+import { formatCurrency } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+
+function ConfidenceBadge({ score }) {
+  if (score >= 0.8) return <Badge variant="success">Alta</Badge>
+  if (score >= 0.5) return <Badge variant="warning">Media</Badge>
+  return <Badge variant="destructive">Baja</Badge>
+}
+
+function DropZone({ onFile, disabled }) {
+  const inputRef = useRef()
+  const [dragging, setDragging] = useState(false)
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onFile(file)
+  }
+
+  return (
+    <div
+      className={cn(
+        'border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer',
+        dragging ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50',
+        disabled && 'opacity-50 pointer-events-none'
+      )}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => e.target.files[0] && onFile(e.target.files[0])}
+      />
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center">
+          <Upload className="h-7 w-7 text-blue-500" />
+        </div>
+        <div>
+          <p className="font-semibold text-gray-700">Arrastrá tu factura aquí</p>
+          <p className="text-sm text-gray-400 mt-1">o hacé click para seleccionar</p>
+          <p className="text-xs text-gray-300 mt-2">JPG, PNG, PDF — máx. 10MB</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function OcrPage() {
+  const navigate = useNavigate()
+  const [file, setFile] = useState(null)
+  const [preview, setPreview] = useState(null)
+  const [processing, setProcessing] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+  const [provider, setProvider] = useState('gpt4v')
+
+  const handleFile = (f) => {
+    setFile(f)
+    setResult(null)
+    setError(null)
+    if (f.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onload = (e) => setPreview(e.target.result)
+      reader.readAsDataURL(f)
+    } else {
+      setPreview(null)
+    }
+  }
+
+  const handleProcess = async () => {
+    if (!file) return
+    setProcessing(true)
+    setError(null)
+    try {
+      const res = await ocrService.processInvoice(file, provider)
+      setResult(res)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleUseData = () => {
+    if (!result) return
+    const { normalized } = result
+    navigate('/invoices/new', { state: { ocrData: normalized, ocrPreview: preview } })
+  }
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Escanear factura</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Subí una imagen y extraemos los datos automáticamente
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Upload */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScanLine className="h-4 w-4" /> Subir imagen
+              </CardTitle>
+              <CardDescription>Factura, nota de crédito, débito, recibo o ticket</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {preview ? (
+                <ZoomPanImageViewer
+                  src={preview}
+                  alt={file?.name ?? 'Factura'}
+                  className="h-[calc(100vh-22rem)] min-h-[360px]"
+                  minHeight={360}
+                />
+              ) : (
+                <DropZone onFile={handleFile} disabled={processing} />
+              )}
+
+              {file && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <FileImage className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                    <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs shrink-0"
+                    disabled={processing}
+                    onClick={() => {
+                      setFile(null)
+                      setPreview(null)
+                      setResult(null)
+                      setError(null)
+                    }}
+                  >
+                    Cambiar
+                  </Button>
+                </div>
+              )}
+
+              <Button
+                className="w-full"
+                onClick={handleProcess}
+                disabled={!file || processing}
+              >
+                {processing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Procesando...</>
+                ) : (
+                  <><ScanLine className="h-4 w-4 mr-2" /> Extraer datos</>
+                )}
+              </Button>
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg text-red-600 text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Results */}
+        <div>
+          {!result ? (
+            <Card className="h-full">
+              <CardContent className="flex flex-col items-center justify-center h-full py-16 text-gray-300">
+                <ScanLine className="h-12 w-12 mb-3" />
+                <p className="text-sm">Los datos extraídos aparecerán aquí</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    Datos extraídos
+                  </CardTitle>
+                  <Badge variant="success">Completado</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Todos los campos extraídos con scores */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Identificación</p>
+                  {[
+                    { label: 'Tipo comprobante', value: result.normalized.invoice_type, key: 'invoice_type' },
+                    { label: 'Número', value: result.normalized.invoice_number, key: 'invoice_number' },
+                    { label: 'Fecha emisión', value: result.normalized.issue_date, key: 'issue_date' },
+                    { label: 'Vencimiento', value: result.normalized.due_date, key: 'due_date' },
+                    { label: 'CAE', value: result.normalized.cae, key: 'total_amount' },
+                    { label: 'Cond. pago', value: result.normalized.condicion_pago?.replace('_', ' '), key: 'subtotal' },
+                  ].map(({ label, value, key }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Emisor (Vendedor)</p>
+                  {[
+                    { label: 'Razón social', value: result.normalized.seller_name, key: 'seller_name' },
+                    { label: 'CUIT', value: result.normalized.seller_cuit, key: 'seller_cuit' },
+                    { label: 'Domicilio', value: result.normalized.seller_address, key: 'seller_name' },
+                  ].map(({ label, value, key }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Receptor (Comprador)</p>
+                  {[
+                    { label: 'Razón social', value: result.normalized.buyer_name, key: 'buyer_name' },
+                    { label: 'CUIT', value: result.normalized.buyer_cuit, key: 'buyer_cuit' },
+                    { label: 'Domicilio', value: result.normalized.buyer_address, key: 'buyer_name' },
+                  ].map(({ label, value, key }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Montos */}
+                <div className="space-y-2 text-sm">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Importes</p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Neto gravado</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{result.normalized.subtotal ? formatCurrency(result.normalized.subtotal) : '-'}</span>
+                      <ConfidenceBadge score={result.normalized.confidence.subtotal ?? 0.1} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">IVA</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{result.normalized.total_iva ? formatCurrency(result.normalized.total_iva) : '-'}</span>
+                      <ConfidenceBadge score={result.normalized.confidence.total_iva ?? 0.1} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <span>Total</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">{result.normalized.total_amount ? formatCurrency(result.normalized.total_amount) : '-'}</span>
+                      <ConfidenceBadge score={result.normalized.confidence.total_amount ?? 0.1} />
+                    </div>
+                  </div>
+                </div>
+
+                {result.normalized.items?.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Ítems detectados ({result.normalized.items.length})</p>
+                      <div className="space-y-1.5">
+                        {result.normalized.items.map((item, i) => (
+                          <div key={i} className="text-xs bg-gray-50 rounded-lg p-2">
+                            <p className="font-medium text-gray-800 truncate">{item.descripcion}</p>
+                            <p className="text-gray-500 mt-0.5">
+                              {item.cantidad} × {formatCurrency(item.precio_unitario)} · IVA {item.alicuota_iva}%
+                              {item.subtotal_neto ? ` = ${formatCurrency(item.subtotal_neto)}` : ''}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <Button className="w-full" onClick={handleUseData}>
+                  Usar estos datos <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/layouts/AppLayout.jsx">
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
@@ -15146,202 +15223,106 @@ export default function ProtectedLayout() {
 }
 </file>
 
-<file path="src/features/invoices/schemas/invoiceSchemas.js">
-import { z } from 'zod'
-import { IVA_VALID_RATES, SUPPORTED_CURRENCIES } from '@/lib/constants'
-import { cuitSchema } from '@/features/auth/schemas/authSchemas'
+<file path="src/app/router.jsx">
+import { lazy, Suspense } from 'react'
+import { createBrowserRouter } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import AppLayout from '@/layouts/AppLayout'
+import AuthLayout from '@/layouts/AuthLayout'
+import LandingGuard from '@/layouts/LandingGuard'
+import ProtectedLayout from '@/layouts/ProtectedLayout'
+import OnboardingGuard from '@/layouts/OnboardingGuard'
 
-// ── Tipos de comprobante AFIP ─────────────────────────────────────────────────
-export const TIPOS_COMPROBANTE = [
-  'Factura A', 'Factura B', 'Factura C', 'Factura M',
-  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
-  'Nota de Débito A', 'Nota de Débito B', 'Nota de Débito C',
-  'Recibo',
-]
+// Lazy loaded pages
+const LandingPage = lazy(() => import('@/features/landing/LandingPage'))
+const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
+const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
+const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'))
+const OnboardingPage = lazy(() => import('@/features/companies/pages/OnboardingPage'))
+const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
+const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage'))
+const NewInvoicePage = lazy(() => import('@/features/invoices/pages/NewInvoicePage'))
+const InvoiceDetailPage = lazy(() => import('@/features/invoices/pages/InvoiceDetailPage'))
+const ClientsPage = lazy(() => import('@/features/clients/pages/ClientsPage'))
+const ProvidersPage = lazy(() => import('@/features/providers/pages/ProvidersPage'))
+const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
+const AlertsPage = lazy(() => import('@/features/alerts/pages/AlertsPage'))
+const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'))
+const OcrPage = lazy(() => import('@/features/ocr/pages/OcrPage'))
 
-// ── Tipos que requieren datos COMPLETOS del receptor (CUIT + razón social + condición IVA)
-// Factura A y M: operaciones entre responsables inscriptos — receptor siempre identificado.
-export const TIPOS_RECEPTOR_IDENTIFICADO = [
-  'Factura A', 'Factura M',
-  'Nota de Crédito A', 'Nota de Débito A',
-]
+// Spinner de carga que se muestra mientras una página lazy se está descargando.
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-full min-h-[400px]">
+    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+  </div>
+)
 
-// ── Tipos donde el receptor puede ser Consumidor Final (sin CUIT ni razón social)
-// Factura C: emitida por Monotributistas a cualquier receptor.
-// Factura B: para consumidor final (aunque técnicamente puede tener datos).
-// Recibo, Notas B/C: idem.
-export const TIPOS_RECEPTOR_OPCIONAL = [
-  'Factura B', 'Factura C',
-  'Nota de Crédito B', 'Nota de Débito B',
-  'Nota de Crédito C', 'Nota de Débito C',
-  'Recibo',
-]
-// Factura C: emitida por Monotributistas, no requiere vencimiento.
-// Recibo: comprobante de pago, no tiene vencimiento.
-// Notas de Crédito/Débito: ajustes, no tienen vencimiento propio.
-export const TIPOS_SIN_VENCIMIENTO = [
-  'Factura C',
-  'Recibo',
-  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
-  'Nota de Débito A', 'Nota de Débito B', 'Nota de Débito C',
-]
+// Envuelve un componente lazy en Suspense para mostrar el PageLoader mientras carga.
+const withSuspense = (Component) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+)
 
-// ── Condiciones de pago ───────────────────────────────────────────────────────
-// Bug 2 — Ampliar las condiciones de pago más allá de contado/cuenta_corriente
-export const CONDICIONES_PAGO = [
-  { value: 'contado',           label: 'Contado' },
-  { value: 'cuenta_corriente',  label: 'Cuenta corriente' },
-  { value: '15_dias',           label: '15 días' },
-  { value: '30_dias',           label: '30 días' },
-  { value: '60_dias',           label: '60 días' },
-  { value: '90_dias',           label: '90 días' },
-  { value: 'contra_entrega',    label: 'Contra entrega' },
-  { value: 'anticipado',        label: 'Pago anticipado' },
-]
-
-export const CONDICIONES_PAGO_VALUES = CONDICIONES_PAGO.map((c) => c.value)
-
-// z.enum() requiere un tuple de al menos 2 elementos, no un array dinámico.
-// Lo casteamos con 'as const' equivalente para que Zod lo acepte.
-export const CONDICIONES_PAGO_ENUM = /** @type {[string, ...string[]]} */ (CONDICIONES_PAGO_VALUES)
-
-// ── Condiciones IVA ───────────────────────────────────────────────────────────
-export const TAX_CONDITION_VALUES = ['RI', 'MO', 'EX', 'CF', 'RS']
-
-// ── Schema de ítem de factura ─────────────────────────────────────────────────
-// Bug 7 — Todos los mensajes de error en español
-export const invoiceItemSchema = z.object({
-  descripcion: z.string().min(1, 'La descripción del ítem es requerida'),
-  cantidad: z.coerce
-    .number({ invalid_type_error: 'La cantidad debe ser un número' })
-    .positive('La cantidad debe ser mayor a 0'),
-  unidad: z.string().optional(),
-  precio_unitario: z.coerce
-    .number({ invalid_type_error: 'El precio debe ser un número' })
-    .positive('El precio unitario debe ser mayor a 0'),
-  alicuota_iva: z.coerce
-    .number({ invalid_type_error: 'La alícuota de IVA debe ser un número' })
-    .refine(
-      (v) => IVA_VALID_RATES.includes(v),
-      { message: `Alícuota de IVA inválida. Valores permitidos: ${IVA_VALID_RATES.join(', ')}%` }
+export const router = createBrowserRouter([
+  {
+    // Ruta raíz: landing para no logueados, redirige al dashboard si ya está autenticado.
+    element: <LandingGuard />,
+    children: [
+      { path: '/', element: withSuspense(LandingPage) },
+    ],
+  },
+  {
+    // Rutas públicas de auth: redirigen al dashboard si el usuario ya está logueado.
+    element: <AuthLayout />,
+    children: [
+      { path: '/login', element: withSuspense(LoginPage) },
+      { path: '/register', element: withSuspense(RegisterPage) },
+      // Callback de Supabase después de confirmar el email.
+      { path: '/auth/callback', element: withSuspense(AuthCallbackPage) },
+    ],
+  },
+  {
+    // Onboarding: requires authentication but NOT a company (OnboardingGuard handles this)
+    element: <OnboardingGuard />,
+    children: [
+      { path: '/onboarding', element: withSuspense(OnboardingPage) },
+    ],
+  },
+  {
+    element: <ProtectedLayout />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/dashboard', element: withSuspense(DashboardPage) },
+          { path: '/invoices', element: withSuspense(InvoicesPage) },
+          { path: '/invoices/new', element: withSuspense(NewInvoicePage) },
+          { path: '/invoices/:id', element: withSuspense(InvoiceDetailPage) },
+          { path: '/invoices/:id/edit', element: withSuspense(NewInvoicePage) },
+          { path: '/clients', element: withSuspense(ClientsPage) },
+          { path: '/providers', element: withSuspense(ProvidersPage) },
+          { path: '/reports', element: withSuspense(ReportsPage) },
+          { path: '/alerts', element: withSuspense(AlertsPage) },
+          { path: '/settings', element: withSuspense(SettingsPage) },
+          { path: '/ocr', element: withSuspense(OcrPage) },
+        ],
+      },
+    ],
+  },
+  {
+    path: '*',
+    element: (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
+        <p className="text-6xl font-bold text-gray-200">404</p>
+        <p className="mt-2">Página no encontrada</p>
+        <a href="/dashboard" className="mt-4 text-blue-600 hover:underline text-sm">
+          Volver al dashboard
+        </a>
+      </div>
     ),
-  subtotal_neto: z.coerce.number().optional(),
-  subtotal_iva: z.coerce.number().optional(),
-  sort_order: z.number().int().optional(),
-})
-
-// ── Schema principal de factura ───────────────────────────────────────────────
-// Bug 2: condiciones de pago ampliadas
-// Bug 4: fecha de vencimiento condicional según tipo de comprobante
-// Bug 5: mismo que bug 4 — tipos sin vencimiento
-// Bug 6: emisor y receptor obligatorios
-// Bug 7: todos los mensajes en español
-export const invoiceSchema = z.object({
-  // Tipo y flujo
-  tipo_comprobante: z.enum(TIPOS_COMPROBANTE, {
-    errorMap: () => ({ message: 'Seleccioná un tipo de comprobante válido' }),
-  }),
-  type: z.enum(['receivable', 'payable'], {
-    errorMap: () => ({ message: 'Seleccioná un tipo de flujo válido' }),
-  }),
-
-  // Numeración AFIP
-  punto_de_venta: z.coerce
-    .number({ invalid_type_error: 'El punto de venta debe ser un número' })
-    .int('El punto de venta debe ser un número entero')
-    .min(1, 'El punto de venta mínimo es 1')
-    .max(99999, 'El punto de venta máximo es 99999'),
-  numero_comprobante: z.coerce
-    .number({ invalid_type_error: 'El número de comprobante debe ser un número' })
-    .int('El número de comprobante debe ser un número entero')
-    .positive('El número de comprobante debe ser positivo'),
-
-  // Fechas
-  fecha_emision: z.string().min(1, 'La fecha de emisión es requerida'),
-  // Bug 4/5 — Se valida condicionalmente en el .superRefine() de abajo
-  fecha_vencimiento: z.string().optional().nullable(),
-
-  // Bug 2 — Condiciones de pago ampliadas
-  condicion_pago: z.enum(CONDICIONES_PAGO_ENUM, {
-    errorMap: () => ({ message: 'Seleccioná una condición de pago válida' }),
-  }),
-
-  // Moneda
-  moneda: z.enum(SUPPORTED_CURRENCIES, {
-    errorMap: () => ({ message: `Moneda inválida. Valores permitidos: ${SUPPORTED_CURRENCIES.join(', ')}` }),
-  }).default('ARS'),
-  tipo_cambio: z.coerce
-    .number({ invalid_type_error: 'El tipo de cambio debe ser un número' })
-    .positive('El tipo de cambio debe ser mayor a 0')
-    .default(1.0),
-
-  // Bug 6 — Emisor siempre obligatorio (el emisor es siempre la empresa)
-  emisor_cuit: cuitSchema.or(z.literal('')).refine(
-    (v) => v && v.trim() !== '',
-    { message: 'El CUIT del emisor es requerido' }
-  ),
-  emisor_razon_social: z.string().min(1, 'La razón social del emisor es requerida'),
-  emisor_condicion_iva: z.enum(TAX_CONDITION_VALUES, {
-    errorMap: () => ({ message: 'Seleccioná la condición de IVA del emisor' }),
-  }),
-  emisor_domicilio: z.string().optional().nullable(),
-
-  // Receptor — todos opcionales.
-  receptor_cuit: cuitSchema.or(z.literal('')).optional().nullable(),
-  receptor_razon_social: z.string().optional().nullable(),
-  receptor_condicion_iva: z.enum(TAX_CONDITION_VALUES).optional().nullable(),
-  receptor_domicilio: z.string().optional().nullable(),
-
-  // Totales fiscales (calculados en frontend antes de persistir)
-  neto_gravado: z.coerce.number().min(0).default(0),
-  neto_no_gravado: z.coerce.number().min(0).default(0),
-  exento: z.coerce.number().min(0).default(0),
-  iva_105: z.coerce.number().min(0).default(0),
-  iva_21: z.coerce.number().min(0).default(0),
-  iva_27: z.coerce.number().min(0).default(0),
-  otros_tributos: z.coerce.number().min(0).default(0),
-  total_amount: z.coerce.number().min(0).default(0),
-
-  // CAE / AFIP
-  cae: z.string().max(14).optional().nullable(),
-  cae_vencimiento: z.string().optional().nullable(),
-
-  // Relaciones opcionales
-  client_id: z.string().uuid().optional().nullable(),
-  provider_id: z.string().uuid().optional().nullable(),
-
-  // Notas
-  notes: z.string().optional().nullable(),
-
-  // Ítems (array requerido, mínimo 1)
-  items: z.array(invoiceItemSchema).min(1, 'La factura debe tener al menos un ítem'),
-}).superRefine((data, ctx) => {
-  // Validación 1 — Fecha de vencimiento condicional
-  const requiereVencimiento = !TIPOS_SIN_VENCIMIENTO.includes(data.tipo_comprobante)
-  if (requiereVencimiento && (!data.fecha_vencimiento || data.fecha_vencimiento.trim() === '')) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['fecha_vencimiento'],
-      message: `La fecha de vencimiento es requerida para ${data.tipo_comprobante}`,
-    })
-  }
-
-  // Validación 2 — El receptor siempre es requerido (validación a nivel campo arriba).
-  // Se mantiene el bloque por compatibilidad pero ya no agrega issues adicionales.
-})
-
-// ── Schema de filtros para listado de facturas ────────────────────────────────
-// Req 5.8, 9.1
-export const invoiceFilterSchema = z.object({
-  status: z.enum(['draft', 'pending', 'paid', 'overdue', 'cancelled']).optional(),
-  type: z.enum(['receivable', 'payable']).optional(),
-  search: z.string().optional(),
-  companyId: z.string().uuid().optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-  page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().positive().max(100, 'Máximo 100 por página').default(20),
-})
+  },
+])
 </file>
 
 <file path="src/features/auth/context/AuthContext.jsx">
@@ -15431,12 +15412,357 @@ export function useAuth() {
 }
 </file>
 
+<file path="src/features/invoices/schemas/invoiceSchemas.js">
+import { z } from 'zod'
+import { IVA_VALID_RATES, SUPPORTED_CURRENCIES } from '@/lib/constants'
+import { cuitSchema } from '@/features/auth/schemas/authSchemas'
+
+// ── Tipos de comprobante AFIP/ARCA ────────────────────────────────────────────
+export const TIPOS_COMPROBANTE = [
+  'Factura A', 'Factura B', 'Factura C', 'Factura M', 'Factura E',
+  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
+  'Nota de Débito A', 'Nota de Débito B', 'Nota de Débito C',
+  'Recibo',
+]
+
+// Tipos disponibles según la condición IVA del emisor.
+// RI → puede emitir A, B, M, E. MO/EX → solo C, E.
+export const TIPOS_PARA_RI    = ['Factura A', 'Factura B', 'Factura M', 'Factura E']
+export const TIPOS_PARA_MO_EX = ['Factura C', 'Factura E']
+
+// Tipos que exigen identificar completamente al receptor (CUIT + razón social + condición).
+export const TIPOS_RECEPTOR_IDENTIFICADO = [
+  'Factura A', 'Factura M',
+  'Nota de Crédito A', 'Nota de Débito A',
+]
+
+// Tipos de exportación: receptor extranjero, moneda libre, sin CUIT arg.
+export const TIPOS_EXPORTACION = ['Factura E']
+
+// Tipos donde el IVA se discrimina en el comprobante (solo RI).
+export const TIPOS_CON_IVA_DISCRIMINADO = [
+  'Factura A', 'Factura M',
+  'Nota de Crédito A', 'Nota de Débito A',
+]
+
+// Tipos donde el receptor puede ser Consumidor Final anónimo.
+export const TIPOS_RECEPTOR_OPCIONAL = [
+  'Factura B', 'Factura C',
+  'Nota de Crédito B', 'Nota de Débito B',
+  'Nota de Crédito C', 'Nota de Débito C',
+  'Recibo',
+]
+
+// Tipos sin fecha de vencimiento propia.
+export const TIPOS_SIN_VENCIMIENTO = [
+  'Factura C', 'Factura E',
+  'Recibo',
+  'Nota de Crédito A', 'Nota de Crédito B', 'Nota de Crédito C',
+  'Nota de Débito A',  'Nota de Débito B',  'Nota de Débito C',
+]
+
+// Umbral ARCA para identificar al receptor en Factura B/C (en ARS).
+export const UMBRAL_CF_ARS = 100_000
+
+// ── Condiciones de pago ───────────────────────────────────────────────────────
+export const CONDICIONES_PAGO = [
+  { value: 'contado',          label: 'Contado' },
+  { value: 'cuenta_corriente', label: 'Cuenta corriente' },
+  { value: '15_dias',          label: '15 días' },
+  { value: '30_dias',          label: '30 días' },
+  { value: '60_dias',          label: '60 días' },
+  { value: '90_dias',          label: '90 días' },
+  { value: 'contra_entrega',   label: 'Contra entrega' },
+  { value: 'anticipado',       label: 'Pago anticipado' },
+]
+
+export const CONDICIONES_PAGO_VALUES = CONDICIONES_PAGO.map((c) => c.value)
+export const CONDICIONES_PAGO_ENUM = /** @type {[string, ...string[]]} */ (CONDICIONES_PAGO_VALUES)
+
+// ── Condiciones IVA ───────────────────────────────────────────────────────────
+export const TAX_CONDITION_VALUES = ['RI', 'MO', 'EX', 'CF', 'RS']
+
+// Condiciones válidas para receptor en Factura A/M (solo RI o RS aceptados por ARCA).
+export const TAX_CONDITION_RECEPTOR_AM = ['RI', 'RS']
+
+// ── Lista de países para Factura E ───────────────────────────────────────────
+export const PAISES_EXPORTACION = [
+  { value: 'US', label: 'Estados Unidos' },
+  { value: 'BR', label: 'Brasil' },
+  { value: 'CL', label: 'Chile' },
+  { value: 'UY', label: 'Uruguay' },
+  { value: 'PY', label: 'Paraguay' },
+  { value: 'BO', label: 'Bolivia' },
+  { value: 'PE', label: 'Perú' },
+  { value: 'CO', label: 'Colombia' },
+  { value: 'MX', label: 'México' },
+  { value: 'ES', label: 'España' },
+  { value: 'DE', label: 'Alemania' },
+  { value: 'FR', label: 'Francia' },
+  { value: 'GB', label: 'Reino Unido' },
+  { value: 'IT', label: 'Italia' },
+  { value: 'CN', label: 'China' },
+  { value: 'JP', label: 'Japón' },
+  { value: 'OTHER', label: 'Otro' },
+]
+
+// ── Schema de ítem ────────────────────────────────────────────────────────────
+export const invoiceItemSchema = z.object({
+  descripcion: z.string().min(1, 'La descripción del ítem es requerida'),
+  cantidad: z.coerce
+    .number({ invalid_type_error: 'La cantidad debe ser un número' })
+    .positive('La cantidad debe ser mayor a 0'),
+  unidad: z.string().optional(),
+  precio_unitario: z.coerce
+    .number({ invalid_type_error: 'El precio debe ser un número' })
+    .positive('El precio unitario debe ser mayor a 0'),
+  alicuota_iva: z.coerce
+    .number({ invalid_type_error: 'La alícuota de IVA debe ser un número' })
+    .refine(
+      (v) => IVA_VALID_RATES.includes(v),
+      { message: `Alícuota de IVA inválida. Valores permitidos: ${IVA_VALID_RATES.join(', ')}%` }
+    ),
+  subtotal_neto: z.coerce.number().optional(),
+  subtotal_iva:  z.coerce.number().optional(),
+  sort_order:    z.number().int().optional(),
+})
+
+// ── Schema principal ──────────────────────────────────────────────────────────
+export const invoiceSchema = z.object({
+  // Tipo y flujo
+  tipo_comprobante: z.enum(TIPOS_COMPROBANTE, {
+    errorMap: () => ({ message: 'Seleccioná un tipo de comprobante válido' }),
+  }),
+  type: z.enum(['receivable', 'payable'], {
+    errorMap: () => ({ message: 'Seleccioná un tipo de flujo válido' }),
+  }),
+
+  // Numeración ARCA
+  punto_de_venta: z.coerce
+    .number({ invalid_type_error: 'El punto de venta debe ser un número' })
+    .int('El punto de venta debe ser un número entero')
+    .min(1, 'El punto de venta mínimo es 1')
+    .max(99999, 'El punto de venta máximo es 99999'),
+  numero_comprobante: z.coerce
+    .number({ invalid_type_error: 'El número de comprobante debe ser un número' })
+    .int('El número de comprobante debe ser un número entero')
+    .positive('El número de comprobante debe ser positivo'),
+
+  // Fechas
+  fecha_emision:    z.string().min(1, 'La fecha de emisión es requerida'),
+  fecha_vencimiento: z.string().optional().nullable(),
+
+  // Condición de pago
+  condicion_pago: z.enum(CONDICIONES_PAGO_ENUM, {
+    errorMap: () => ({ message: 'Seleccioná una condición de pago válida' }),
+  }),
+
+  // Moneda y tipo de cambio
+  moneda: z.enum(SUPPORTED_CURRENCIES, {
+    errorMap: () => ({ message: `Moneda inválida. Valores permitidos: ${SUPPORTED_CURRENCIES.join(', ')}` }),
+  }).default('ARS'),
+  tipo_cambio: z.coerce
+    .number({ invalid_type_error: 'El tipo de cambio debe ser un número' })
+    .positive('El tipo de cambio debe ser mayor a 0')
+    .default(1.0),
+
+  // País de destino — solo para Factura E
+  pais_destino: z.string().optional().nullable(),
+
+  // Emisor — siempre obligatorio
+  emisor_cuit: cuitSchema.or(z.literal('')).refine(
+    (v) => v && v.trim() !== '',
+    { message: 'El CUIT del emisor es requerido' }
+  ),
+  emisor_razon_social: z.string().min(1, 'La razón social del emisor es requerida'),
+  emisor_condicion_iva: z.enum(TAX_CONDITION_VALUES, {
+    errorMap: () => ({ message: 'Seleccioná la condición de IVA del emisor' }),
+  }),
+  emisor_domicilio: z.string().optional().nullable(),
+
+  // Receptor — obligatoriedad condicional resuelta en superRefine
+  receptor_id_impositivo: z.string().optional().nullable(), // para exportación
+  receptor_cuit:           z.string().optional().nullable(),
+  receptor_razon_social:   z.string().optional().nullable(),
+  receptor_condicion_iva:  z.enum(TAX_CONDITION_VALUES).optional().nullable(),
+  receptor_domicilio:      z.string().optional().nullable(),
+
+  // Flag UI — Consumidor Final Anónimo (Factura B/C bajo umbral)
+  consumidor_final_anonimo: z.boolean().optional().default(false),
+
+  // Totales fiscales
+  neto_gravado:    z.coerce.number().min(0).default(0),
+  neto_no_gravado: z.coerce.number().min(0).default(0),
+  exento:          z.coerce.number().min(0).default(0),
+  iva_105:         z.coerce.number().min(0).default(0),
+  iva_21:          z.coerce.number().min(0).default(0),
+  iva_27:          z.coerce.number().min(0).default(0),
+  otros_tributos:  z.coerce.number().min(0).default(0),
+  total_amount:    z.coerce.number().min(0).default(0),
+
+  // CAE / ARCA
+  cae:             z.string().max(14).optional().nullable(),
+  cae_vencimiento: z.string().optional().nullable(),
+
+  // Relaciones
+  client_id:   z.string().uuid().optional().nullable(),
+  provider_id: z.string().uuid().optional().nullable(),
+
+  // Notas
+  notes: z.string().optional().nullable(),
+
+  // Ítems
+  items: z.array(invoiceItemSchema).min(1, 'La factura debe tener al menos un ítem'),
+
+}).superRefine((data, ctx) => {
+  const tipo   = data.tipo_comprobante
+  const emisor = data.emisor_condicion_iva
+
+  // ── 1. Tipos permitidos según condición del emisor ──────────────────────
+  if ((emisor === 'MO' || emisor === 'EX') && !TIPOS_PARA_MO_EX.includes(tipo)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['tipo_comprobante'],
+      message: `Un emisor ${emisor === 'MO' ? 'Monotributista' : 'Exento'} solo puede emitir: ${TIPOS_PARA_MO_EX.join(', ')}`,
+    })
+  }
+  if (emisor === 'RI' && !TIPOS_PARA_RI.includes(tipo) && !tipo.startsWith('Nota') && tipo !== 'Recibo') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['tipo_comprobante'],
+      message: `Un Responsable Inscripto no puede emitir ${tipo}`,
+    })
+  }
+
+  // ── 2. Fecha de vencimiento condicional ─────────────────────────────────
+  if (!TIPOS_SIN_VENCIMIENTO.includes(tipo) &&
+      (!data.fecha_vencimiento || data.fecha_vencimiento.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['fecha_vencimiento'],
+      message: `La fecha de vencimiento es requerida para ${tipo}`,
+    })
+  }
+
+  // ── 3. Receptor en Factura A / M ────────────────────────────────────────
+  if (TIPOS_RECEPTOR_IDENTIFICADO.includes(tipo)) {
+    if (!data.receptor_cuit || data.receptor_cuit.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_cuit'],
+        message: `El CUIT del receptor es obligatorio para ${tipo}`,
+      })
+    } else if (!/^\d{2}-\d{8}-\d$/.test(data.receptor_cuit.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_cuit'],
+        message: 'CUIT inválido. Formato esperado: XX-XXXXXXXX-X',
+      })
+    }
+    if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_razon_social'],
+        message: `La razón social del receptor es obligatoria para ${tipo}`,
+      })
+    }
+    if (!data.receptor_condicion_iva || !TAX_CONDITION_RECEPTOR_AM.includes(data.receptor_condicion_iva)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_condicion_iva'],
+        message: `Para ${tipo} el receptor debe ser Responsable Inscripto o Responsable Sustituto`,
+      })
+    }
+  }
+
+  // ── 4. Receptor en Factura B / C — umbral $100.000 ──────────────────────
+  if (TIPOS_RECEPTOR_OPCIONAL.includes(tipo) && tipo !== 'Recibo') {
+    const superaUmbral = (data.total_amount ?? 0) >= UMBRAL_CF_ARS
+    const esCF = data.consumidor_final_anonimo === true
+
+    if (superaUmbral || !esCF) {
+      if (!data.receptor_cuit && !data.receptor_razon_social) {
+        // Solo advertimos si el total supera el umbral; si no, es libre.
+        if (superaUmbral) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['receptor_razon_social'],
+            message: `Para ${tipo} con total ≥ $${UMBRAL_CF_ARS.toLocaleString('es-AR')} el receptor debe estar identificado`,
+          })
+        }
+      }
+    }
+  }
+
+  // ── 5. Factura E — validaciones de exportación ──────────────────────────
+  if (TIPOS_EXPORTACION.includes(tipo)) {
+    if (!data.receptor_id_impositivo || data.receptor_id_impositivo.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_id_impositivo'],
+        message: 'El ID impositivo extranjero es obligatorio para Factura E',
+      })
+    }
+    if (!data.receptor_razon_social || data.receptor_razon_social.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['receptor_razon_social'],
+        message: 'La razón social del destinatario es obligatoria para Factura E',
+      })
+    }
+    if (!data.pais_destino) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['pais_destino'],
+        message: 'El país de destino es obligatorio para Factura E',
+      })
+    }
+    if (data.moneda !== 'ARS' && (!data.tipo_cambio || data.tipo_cambio <= 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['tipo_cambio'],
+        message: 'Para Factura E en moneda extranjera el tipo de cambio debe ser mayor a 1',
+      })
+    }
+  }
+
+  // ── 6. Tipo de cambio obligatorio cuando moneda ≠ ARS ───────────────────
+  if (data.moneda !== 'ARS' && (!data.tipo_cambio || data.tipo_cambio <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['tipo_cambio'],
+      message: 'El tipo de cambio es obligatorio cuando la moneda no es ARS',
+    })
+  }
+})
+
+// ── Schema de filtros ─────────────────────────────────────────────────────────
+export const invoiceFilterSchema = z.object({
+  status:    z.enum(['draft', 'pending', 'paid', 'overdue', 'cancelled']).optional(),
+  type:      z.enum(['receivable', 'payable']).optional(),
+  search:    z.string().optional(),
+  companyId: z.string().uuid().optional(),
+  dateFrom:  z.string().optional(),
+  dateTo:    z.string().optional(),
+  page:      z.coerce.number().int().positive().default(1),
+  pageSize:  z.coerce.number().int().positive().max(100, 'Máximo 100 por página').default(20),
+})
+</file>
+
 <file path="src/features/invoices/components/InvoiceForm.jsx">
+import { useState } from 'react'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Loader2, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { invoiceSchema, TIPOS_COMPROBANTE, TAX_CONDITION_VALUES, TIPOS_SIN_VENCIMIENTO, CONDICIONES_PAGO, TIPOS_RECEPTOR_IDENTIFICADO } from '../schemas/invoiceSchemas'
+import {
+  invoiceSchema,
+  TIPOS_COMPROBANTE, TAX_CONDITION_VALUES, TAX_CONDITION_RECEPTOR_AM,
+  TIPOS_SIN_VENCIMIENTO, TIPOS_RECEPTOR_IDENTIFICADO, TIPOS_EXPORTACION,
+  TIPOS_CON_IVA_DISCRIMINADO, TIPOS_RECEPTOR_OPCIONAL,
+  TIPOS_PARA_RI, TIPOS_PARA_MO_EX,
+  CONDICIONES_PAGO, PAISES_EXPORTACION, UMBRAL_CF_ARS,
+} from '../schemas/invoiceSchemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15446,27 +15772,7 @@ import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
 
-// ──────────────────────────────────────────────────────────────────────────────
-// FLUJO "CREAR FACTURA" — paso 2 de 4
-// ──────────────────────────────────────────────────────────────────────────────
-// InvoiceForm es el formulario visual que el usuario completa.
-//
-// Responsabilidades:
-//  1. Inicializar react-hook-form con validación Zod (invoiceSchema).
-//  2. Renderizar todas las secciones: tipo, emisor, receptor, ítems y notas.
-//  3. Calcular totales fiscales en tiempo real a medida que el usuario edita ítems.
-//  4. Al hacer submit: calcular totales finales, enriquecer los datos y
-//     llamar a onSubmit (que viene de NewInvoicePage → handleSubmit).
-// ──────────────────────────────────────────────────────────────────────────────
-
-// ── Valores por defecto ───────────────────────────────────────────────────────
-const defaultItem = {
-  descripcion: '',
-  cantidad: 1,
-  unidad: '',
-  precio_unitario: 0,
-  alicuota_iva: 21,
-}
+const defaultItem = { descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }
 
 const TAX_CONDITION_LABELS = {
   RI: 'Responsable Inscripto',
@@ -15476,26 +15782,19 @@ const TAX_CONDITION_LABELS = {
   RS: 'Responsable Sustituto',
 }
 
-// ── Componente ────────────────────────────────────────────────────────────────
-/**
- * Formulario completo de factura con todos los campos fiscales argentinos.
- * Req 5.9, 5.10, 5.11, 5.12
- *
- * @param {{ defaultValues?: object, onSubmit: Function, isLoading?: boolean, clients?: object[], providers?: object[] }} props
- */
+// Devuelve los tipos de comprobante permitidos según la condición IVA del emisor.
+function getTiposPermitidos(emisorCondicion) {
+  if (emisorCondicion === 'MO' || emisorCondicion === 'EX') return TIPOS_PARA_MO_EX
+  if (emisorCondicion === 'RI') return TIPOS_PARA_RI
+  // Para otras condiciones (CF, RS, etc.) mostramos todo y Zod validará.
+  return TIPOS_COMPROBANTE
+}
+
 export default function InvoiceForm({ defaultValues, onSubmit, isLoading, clients = [], providers = [] }) {
-  // Bug 3 — Usar navigate de React Router en vez de window.history.back()
-  // para evitar reloads del browser que pierden el estado del formulario.
   const navigate = useNavigate()
 
-  // Paso 2a — Inicializar el formulario con validación Zod
-  // zodResolver conecta invoiceSchema con react-hook-form: todos los campos se
-  // validan automáticamente según las reglas definidas en invoiceSchemas.js.
   const {
-    register,
-    handleSubmit,
-    control,
-    watch,
+    register, handleSubmit, control, watch, setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(invoiceSchema),
@@ -15510,50 +15809,60 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       moneda: 'ARS',
       tipo_cambio: 1,
       emisor_condicion_iva: 'RI',
-      receptor_condicion_iva: 'CF',
-      neto_gravado: 0,
-      neto_no_gravado: 0,
-      exento: 0,
-      iva_105: 0,
-      iva_21: 0,
-      iva_27: 0,
-      otros_tributos: 0,
-      total_amount: 0,
+      receptor_condicion_iva: 'RI',
+      consumidor_final_anonimo: false,
+      neto_gravado: 0, neto_no_gravado: 0, exento: 0,
+      iva_105: 0, iva_21: 0, iva_27: 0, otros_tributos: 0, total_amount: 0,
       items: [defaultItem],
     },
   })
 
-  // useFieldArray administra la lista dinámica de ítems (descripción, cantidad, precio, IVA).
-  // append() agrega un ítem vacío; remove(index) elimina uno existente.
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
 
-  // watch('items') reacciona en tiempo real a cada cambio del usuario en los ítems,
-  // lo que permite recalcular los totales fiscales sin esperar al submit.
-  const items = watch('items') ?? []
-  const moneda = watch('moneda') ?? 'ARS'
-  const tipoComprobante = watch('tipo_comprobante') ?? 'Factura B'
-  const requiereVencimiento = !TIPOS_SIN_VENCIMIENTO.includes(tipoComprobante)
+  // Valores observados para la lógica dinámica
+  const items               = watch('items') ?? []
+  const moneda              = watch('moneda') ?? 'ARS'
+  const tipoComprobante     = watch('tipo_comprobante') ?? 'Factura B'
+  const emisorCondicionIva  = watch('emisor_condicion_iva') ?? 'RI'
+  const esAnonimo           = watch('consumidor_final_anonimo') ?? false
 
-  // Paso 2b — Calcular totales en tiempo real
-  // calculateInvoiceTotals recorre los ítems y devuelve neto gravado, IVA por alícuota y total.
-  // El resultado se muestra en el panel de totales al pie del formulario.
+  // Flags derivados
+  const tiposPermitidos      = getTiposPermitidos(emisorCondicionIva)
+  const requiereVencimiento  = !TIPOS_SIN_VENCIMIENTO.includes(tipoComprobante)
+  const esExportacion        = TIPOS_EXPORTACION.includes(tipoComprobante)
+  const receptorObligatorio  = TIPOS_RECEPTOR_IDENTIFICADO.includes(tipoComprobante)
+  const discriminaIva        = TIPOS_CON_IVA_DISCRIMINADO.includes(tipoComprobante)
+  const esBoCOpcional        = TIPOS_RECEPTOR_OPCIONAL.includes(tipoComprobante) && tipoComprobante !== 'Recibo'
+
+  // Totales en tiempo real
   const totals = calculateInvoiceTotals(items)
+  const superaUmbral = totals.total_amount >= UMBRAL_CF_ARS
 
-  // Paso 2c — Handler de submit
-  // react-hook-form valida todos los campos con Zod ANTES de llegar aquí.
-  // Si la validación falla, no se llama a esta función y se muestran los errores en pantalla.
-  // Si pasa: recalculamos los totales con los valores finales y llamamos al onSubmit del padre
-  // (NewInvoicePage.handleSubmit → useCreateInvoice → invoiceService.create → Supabase).
+  // Si el tipo cambia a uno no permitido para el emisor actual, resetear.
+  const handleEmisorCondicionChange = (val) => {
+    setValue('emisor_condicion_iva', val)
+    const permitidos = getTiposPermitidos(val)
+    if (!permitidos.includes(tipoComprobante)) {
+      setValue('tipo_comprobante', permitidos[0])
+    }
+  }
+
+  // Handler de submit: enriquece con totales calculados.
+  // Para B/C con IVA no discriminado, alícuota interna se fija en 0.
   const handleFormSubmit = (data) => {
-    const enriched = calculateInvoiceTotals(data.items)
+    const itemsNormalizados = data.items.map((item) => ({
+      ...item,
+      alicuota_iva: discriminaIva ? item.alicuota_iva : 0,
+    }))
+    const enriched = calculateInvoiceTotals(itemsNormalizados)
     onSubmit({
       ...data,
-      neto_gravado: enriched.neto_gravado,
-      iva_105: enriched.iva_105,
-      iva_21: enriched.iva_21,
-      iva_27: enriched.iva_27,
-      total_amount: enriched.total_amount,
-      items: enriched.items,
+      neto_gravado:  enriched.neto_gravado,
+      iva_105:       enriched.iva_105,
+      iva_21:        enriched.iva_21,
+      iva_27:        enriched.iva_27,
+      total_amount:  enriched.total_amount,
+      items:         enriched.items,
     })
   }
 
@@ -15565,13 +15874,14 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         <CardHeader><CardTitle>Tipo de comprobante</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
+          {/* Tipo de comprobante — filtrado por condición del emisor */}
           <div className="space-y-1.5">
             <Label>Tipo de comprobante <span className="text-red-500">*</span></Label>
             <Controller name="tipo_comprobante" control={control} render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_COMPROBANTE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {tiposPermitidos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             )} />
@@ -15597,7 +15907,6 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {/* Bug 2 — Opciones de pago ampliadas */}
                   {CONDICIONES_PAGO.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
@@ -15626,18 +15935,14 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </div>
 
           <div className="space-y-1.5">
-            {/* Bug 4/5 — Fecha de vencimiento solo obligatoria si el tipo lo requiere.
-                Tipos sin vencimiento: Factura C, Recibo, Notas de Crédito/Débito. */}
             <Label>
               Fecha de vencimiento
-              {requiereVencimiento && <span className="text-red-500"> *</span>}
-              {!requiereVencimiento && <span className="text-gray-400 text-xs ml-1">(no aplica para {tipoComprobante})</span>}
+              {requiereVencimiento
+                ? <span className="text-red-500"> *</span>
+                : <span className="text-gray-400 text-xs ml-1">(no aplica para {tipoComprobante})</span>
+              }
             </Label>
-            <Input
-              type="date"
-              disabled={!requiereVencimiento}
-              {...register('fecha_vencimiento')}
-            />
+            <Input type="date" disabled={!requiereVencimiento} {...register('fecha_vencimiento')} />
             {errors.fecha_vencimiento && <p className="text-xs text-red-500">{errors.fecha_vencimiento.message}</p>}
           </div>
 
@@ -15651,7 +15956,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             <Input type="date" {...register('cae_vencimiento')} />
           </div>
 
-          {/* Moneda — Req 15.4 */}
+          {/* Moneda — Factura E permite cualquiera; las demás solo ARS por defecto */}
           <div className="space-y-1.5">
             <Label>Moneda <span className="text-red-500">*</span></Label>
             <Controller name="moneda" control={control} render={({ field }) => (
@@ -15667,21 +15972,37 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             {errors.moneda && <p className="text-xs text-red-500">{errors.moneda.message}</p>}
           </div>
 
-          {/* Tipo de cambio — solo visible cuando moneda !== 'ARS' */}
+          {/* Tipo de cambio — visible cuando moneda ≠ ARS */}
           {moneda !== 'ARS' && (
             <div className="space-y-1.5">
               <Label>Tipo de cambio <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                step="0.0001"
-                min="0.0001"
-                placeholder="ej: 1050.0000"
-                {...register('tipo_cambio')}
-              />
+              <Input type="number" step="0.0001" min="0.0001" placeholder="ej: 1050.0000" {...register('tipo_cambio')} />
               <p className="text-xs text-gray-400">1 {moneda} = X ARS</p>
               {errors.tipo_cambio && <p className="text-xs text-red-500">{errors.tipo_cambio.message}</p>}
             </div>
           )}
+
+          {/* País de destino — solo Factura E */}
+          {esExportacion && (
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-blue-500" />
+                País de destino <span className="text-red-500">*</span>
+              </Label>
+              <Controller name="pais_destino" control={control} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar país" /></SelectTrigger>
+                  <SelectContent>
+                    {PAISES_EXPORTACION.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )} />
+              {errors.pais_destino && <p className="text-xs text-red-500">{errors.pais_destino.message}</p>}
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
@@ -15689,7 +16010,6 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       <Card>
         <CardHeader><CardTitle>Datos del emisor</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Bug 6 — Razón social y CUIT del emisor son obligatorios */}
           <div className="space-y-1.5">
             <Label>Razón social <span className="text-red-500">*</span></Label>
             <Input placeholder="Empresa S.A." {...register('emisor_razon_social')} />
@@ -15702,8 +16022,9 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </div>
           <div className="space-y-1.5">
             <Label>Condición IVA <span className="text-red-500">*</span></Label>
+            {/* Cambiar la condición del emisor actualiza los tipos disponibles */}
             <Controller name="emisor_condicion_iva" control={control} render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value ?? ''}>
+              <Select onValueChange={(val) => { field.onChange(val); handleEmisorCondicionChange(val) }} value={field.value ?? ''}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   {TAX_CONDITION_VALUES.map((v) => (
@@ -15724,40 +16045,100 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       {/* ── Receptor ─────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>Datos del receptor</CardTitle>
-          <p className="text-xs text-gray-400 mt-0.5">Opcional — podés completarlo después.</p>
+          <CardTitle>
+            {esExportacion ? 'Destinatario (Exportación)' : 'Datos del receptor'}
+          </CardTitle>
+          {receptorObligatorio && (
+            <p className="text-xs text-amber-600 mt-0.5">
+              Para {tipoComprobante} el receptor debe ser Responsable Inscripto o Responsable Sustituto con CUIT válido.
+            </p>
+          )}
+          {esBoCOpcional && !superaUmbral && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Opcional para totales menores a {formatCurrency(UMBRAL_CF_ARS)}.
+            </p>
+          )}
+          {esBoCOpcional && superaUmbral && (
+            <p className="text-xs text-amber-600 mt-0.5">
+              El total supera {formatCurrency(UMBRAL_CF_ARS)} — ARCA exige identificar al receptor.
+            </p>
+          )}
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>Razón social</Label>
-            <Input placeholder="Cliente S.R.L." {...register('receptor_razon_social')} />
-            {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>CUIT</Label>
-            <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
-            {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Condición IVA</Label>
-            <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>
-                  {TAX_CONDITION_VALUES.map((v) => (
-                    <SelectItem key={v} value={v}>{TAX_CONDITION_LABELS[v]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )} />
-            {errors.receptor_condicion_iva && <p className="text-xs text-red-500">{errors.receptor_condicion_iva.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Domicilio</Label>
-            <Input placeholder="Av. Santa Fe 5678, CABA" {...register('receptor_domicilio')} />
-          </div>
 
-          {clients.length > 0 && (
+          {/* Checkbox Consumidor Final Anónimo — solo en Factura B/C bajo umbral */}
+          {esBoCOpcional && !superaUmbral && (
+            <div className="sm:col-span-2 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <input
+                type="checkbox"
+                id="consumidor_final_anonimo"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                {...register('consumidor_final_anonimo')}
+              />
+              <label htmlFor="consumidor_final_anonimo" className="text-sm font-medium text-gray-700 cursor-pointer">
+                Consumidor Final Anónimo
+                <span className="ml-1.5 text-xs text-gray-400">(total bajo {formatCurrency(UMBRAL_CF_ARS)} — no requiere identificación)</span>
+              </label>
+            </div>
+          )}
+
+          {/* Ocultar campos si es CF anónimo y no supera el umbral */}
+          {(!esAnonimo || superaUmbral || receptorObligatorio) && (
+            <>
+              {/* ID Impositivo Extranjero en Factura E; CUIT en el resto */}
+              <div className="space-y-1.5">
+                <Label>
+                  {esExportacion ? 'ID Impositivo Extranjero' : 'CUIT'}
+                  {(receptorObligatorio || esExportacion) && <span className="text-red-500"> *</span>}
+                </Label>
+                {esExportacion
+                  ? <Input placeholder="Tax ID, VAT, EIN, etc." {...register('receptor_id_impositivo')} />
+                  : <Input placeholder="30-98765432-1" {...register('receptor_cuit')} />
+                }
+                {errors.receptor_id_impositivo && <p className="text-xs text-red-500">{errors.receptor_id_impositivo.message}</p>}
+                {errors.receptor_cuit && <p className="text-xs text-red-500">{errors.receptor_cuit.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>
+                  {esExportacion ? 'Razón social / Nombre' : 'Razón social'}
+                  {(receptorObligatorio || esExportacion || superaUmbral) && <span className="text-red-500"> *</span>}
+                </Label>
+                <Input placeholder={esExportacion ? 'Foreign Corp LLC' : 'Cliente S.R.L.'} {...register('receptor_razon_social')} />
+                {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
+              </div>
+
+              {/* Condición IVA — solo para facturas nacionales */}
+              {!esExportacion && (
+                <div className="space-y-1.5">
+                  <Label>
+                    Condición IVA
+                    {receptorObligatorio && <span className="text-red-500"> *</span>}
+                  </Label>
+                  <Controller name="receptor_condicion_iva" control={control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                      <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                      <SelectContent>
+                        {/* Para A/M solo se permiten RI y RS */}
+                        {(receptorObligatorio ? TAX_CONDITION_RECEPTOR_AM : TAX_CONDITION_VALUES).map((v) => (
+                          <SelectItem key={v} value={v}>{TAX_CONDITION_LABELS[v]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )} />
+                  {errors.receptor_condicion_iva && <p className="text-xs text-red-500">{errors.receptor_condicion_iva.message}</p>}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>Domicilio</Label>
+                <Input placeholder={esExportacion ? '123 Main St, New York' : 'Av. Santa Fe 5678, CABA'} {...register('receptor_domicilio')} />
+              </div>
+            </>
+          )}
+
+          {/* Vínculos con clientes/proveedores registrados */}
+          {clients.length > 0 && !esExportacion && (
             <div className="space-y-1.5">
               <Label>Vincular cliente</Label>
               <Controller name="client_id" control={control} render={({ field }) => (
@@ -15770,8 +16151,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               )} />
             </div>
           )}
-
-          {providers.length > 0 && (
+          {providers.length > 0 && !esExportacion && (
             <div className="space-y-1.5">
               <Label>Vincular proveedor</Label>
               <Controller name="provider_id" control={control} render={({ field }) => (
@@ -15797,20 +16177,22 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         </CardHeader>
         <CardContent className="space-y-3">
 
-          {/* Cabecera de columnas — visible solo en pantallas medianas en adelante */}
-          <div className="hidden sm:grid grid-cols-12 gap-2 px-0.5">
+          {/* Cabecera de columnas */}
+          <div className={`hidden sm:grid gap-2 px-0.5 ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
             <div className="col-span-4 text-xs font-medium text-gray-400 uppercase tracking-wide">Descripción</div>
             <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Cantidad</div>
             <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Unidad</div>
             <div className="col-span-2 text-xs font-medium text-gray-400 uppercase tracking-wide">Precio unit.</div>
-            <div className="col-span-1 text-xs font-medium text-gray-400 uppercase tracking-wide">IVA</div>
+            {/* Columna IVA solo en facturas con IVA discriminado (A, M) */}
+            {discriminaIva && (
+              <div className="col-span-1 text-xs font-medium text-gray-400 uppercase tracking-wide">IVA</div>
+            )}
             <div className="col-span-1" />
           </div>
 
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-12 gap-2 items-start">
+            <div key={field.id} className={`grid gap-2 items-start ${discriminaIva ? 'grid-cols-12' : 'grid-cols-11'}`}>
               <div className="col-span-12 sm:col-span-4">
-                {/* En mobile mostramos el label inline porque no hay cabecera */}
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Descripción</label>
                 <Input placeholder="Motor" {...register(`items.${index}.descripcion`)} />
                 {errors.items?.[index]?.descripcion && (
@@ -15823,32 +16205,41 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               </div>
               <div className="col-span-3 sm:col-span-2">
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Unidad</label>
-                <Input placeholder="Ej: hs, kg, un" {...register(`items.${index}.unidad`)} />
+                <Input placeholder="hs, kg, un" {...register(`items.${index}.unidad`)} />
               </div>
               <div className="col-span-3 sm:col-span-2">
                 <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">Precio unitario</label>
                 <Input type="number" placeholder="0.00" step="0.01" min="0" {...register(`items.${index}.precio_unitario`)} />
               </div>
-              <div className="col-span-2 sm:col-span-1">
-                <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">IVA</label>
-                <Controller
-                  name={`items.${index}.alicuota_iva`}
-                  control={control}
-                  render={({ field: f }) => (
-                    <Select onValueChange={(v) => f.onChange(parseFloat(v))} value={String(f.value)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {IVA_RATES.map((r) => (
-                          <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+
+              {/* Selector IVA — visible solo cuando se discrimina (Factura A / M) */}
+              {discriminaIva && (
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-xs text-gray-400 mb-0.5 sm:hidden">IVA</label>
+                  <Controller
+                    name={`items.${index}.alicuota_iva`}
+                    control={control}
+                    render={({ field: f }) => (
+                      <Select onValueChange={(v) => f.onChange(parseFloat(v))} value={String(f.value)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {IVA_RATES.map((r) => (
+                            <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              )}
+
               <div className="col-span-1 flex justify-end">
                 {fields.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:text-red-600" onClick={() => remove(index)}>
+                  <Button
+                    type="button" variant="ghost" size="icon"
+                    className="h-9 w-9 text-red-400 hover:text-red-600"
+                    onClick={() => remove(index)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
@@ -15858,36 +16249,52 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
           <Separator className="my-4" />
 
-          {/* Totales fiscales */}
+          {/* Panel de totales — IVA discriminado solo en A / M */}
           <div className="flex flex-col items-end gap-1 text-sm">
-            <div className="flex gap-8">
-              <span className="text-gray-500">Neto gravado</span>
-              <span className="font-medium w-36 text-right">{formatCurrency(totals.neto_gravado)}</span>
-            </div>
-            {totals.iva_105 > 0 && (
+            {discriminaIva ? (
+              <>
+                <div className="flex gap-8">
+                  <span className="text-gray-500">Neto gravado</span>
+                  <span className="font-medium w-36 text-right">{formatCurrency(totals.neto_gravado)}</span>
+                </div>
+                {totals.iva_105 > 0 && (
+                  <div className="flex gap-8">
+                    <span className="text-gray-500">IVA 10.5%</span>
+                    <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_105)}</span>
+                  </div>
+                )}
+                {totals.iva_21 > 0 && (
+                  <div className="flex gap-8">
+                    <span className="text-gray-500">IVA 21%</span>
+                    <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_21)}</span>
+                  </div>
+                )}
+                {totals.iva_27 > 0 && (
+                  <div className="flex gap-8">
+                    <span className="text-gray-500">IVA 27%</span>
+                    <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_27)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Para B / C / E el IVA está subsumido en el precio — solo se muestra el total */
               <div className="flex gap-8">
-                <span className="text-gray-500">IVA 10.5%</span>
-                <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_105)}</span>
-              </div>
-            )}
-            {totals.iva_21 > 0 && (
-              <div className="flex gap-8">
-                <span className="text-gray-500">IVA 21%</span>
-                <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_21)}</span>
-              </div>
-            )}
-            {totals.iva_27 > 0 && (
-              <div className="flex gap-8">
-                <span className="text-gray-500">IVA 27%</span>
-                <span className="font-medium w-36 text-right">{formatCurrency(totals.iva_27)}</span>
+                <span className="text-xs text-gray-400 self-end pb-0.5">
+                  {esExportacion ? 'Precio sin IVA (exportación)' : 'IVA incluido en precio'}
+                </span>
+                <span className="font-medium w-36 text-right">{formatCurrency(totals.neto_gravado)}</span>
               </div>
             )}
             <Separator className="w-56 my-1" />
             <div className="flex gap-8">
               <span className="font-semibold text-gray-900">Total</span>
-              <span className="font-bold text-gray-900 w-36 text-right text-base">{formatCurrency(totals.total_amount)}</span>
+              <span className="font-bold text-gray-900 w-36 text-right text-base">
+                {formatCurrency(totals.total_amount)}
+                {moneda !== 'ARS' && <span className="text-xs text-gray-400 ml-1">{moneda}</span>}
+              </span>
             </div>
           </div>
+
         </CardContent>
       </Card>
 
@@ -15914,6 +16321,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           Guardar factura
         </Button>
       </div>
+
     </form>
   )
 }
@@ -15921,9 +16329,10 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
 <file path="src/features/invoices/pages/NewInvoicePage.jsx">
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft, Loader2, FlaskConical } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
 import { useCompany } from '@/features/companies/context/CompanyContext'
@@ -16040,6 +16449,7 @@ export default function NewInvoicePage() {
   // Si el usuario escaneó una factura, llega aquí con ocrData en el navigation state.
   // mapOcrToFormValues() convierte esos datos al formato del formulario.
   const ocrData = location.state?.ocrData ?? null
+  const ocrPreview = location.state?.ocrPreview ?? null
 
   // Paso 1b — Hooks de mutación (creación y edición)
   // useCreateInvoice y useUpdateInvoice encapsulan la llamada a Supabase y el
@@ -16152,8 +16562,10 @@ export default function NewInvoicePage() {
     )
   }
 
+  const hasOcrPreview = Boolean(ocrPreview && !isEditMode)
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className={hasOcrPreview ? 'p-6 max-w-7xl mx-auto space-y-6' : 'p-6 max-w-4xl mx-auto space-y-6'}>
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
@@ -16170,7 +16582,6 @@ export default function NewInvoicePage() {
         </div>
       </div>
 
-      {/* Banner OCR — avisamos que los datos vienen pre-cargados */}
       {ocrData && !isEditMode && (
         <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
           <span>✨</span>
@@ -16181,11 +16592,26 @@ export default function NewInvoicePage() {
         </div>
       )}
 
-      <InvoiceForm
-        defaultValues={getDefaultValues()}
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-      />
+      <div className={hasOcrPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 items-start' : undefined}>
+        {hasOcrPreview && (
+          <div className="lg:sticky lg:top-6">
+            <ZoomPanImageViewer
+              src={ocrPreview}
+              alt="Factura escaneada"
+              className="h-[calc(100vh-12rem)] min-h-[400px]"
+              minHeight={400}
+            />
+          </div>
+        )}
+
+        <div className={hasOcrPreview ? 'min-w-0' : undefined}>
+          <InvoiceForm
+            defaultValues={getDefaultValues()}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
     </div>
   )
 }
