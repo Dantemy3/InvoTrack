@@ -109,6 +109,17 @@ export const authService = {
   },
 
   /**
+   * Update the current user's profile metadata (full_name).
+   */
+  async updateProfile(fullName) {
+    const { data, error } = await supabase.auth.updateUser({
+      data: { full_name: fullName },
+    })
+    if (error) throw error
+    return data
+  },
+
+  /**
    * Fetch the profile row for the current user.
    */
   async getProfile() {

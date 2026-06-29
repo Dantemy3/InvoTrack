@@ -123,6 +123,9 @@ export const invoiceService = {
       cleanInvoice.cae = null
     }
 
+    // Limpiar campos UI-only que no existen en la tabla invoices
+    delete cleanInvoice.consumidor_final_anonimo
+
     // Paso 4c — Insertar la cabecera de la factura en la tabla `invoices`
     // .select().single() devuelve el registro recién creado con su id generado por Supabase.
     const { data: newInvoice, error: invError } = await supabase

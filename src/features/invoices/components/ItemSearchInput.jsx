@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -11,13 +11,22 @@ export default function ItemSearchInput({
   onSelectItem,
   placeholder = 'Buscar ítem...',
   error,
+  products,
 }) {
   const containerRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [highlightIndex, setHighlightIndex] = useState(0)
 
   const query = value ?? ''
-  const suggestions = searchDemoCatalogItems(query)
+
+  const suggestions = useMemo(() => {
+    if (products) {
+      const normalized = query.trim().toLowerCase()
+      if (!normalized) return products
+      return products.filter((p) => p.name.toLowerCase().includes(normalized))
+    }
+    return searchDemoCatalogItems(query)
+  }, [products, query])
 
   useEffect(() => {
     setHighlightIndex(0)
@@ -34,8 +43,15 @@ export default function ItemSearchInput({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const normalizeItem = (item) => ({
+    descripcion: item.descripcion ?? item.name ?? '',
+    unidad: item.unidad ?? item.unit ?? '',
+    precio_unitario: item.precio_unitario ?? item.price ?? 0,
+    alicuota_iva: item.alicuota_iva ?? 21,
+  })
+
   const handleSelect = (item) => {
-    onSelectItem(item)
+    onSelectItem(normalizeItem(item))
     setOpen(false)
   }
 
@@ -93,9 +109,9 @@ export default function ItemSearchInput({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => handleSelect(item)}
               >
-                <span className="font-medium">{item.descripcion}</span>
+                <span className="font-medium">{item.descripcion ?? item.name}</span>
                 <span className="shrink-0 text-xs text-gray-400">
-                  {item.unidad} · {formatCurrency(item.precio_unitario)}
+                  {item.unidad ?? item.unit} · {formatCurrency(item.precio_unitario ?? item.price)}
                 </span>
               </button>
             </li>

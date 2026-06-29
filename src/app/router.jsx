@@ -18,6 +18,7 @@ const InvoicesPage = lazy(() => import('@/features/invoices/pages/InvoicesPage')
 const NewInvoicePage = lazy(() => import('@/features/invoices/pages/NewInvoicePage'))
 const InvoiceDetailPage = lazy(() => import('@/features/invoices/pages/InvoiceDetailPage'))
 const ClientsPage = lazy(() => import('@/features/clients/pages/ClientsPage'))
+const ProductsPage = lazy(() => import('@/features/products/pages/ProductsPage'))
 const ProvidersPage = lazy(() => import('@/features/providers/pages/ProvidersPage'))
 const ReportsPage = lazy(() => import('@/features/reports/pages/ReportsPage'))
 const AlertsPage = lazy(() => import('@/features/alerts/pages/AlertsPage'))
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
           { path: '/invoices/:id', element: withSuspense(InvoiceDetailPage) },
           { path: '/invoices/:id/edit', element: withSuspense(NewInvoicePage) },
           { path: '/clients', element: withSuspense(ClientsPage) },
+          { path: '/products', element: withSuspense(ProductsPage) },
           { path: '/providers', element: withSuspense(ProvidersPage) },
           { path: '/reports', element: withSuspense(ReportsPage) },
           { path: '/alerts', element: withSuspense(AlertsPage) },

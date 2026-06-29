@@ -26,7 +26,12 @@ export default function SettingsPage() {
   const { register: regPassword, handleSubmit: handlePassword, reset: resetPassword } = useForm()
 
   const onProfileSubmit = async (data) => {
-    toast({ title: 'Perfil actualizado', variant: 'success' })
+    try {
+      await authService.updateProfile(data.full_name)
+      toast({ title: 'Perfil actualizado', variant: 'success' })
+    } catch (err) {
+      toast({ title: 'Error', description: err.message, variant: 'error' })
+    }
   }
 
   const onPasswordSubmit = async (data) => {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, FileText, Users, Truck, BarChart3,
+  LayoutDashboard, FileText, Package, Users, Truck, BarChart3,
   Bell, Settings, TrendingUp, Menu, X, LogOut, ScanLine, ChevronDown
 } from 'lucide-react'
 import { authService } from '@/features/auth/services/authService'
@@ -19,6 +19,7 @@ const navItems = [
   { to: '/invoices', icon: FileText, label: 'Facturas' },
   { to: '/ocr', icon: ScanLine, label: 'Escanear' },
   { to: '/clients', icon: Users, label: 'Clientes' },
+  { to: '/products', icon: Package, label: 'Productos' },
   { to: '/providers', icon: Truck, label: 'Proveedores' },
   { to: '/reports', icon: BarChart3, label: 'Reportes' },
   { to: '/alerts', icon: Bell, label: 'Alertas' },
