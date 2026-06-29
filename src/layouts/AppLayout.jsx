@@ -154,7 +154,7 @@ export default function AppLayout() {
               </span>
             )}
           </Button>
-          <Avatar className="h-8 w-8 cursor-pointer">
+          <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate('/settings')}>
             <AvatarFallback className="text-xs">{getInitials(displayName)}</AvatarFallback>
           </Avatar>
         </header>

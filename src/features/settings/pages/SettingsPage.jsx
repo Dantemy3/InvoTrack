@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Loader2, User, Building2, Shield } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -10,23 +10,40 @@ import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/features/auth/context/AuthContext'
 import { authService } from '@/features/auth/services/authService'
 import { useToast } from '@/components/ui/toast'
+import { useProfile, useUpdateProfile } from '@/features/profile/hooks/useProfile'
 
 export default function SettingsPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const { data: profile } = useProfile()
+  const updateProfile = useUpdateProfile()
 
-  const { register: regProfile, handleSubmit: handleProfile, formState: { isSubmitting: profileSubmitting } } = useForm({
+  const { register: regProfile, handleSubmit: handleProfile, formState: { isSubmitting: profileSubmitting }, reset: resetProfile } = useForm({
     defaultValues: {
-      full_name: user?.user_metadata?.full_name || '',
-      email: user?.email || '',
+      full_name: '',
+      email: '',
     },
   })
 
   const { register: regPassword, handleSubmit: handlePassword, reset: resetPassword } = useForm()
 
+  useEffect(() => {
+    if (profile) {
+      resetProfile({
+        full_name: profile.full_name || user?.user_metadata?.full_name || '',
+        email: user?.email || '',
+      })
+    } else if (user) {
+      resetProfile({
+        full_name: user?.user_metadata?.full_name || '',
+        email: user?.email || '',
+      })
+    }
+  }, [profile, user, resetProfile])
+
   const onProfileSubmit = async (data) => {
-    toast({ title: 'Perfil actualizado', variant: 'success' })
+    await updateProfile.mutateAsync({ full_name: data.full_name })
   }
 
   const onPasswordSubmit = async (data) => {
@@ -77,8 +94,8 @@ export default function SettingsPage() {
                   <Input type="email" disabled {...regProfile('email')} />
                   <p className="text-xs text-gray-400">El email no se puede cambiar</p>
                 </div>
-                <Button type="submit" disabled={profileSubmitting}>
-                  {profileSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                <Button type="submit" disabled={profileSubmitting || updateProfile.isPending}>
+                  {(profileSubmitting || updateProfile.isPending) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Guardar cambios
                 </Button>
               </form>
