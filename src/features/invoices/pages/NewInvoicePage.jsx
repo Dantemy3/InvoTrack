@@ -1,11 +1,18 @@
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
+import { providerService } from '@/features/providers/services/providerService'
 import { useCompany } from '@/features/companies/context/CompanyContext'
+import { useToast } from '@/components/ui/toast'
 
 // Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.
 // Cubre todos los campos del formulario.
@@ -131,6 +138,53 @@ export default function NewInvoicePage() {
   // Si no hay id (modo creación), el hook recibe null y no hace ninguna petición.
   const { data: existingInvoice, isLoading: isLoadingInvoice } = useInvoice(isEditMode ? id : null)
 
+  // Paso 1d — Empresa activa para verificar proveedor del OCR
+  const { company } = useCompany()
+
+  // Paso 1e — Estado para verificar proveedor desde OCR
+  const { toast } = useToast()
+  const [providerDialog, setProviderDialog] = useState({
+    open: false,
+    name: '',
+    cuit: '',
+  })
+  const [providerIdFromOcr, setProviderIdFromOcr] = useState(null)
+
+  // Paso 1e — Verificar si el vendedor del OCR existe como proveedor
+  useEffect(() => {
+    if (!ocrData || !company?.id || isEditMode) return
+
+    const sellerCuit = ocrData.seller_cuit?.trim()
+    const sellerName = ocrData.seller_name?.trim()
+    if (!sellerCuit && !sellerName) return
+
+    providerService.findByCuit({ companyId: company.id, cuit: sellerCuit })
+      .then((existing) => {
+        if (existing) {
+          setProviderIdFromOcr(existing.id)
+        } else if (sellerName) {
+          setProviderDialog({ open: true, name: sellerName, cuit: sellerCuit })
+        }
+      })
+      .catch(() => {})
+  }, [ocrData, company?.id, isEditMode])
+
+  // Paso 1f — Crear proveedor desde el diálogo OCR
+  const handleCreateProvider = async () => {
+    try {
+      const newProvider = await providerService.create({
+        name: providerDialog.name || 'Proveedor',
+        cuit: providerDialog.cuit || '',
+        company_id: company.id,
+      })
+      setProviderIdFromOcr(newProvider.id)
+      setProviderDialog({ open: false, name: '', cuit: '' })
+      toast({ title: 'Proveedor creado', description: `Se vinculó ${newProvider.name} a la factura`, variant: 'success' })
+    } catch (err) {
+      toast({ title: 'Error', description: err.message, variant: 'error' })
+    }
+  }
+
   // isLoading es true mientras cualquiera de las dos mutaciones está en curso;
   // se pasa al formulario para deshabilitar el botón de envío y mostrar el spinner.
   const isLoading = createInvoice.isPending || updateInvoice.isPending
@@ -153,8 +207,8 @@ export default function NewInvoicePage() {
   }
 
   // ── Paso 1d — Calcular defaultValues ────────────────────────────────────────
-  // Prioridad de datos iniciales: edición > OCR > formulario vacío.
-  // Retorna los defaultValues del formulario con prioridad: edición > OCR > vacío.
+  // Prioridad de datos iniciales: edición > OCR > empresa > formulario vacío.
+  // Retorna los defaultValues del formulario con prioridad: edición > OCR > empresa > vacío.
   const getDefaultValues = () => {
     if (isEditMode && existingInvoice) {
       return {
@@ -200,10 +254,43 @@ export default function NewInvoicePage() {
       }
     }
 
-    // Si vienen datos de OCR, mapearlos al formulario
-    if (ocrData) return mapOcrToFormValues(ocrData)
+    // Si vienen datos de OCR, usar los del OCR (el emisor es el proveedor)
+    if (ocrData) {
+      const values = mapOcrToFormValues(ocrData)
+      if (providerIdFromOcr) values.provider_id = providerIdFromOcr
+      return values
+    }
 
-    return undefined
+    // Pre-fill emisor con datos de la empresa para facturas de ingreso
+    const companyDefaults = company ? {
+      emisor_razon_social: company.name ?? '',
+      emisor_cuit: company.cuit ?? '',
+      emisor_condicion_iva: company.tax_condition ?? 'RI',
+      emisor_domicilio: company.address ?? '',
+    } : {}
+
+    return {
+      tipo_comprobante: 'Factura B',
+      type: 'receivable',
+      punto_de_venta: 1,
+      numero_comprobante: 1,
+      fecha_emision: new Date().toISOString().split('T')[0],
+      fecha_vencimiento: '',
+      condicion_pago: 'contado',
+      moneda: 'ARS',
+      tipo_cambio: 1,
+      ...companyDefaults,
+      receptor_cuit: '',
+      receptor_razon_social: '',
+      receptor_condicion_iva: 'RI',
+      receptor_domicilio: '',
+      neto_gravado: 0, neto_no_gravado: 0, exento: 0,
+      iva_105: 0, iva_21: 0, iva_27: 0, otros_tributos: 0, total_amount: 0,
+      cae: '', cae_vencimiento: '',
+      client_id: null, provider_id: null,
+      notes: '',
+      items: [{ descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }],
+    }
   }
 
   // Mostrar skeleton mientras carga la factura en modo edición
@@ -261,6 +348,26 @@ export default function NewInvoicePage() {
           </span>
         </div>
       )}
+
+      <Dialog open={providerDialog.open} onOpenChange={(open) => setProviderDialog(prev => ({ ...prev, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Proveedor no registrado</DialogTitle>
+            <DialogDescription>
+              <strong>{providerDialog.name}</strong> no está registrado como proveedor en tu empresa.
+              ¿Querés crearlo automáticamente y vincularlo a esta factura?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProviderDialog({ open: false, name: '', cuit: '' })}>
+              No, ahora no
+            </Button>
+            <Button onClick={handleCreateProvider}>
+              Sí, crear proveedor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className={hasOcrPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 items-start' : undefined}>
         {hasOcrPreview && (

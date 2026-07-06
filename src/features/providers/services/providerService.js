@@ -22,6 +22,23 @@ export const providerService = {
   },
 
   /**
+   * Find a provider by CUIT within a company.
+   * @param {{ companyId: string, cuit: string }} opts
+   */
+  async findByCuit({ companyId, cuit }) {
+    if (!cuit) return null
+    const { data, error } = await supabase
+      .from('providers')
+      .select('*')
+      .eq('company_id', companyId)
+      .eq('cuit', cuit)
+      .maybeSingle()
+
+    if (error) throw error
+    return data
+  },
+
+  /**
    * Get a single provider by id.
    * @param {string} id
    */
