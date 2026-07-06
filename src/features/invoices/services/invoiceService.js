@@ -108,7 +108,44 @@ export const invoiceService = {
       )
     }
 
-    // Paso 4b.1 — Limpiar campos de fecha vacíos antes de enviar a Supabase.
+    // ──────────────────────────────────────────────────────────────────────
+    // PASO 4b.1 — VALIDACIÓN DE STOCK (solo para ventas)
+    // Antes de insertar la factura, verificamos que todos los productos
+    // existan y tengan stock suficiente. Si algo falla, la factura NO se crea.
+    // ──────────────────────────────────────────────────────────────────────
+    if (invoice.type === 'receivable' && items.length > 0) {
+      for (const item of items) {
+        const desc = ((item.description ?? item.descripcion) ?? '').trim()
+        if (!desc) continue
+        const qty = Number(item.quantity ?? item.cantidad ?? 1)
+
+        const { data: product, error: findError } = await supabase
+          .from('products')
+          .select('id, name, stock')
+          .eq('company_id', invoice.company_id)
+          .eq('name', desc)
+          .maybeSingle()
+
+        if (findError) throw findError
+        if (!product) {
+          throw new Error(
+            `Producto "${desc}" no encontrado. ` +
+            `En facturas de venta solo se pueden usar productos existentes. ` +
+            `Creá el producto primero desde la sección Productos.`
+          )
+        }
+
+        const currentStock = Number(product.stock ?? 0)
+        if (currentStock < qty) {
+          throw new Error(
+            `Stock insuficiente para "${product.name}". ` +
+            `Disponible: ${currentStock}, requerido: ${qty}.`
+          )
+        }
+      }
+    }
+
+    // Limpiar campos de fecha vacíos antes de enviar a Supabase.
     // Postgres espera NULL o una fecha válida — un string vacío ("") tira
     // "invalid input syntax for type date". Esto ocurre en tipos de factura
     // que no tienen fecha de vencimiento (Factura C, Recibo, Notas).
@@ -157,6 +194,18 @@ export const invoiceService = {
         // para no dejar una cabecera sin líneas (registro huérfano) en la base de datos.
         await supabase.from('invoices').delete().eq('id', newInvoice.id)
         throw itemsError
+      }
+
+      // ────────────────────────────────────────────────────────────────────
+      // PASO 4e.2 — STOCK: Actualizar inventario según tipo de factura
+      // ────────────────────────────────────────────────────────────────────
+      // payable  (compra)  → suma stock (o crea producto si no existe)
+      // receivable (venta) → resta stock (ya validado en paso 4b.1)
+      // ────────────────────────────────────────────────────────────────────
+      if (invoice.type === 'receivable') {
+        await this._updateStockForSale(rows, invoice.company_id)
+      } else if (invoice.type === 'payable') {
+        await this._updateStockForPurchase(rows, invoice.company_id, userId)
       }
     }
 
@@ -208,6 +257,91 @@ export const invoiceService = {
   async delete(id) {
     const { error } = await supabase.from('invoices').delete().eq('id', id)
     if (error) throw error
+  },
+
+  /**
+   * Resta stock para facturas de VENTA (receivable).
+   * La validación de existencia y stock suficiente ya se hizo en create().
+   * @param {object[]} items - Items de la factura (con description, quantity)
+   * @param {string} companyId
+   */
+  async _updateStockForSale(items, companyId) {
+    for (const item of items) {
+      const desc = (item.description ?? '').trim()
+      if (!desc) continue
+
+      const qty = Number(item.quantity ?? 1)
+
+      const { data: product, error: findError } = await supabase
+        .from('products')
+        .select('id, stock')
+        .eq('company_id', companyId)
+        .eq('name', desc)
+        .maybeSingle()
+
+      if (findError) throw findError
+      if (!product) continue
+
+      const currentStock = Number(product.stock ?? 0)
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ stock: Math.max(0, currentStock - qty) })
+        .eq('id', product.id)
+
+      if (updateError) throw updateError
+    }
+  },
+
+  /**
+   * Actualiza stock para facturas de COMPRA (payable).
+   * Si el producto no existe, lo crea con el stock comprado.
+   * Si ya existe, suma la cantidad al stock actual.
+   * @param {object[]} items - Items de la factura (con description, quantity, unit_price, unidad)
+   * @param {string} companyId
+   * @param {string} userId
+   */
+  async _updateStockForPurchase(items, companyId, userId) {
+    for (const item of items) {
+      const desc = (item.description ?? '').trim()
+      if (!desc) continue
+
+      const qty = Number(item.quantity ?? 1)
+
+      const { data: product, error: findError } = await supabase
+        .from('products')
+        .select('id, stock')
+        .eq('company_id', companyId)
+        .eq('name', desc)
+        .maybeSingle()
+
+      if (findError) throw findError
+
+      if (product) {
+        const currentStock = Number(product.stock ?? 0)
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ stock: currentStock + qty })
+          .eq('id', product.id)
+
+        if (updateError) throw updateError
+      } else {
+        const newProduct = {
+          company_id: companyId,
+          user_id: userId,
+          name: desc,
+          description: desc,
+          price: Number(item.unit_price ?? 0),
+          unit: item.unidad ?? 'un',
+          stock: qty,
+        }
+
+        const { error: insertError } = await supabase
+          .from('products')
+          .insert(newProduct)
+
+        if (insertError) throw insertError
+      }
+    }
   },
 
   /**

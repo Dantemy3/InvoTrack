@@ -24,8 +24,8 @@ function ProductFormDialog({ open, onClose, product = null }) {
 
   const defaultValues = useMemo(() =>
     product
-      ? { name: product.name, description: product.description || '', price: String(product.price), unit: product.unit || 'un' }
-      : { name: '', description: '', price: '', unit: 'un' },
+      ? { name: product.name, description: product.description || '', price: String(product.price), unit: product.unit || 'un', stock: String(product.stock ?? 0) }
+      : { name: '', description: '', price: '', unit: 'un', stock: '' },
   [product])
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
@@ -73,6 +73,11 @@ function ProductFormDialog({ open, onClose, product = null }) {
               <Label>Unidad</Label>
               <Input placeholder="un, kg, hs, m" {...register('unit')} />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Stock inicial</Label>
+            <Input type="number" step="1" min="0" placeholder="0" {...register('stock')} />
+            {errors.stock && <p className="text-xs text-red-500">{errors.stock.message}</p>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => { reset(); onClose() }}>Cancelar</Button>
@@ -175,6 +180,12 @@ export default function ProductsPage() {
                 <div className="mt-3 flex items-center gap-3">
                   <span className="text-sm font-semibold text-gray-900">{formatCurrency(product.price)}</span>
                   <span className="text-xs text-gray-400">/ {product.unit || 'un'}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Stock:</span>
+                  <span className={`text-xs font-medium ${Number(product.stock ?? 0) > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    {Number(product.stock ?? 0).toFixed(2)}
+                  </span>
                 </div>
               </CardContent>
             </Card>

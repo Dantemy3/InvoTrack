@@ -12,6 +12,7 @@ export default function ItemSearchInput({
   placeholder = 'Buscar ítem...',
   error,
   products,
+  restrictToProducts = false,
 }) {
   const containerRef = useRef(null)
   const [open, setOpen] = useState(false)
@@ -74,6 +75,18 @@ export default function ItemSearchInput({
 
   const showSuggestions = open && suggestions.length > 0
 
+  const handleBlur = (event) => {
+    if (restrictToProducts && value && products) {
+      const normalized = value.trim().toLowerCase()
+      const isProduct = products.some((p) => p.name.toLowerCase() === normalized)
+      if (!isProduct) {
+        onChange('')
+      }
+    }
+    onBlur?.(event)
+    setOpen(false)
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
@@ -87,7 +100,7 @@ export default function ItemSearchInput({
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          onBlur={onBlur}
+          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoComplete="off"
         />

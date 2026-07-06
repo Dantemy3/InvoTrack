@@ -94,6 +94,7 @@ export function useCreateInvoice() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.INVOICES] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_STATS] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
       toast({ title: 'Factura creada', variant: 'success' })
     },
 

@@ -33,7 +33,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const navigate = useNavigate()
 
   const {
-    register, handleSubmit, control, watch, setValue,
+    register, handleSubmit, control, watch, setValue, setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(invoiceSchema),
@@ -64,6 +64,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const items               = watch('items') ?? []
   const moneda              = watch('moneda') ?? 'ARS'
   const tipoComprobante     = watch('tipo_comprobante') ?? 'Factura B'
+  const invoiceType         = watch('type') ?? 'receivable'
   const emisorCondicionIva  = watch('emisor_condicion_iva') ?? 'RI'
   const esAnonimo           = watch('consumidor_final_anonimo') ?? false
 
@@ -85,6 +86,19 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     const itemsNormalizados = config.permiteItems
       ? data.items
       : []
+
+    if (data.type === 'receivable' && itemsNormalizados.length > 0) {
+      const productNames = new Set(products.map((p) => p.name.toLowerCase()))
+      for (let i = 0; i < itemsNormalizados.length; i++) {
+        const desc = (itemsNormalizados[i].descripcion ?? '').trim()
+        if (desc && !productNames.has(desc.toLowerCase())) {
+          setError(`items.${i}.descripcion`, {
+            message: `"${desc}" no es un producto existente. Seleccioná uno de la lista.`,
+          })
+          return
+        }
+      }
+    }
 
     const enriched = config.permiteItems
       ? calculateInvoiceTotals(itemsNormalizados)
@@ -448,6 +462,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
                         placeholder="Buscar producto…"
                         error={errors.items?.[index]?.descripcion?.message}
                         products={products}
+                        restrictToProducts={invoiceType === 'receivable'}
                         onSelectItem={(catalogItem) => {
                           setValue(`items.${index}.descripcion`, catalogItem.descripcion)
                           setValue(`items.${index}.unidad`, catalogItem.unidad)
