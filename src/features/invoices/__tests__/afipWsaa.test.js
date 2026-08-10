@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import * as fc from 'fast-check'
 import {
   buildLoginTicketRequest,
@@ -8,6 +8,9 @@ import {
   toPkcs8Der,
   base64ToBytes,
   bytesToBase64,
+  isTokenValid,
+  parseCuitFromCert,
+  getTokenAndSignCached,
 } from '../../../../supabase/functions/_shared/afipWsaa.js'
 
 const encoder = new TextEncoder()
@@ -133,5 +136,150 @@ describe('signLoginTicketRequest (WSAA)', () => {
       encoder.encode(canonical)
     )
     expect(verified).toBe(true)
+  })
+})
+
+// ── isTokenValid ────────────────────────────────────────────────────────────
+
+describe('isTokenValid (TA compartido)', () => {
+  it('acepta un vencimiento futuro holgado', () => {
+    const futuro = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    expect(isTokenValid(futuro)).toBe(true)
+  })
+
+  it('rechaza vencidos y vencimientos dentro del margen de seguridad', () => {
+    const vencido = new Date(Date.now() - 1000).toISOString()
+    expect(isTokenValid(vencido)).toBe(false)
+    const muyCerca = new Date(Date.now() + 60 * 1000).toISOString()
+    expect(isTokenValid(muyCerca)).toBe(false)
+  })
+
+  it('rechaza valores ausentes o inválidos', () => {
+    expect(isTokenValid(null)).toBe(false)
+    expect(isTokenValid(undefined)).toBe(false)
+    expect(isTokenValid('')).toBe(false)
+    expect(isTokenValid('no-es-fecha')).toBe(false)
+  })
+
+  it('es consistente: el mismo instante siempre da el mismo resultado', () => {
+    fc.assert(
+      fc.property(
+        fc.constant(new Date(Date.now() + 30 * 60 * 1000).toISOString()),
+        (iso) => {
+          const a = isTokenValid(iso)
+          const b = isTokenValid(iso)
+          return a === b
+        }
+      )
+    )
+  })
+})
+
+// ── parseCuitFromCert ───────────────────────────────────────────────────────
+
+describe('parseCuitFromCert (fallback de CUIT)', () => {
+  it('extrae el CUIT de CN=cuit:XXXXXXXXXXX', () => {
+    const pem = '-----BEGIN CERTIFICATE-----\nsubject=CN=cuit:20305741461, name=Empresa SA\n-----END CERTIFICATE-----'
+    expect(parseCuitFromCert(pem)).toBe('20305741461')
+  })
+
+  it('extrae el CUIT de CN directo y de serialNumber', () => {
+    expect(parseCuitFromCert('CN=20305741461')).toBe('20305741461')
+    expect(parseCuitFromCert('serialNumber=CUIT 20305741461')).toBe('20305741461')
+    expect(parseCuitFromCert('serialNumber=20305741461')).toBe('20305741461')
+  })
+
+  it('devuelve null si no hay CUIT', () => {
+    expect(parseCuitFromCert(null)).toBeNull()
+    expect(parseCuitFromCert('')).toBeNull()
+    expect(parseCuitFromCert('CN=Algo sin numero')).toBeNull()
+  })
+})
+
+// ── getTokenAndSignCached ───────────────────────────────────────────────────
+
+describe('getTokenAndSignCached (TA compartido)', () => {
+  const base = {
+    privateKeyPem: 'k',
+    certPem: 'c',
+    wsaaUrl: 'https://wsaahomo.afip.gov.ar',
+    cuit: '20305741461',
+  }
+  const tokenFresco = {
+    token: 'tok-1',
+    sign: 'sig-1',
+    expirationTime: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+  }
+
+  function storeCon(initial = null) {
+    let guardado = initial
+    return {
+      store: {
+        loadToken: vi.fn(async () => guardado),
+        saveToken: vi.fn(async (t) => { guardado = t }),
+      },
+      ultimoGuardado: () => guardado,
+    }
+  }
+
+  it('reutiliza el TA vigente sin llamar a WSAA', async () => {
+    const { store } = storeCon(tokenFresco)
+    const requestToken = vi.fn()
+
+    const r = await getTokenAndSignCached({ ...base, store, requestToken })
+
+    expect(r.reused).toBe(true)
+    expect(r.token).toBe('tok-1')
+    expect(requestToken).not.toHaveBeenCalled()
+    expect(store.saveToken).not.toHaveBeenCalled()
+  })
+
+  it('pide TA nuevo si no hay caché y lo persiste', async () => {
+    const { store, ultimoGuardado } = storeCon(null)
+    const requestToken = vi.fn(async () => tokenFresco)
+
+    const r = await getTokenAndSignCached({ ...base, store, requestToken })
+
+    expect(r.reused).toBe(false)
+    expect(requestToken).toHaveBeenCalledWith(expect.objectContaining({ service: 'wsfe', wsaaUrl: base.wsaaUrl }))
+    expect(store.saveToken).toHaveBeenCalledWith(expect.objectContaining({ service: 'wsfe', cuit: base.cuit }))
+    expect(ultimoGuardado().token).toBe('tok-1')
+  })
+
+  it('pide TA nuevo si la caché está vencida', async () => {
+    const vencido = { ...tokenFresco, expirationTime: new Date(Date.now() - 1000).toISOString() }
+    const { store, ultimoGuardado } = storeCon(vencido)
+    const requestToken = vi.fn(async () => ({ ...tokenFresco, token: 'tok-2' }))
+
+    const r = await getTokenAndSignCached({ ...base, store, requestToken })
+
+    expect(r.reused).toBe(false)
+    expect(r.token).toBe('tok-2')
+    expect(ultimoGuardado().token).toBe('tok-2')
+  })
+
+  it('recupera de la caché si WSAA responde alreadyAuthenticated', async () => {
+    const { store, ultimoGuardado } = storeCon(tokenFresco)
+    const requestToken = vi.fn(async () => { throw new Error('coe.alreadyAuthenticated') })
+
+    const r = await getTokenAndSignCached({ ...base, store, requestToken })
+
+    expect(r.reused).toBe(true)
+    expect(r.token).toBe('tok-1')
+    expect(store.saveToken).not.toHaveBeenCalled()
+    expect(ultimoGuardado().token).toBe('tok-1')
+  })
+
+  it('propaga el error si alreadyAuthenticated y no hay caché utilizable', async () => {
+    const { store } = storeCon(null)
+    const requestToken = vi.fn(async () => { throw new Error('coe.alreadyAuthenticated') })
+
+    await expect(getTokenAndSignCached({ ...base, store, requestToken })).rejects.toThrow(/alreadyAuthenticated/)
+  })
+
+  it('valida store y cuit obligatorios', async () => {
+    await expect(getTokenAndSignCached({ ...base, store: null })).rejects.toThrow(/store/)
+    const { store } = storeCon(tokenFresco)
+    await expect(getTokenAndSignCached({ ...base, store, cuit: null })).rejects.toThrow(/cuit/)
   })
 })
