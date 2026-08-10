@@ -6,6 +6,7 @@ import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
 import { useCompany } from '@/features/companies/context/CompanyContext'
+import { useClients } from '@/features/clients/hooks/useClients'
 
 // Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.
 // Cubre todos los campos del formulario.
@@ -126,6 +127,11 @@ export default function NewInvoicePage() {
   // manejo de caché de React Query. Se usan en handleSubmit más abajo.
   const createInvoice = useCreateInvoice()
   const updateInvoice = useUpdateInvoice()
+
+  // Clientes de la empresa: el receptor de una factura debe ser uno de ellos.
+  const { company } = useCompany()
+  const { data: clientsData } = useClients({ companyId: company?.id })
+  const clients = clientsData?.data || []
 
   // Paso 1c — Cargar factura existente solo en modo edición
   // Si no hay id (modo creación), el hook recibe null y no hace ninguna petición.
@@ -279,6 +285,7 @@ export default function NewInvoicePage() {
             defaultValues={getDefaultValues()}
             onSubmit={handleSubmit}
             isLoading={isLoading}
+            clients={clients}
           />
         </div>
       </div>

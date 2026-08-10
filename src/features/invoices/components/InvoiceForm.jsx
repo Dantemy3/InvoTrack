@@ -1,5 +1,6 @@
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { Plus, Trash2, Loader2, Globe, BadgeCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/toast'
@@ -20,8 +21,20 @@ import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
 import ItemSearchInput from './ItemSearchInput'
 import { useProducts } from '@/features/products/hooks/useProducts'
+import { DEMO_CATALOG_ITEMS } from '../data/demoCatalogItems'
 
 const defaultItem = { descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.userAgent)
+const modKey = isMac ? '⌘' : 'Ctrl'
+
+function Kbd({ children }) {
+  return (
+    <kbd className="ml-1.5 hidden sm:inline-flex items-center rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-gray-400">
+      {children}
+    </kbd>
+  )
+}
 
 const TAX_CONDITION_LABELS = {
   RI: 'Responsable Inscripto',
@@ -58,7 +71,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     },
   })
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'items' })
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'items' })
 
   const { data: productsData } = useProducts()
   const products = productsData?.data ?? []
@@ -120,9 +133,110 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     })
   }
 
+  useHotkeys('alt+r', (e) => {
+    e.preventDefault()
+    fillDemoData()
+  }, { enableOnFormTags: true }, [config, invoiceType, products, replace])
+
+  // Autocompleta el formulario con datos demo válidos (solo dev).
+  // Atajo: Alt+R. Pensado para agilizar las pruebas manuales de la app.
+  const fillDemoData = () => {
+    const today = new Date().toISOString().split('T')[0]
+    const datePlus = (days) => {
+      const d = new Date()
+      d.setDate(d.getDate() + days)
+      return d.toISOString().split('T')[0]
+    }
+
+    if (config.requierePuntoVenta) setValue('punto_de_venta', 1)
+    if (config.requiereNumeroComprobante) setValue('numero_comprobante', 1)
+    setValue('fecha_emision', today)
+    setValue('fecha_vencimiento', config.requiereFechaVencimiento ? datePlus(15) : '')
+    setValue('condicion_pago', 'contado')
+
+    if (config.esExportacion) {
+      setValue('moneda', 'USD')
+      setValue('tipo_cambio', 1050)
+      setValue('pais_destino', 'US')
+      setValue('receptor_id_impositivo', 'US-EIN-123456789')
+      setValue('receptor_razon_social', 'Foreign Corp LLC')
+      setValue('receptor_domicilio', '123 Main St, New York')
+    } else {
+      setValue('moneda', 'ARS')
+      setValue('tipo_cambio', 1)
+      setValue('receptor_cuit', '20-33445566-7')
+      setValue('receptor_razon_social', 'Cliente Demo S.R.L.')
+      setValue('receptor_domicilio', 'Av. Santa Fe 5678, CABA')
+    }
+
+    setValue('emisor_cuit', '30-71234567-8')
+    setValue('emisor_razon_social', 'InvoTrack Demo S.A.')
+    setValue('emisor_domicilio', 'Av. Corrientes 1234, CABA')
+    setValue('receptor_condicion_iva', 'RI')
+    setValue('consumidor_final_anonimo', false)
+
+    setValue('cae', config.requiereCAE ? '74123456789012' : '')
+    setValue('cae_vencimiento', config.requiereVencimientoCAE ? datePlus(30) : '')
+    setValue('notes', 'Formulario autocompletado con datos demo (Alt+R)')
+
+    if (config.permiteItems) {
+      const itemsDemo = invoiceType === 'receivable' && products.length > 0
+        ? products.slice(0, 3).map((p) => ({
+            descripcion: p.name,
+            cantidad: 1,
+            unidad: p.unit || 'un',
+            precio_unitario: Number(p.price) || 1000,
+            alicuota_iva: 21,
+          }))
+        : DEMO_CATALOG_ITEMS.slice(0, 3).map((item) => ({ ...item }))
+      replace(itemsDemo)
+    } else {
+      setValue('total_amount', 150000)
+    }
+
+    toast({
+      title: 'Formulario autocompletado',
+      description: 'Se cargaron datos demo. Revisá y guardá.',
+      variant: 'success',
+    })
+  }
+
+  useHotkeys('mod+enter', (e) => {
+    e.preventDefault()
+    handleSubmit(handleFormSubmit)()
+  }, { enableOnFormTags: true }, [handleSubmit, handleFormSubmit])
+
+  useHotkeys('alt+i', (e) => {
+    if (config.permiteItems) {
+      e.preventDefault()
+      append(defaultItem)
+    }
+  }, { enableOnFormTags: true }, [config.permiteItems, append])
+
+  useHotkeys('alt+backspace', (e) => {
+    if (fields.length > 1) {
+      e.preventDefault()
+      remove(fields.length - 1)
+    }
+  }, { enableOnFormTags: true }, [fields.length, remove])
+
   const receptorObligatorio = config.requiereReceptorCUIT ||
     config.requiereReceptorRazonSocial ||
     config.requiereReceptorCondicionIVA
+
+  // Seleccionar un cliente de la lista completa los datos del receptor
+  // (razón social, CUIT, domicilio, condición IVA) y lo vincula a la factura.
+  const handleClientSelect = (clientId) => {
+    const client = clients.find((c) => c.id === clientId)
+    setValue('client_id', clientId)
+    if (client) {
+      setValue('receptor_razon_social', client.name ?? '')
+      setValue('receptor_cuit', client.cuit ?? '')
+      setValue('receptor_domicilio', client.address ?? '')
+      setValue('receptor_condicion_iva', client.tax_condition ?? '')
+    }
+    setValue('consumidor_final_anonimo', false)
+  }
 
   // Solicita el CAE a ARCA (WSFEv1 homologación) y completa los campos.
   // Solo aplica a comprobantes que requieren CAE emitidos (flujo "cobrar").
@@ -165,7 +279,15 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
       {/* ── Tipo y flujo ─────────────────────────────────────────────────── */}
       <Card>
-        <CardHeader><CardTitle>Tipo de comprobante</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Tipo de comprobante</CardTitle>
+          {import.meta.env.DEV && (
+            <Button type="button" variant="outline" size="sm" onClick={fillDemoData}>
+              Autocompletar demo
+              <Kbd>Alt+R</Kbd>
+            </Button>
+          )}
+        </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
           <div className="space-y-1.5">
@@ -407,6 +529,30 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+            {/* El receptor es un cliente de la lista — al seleccionarlo se completan sus datos */}
+            {clients.length > 0 && !config.esExportacion && (
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label>
+                  Cliente (receptor)
+                  {(config.requiereReceptorRazonSocial || config.requiereReceptorCUIT) && <span className="text-red-500"> *</span>}
+                </Label>
+                <Controller name="client_id" control={control} render={({ field }) => (
+                  <Select
+                    onValueChange={(clientId) => { field.onChange(clientId); handleClientSelect(clientId) }}
+                    value={field.value ?? ''}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Seleccionar cliente de la lista" /></SelectTrigger>
+                    <SelectContent>
+                      {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )} />
+                <p className="text-xs text-gray-400">
+                  El receptor debe ser un cliente de la lista. Al elegirlo se completan sus datos automáticamente.
+                </p>
+              </div>
+            )}
+
             {config.permiteConsumidorFinalAnonimo && !superaUmbral && (
               <div className="sm:col-span-2 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                 <input
@@ -457,20 +603,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             </>
           )}
 
-          {/* Vínculos con clientes/proveedores registrados */}
-          {clients.length > 0 && !config.esExportacion && (
-            <div className="space-y-1.5">
-              <Label>Vincular cliente</Label>
-              <Controller name="client_id" control={control} render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )} />
-            </div>
-          )}
+          {/* Vínculo con proveedor (solo para compras/pagar) */}
           {providers.length > 0 && !config.esExportacion && (
             <div className="space-y-1.5">
               <Label>Vincular proveedor</Label>
@@ -495,6 +628,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             <CardTitle>Ítems</CardTitle>
             <Button type="button" variant="outline" size="sm" onClick={() => append(defaultItem)}>
               <Plus className="h-4 w-4 mr-1" /> Agregar ítem
+              <Kbd>Alt+I</Kbd>
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -663,6 +797,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
           Guardar factura
+          <Kbd>{modKey}+↵</Kbd>
         </Button>
       </div>
 

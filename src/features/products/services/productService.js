@@ -4,7 +4,7 @@ export const productService = {
   async getAll({ companyId, search, page = 1, pageSize = 50 } = {}) {
     let query = supabase
       .from('products')
-      .select('*', { count: 'exact' })
+      .select('*, provider:providers(id, name)', { count: 'exact' })
       .order('name', { ascending: true })
       .range((page - 1) * pageSize, page * pageSize - 1)
 
@@ -19,7 +19,7 @@ export const productService = {
   async getById(id) {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, provider:providers(id, name)')
       .eq('id', id)
       .single()
 

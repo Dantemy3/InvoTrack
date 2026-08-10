@@ -11,24 +11,28 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { productSchema } from '../schemas/productSchemas'
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../hooks/useProducts'
+import { useProviders } from '@/features/providers/hooks/useProviders'
 import { formatCurrency } from '@/lib/utils'
 
 function ProductFormDialog({ open, onClose, product = null }) {
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
+  const { data: providersData } = useProviders()
+  const providers = providersData?.data || []
   const isEdit = !!product
 
   const defaultValues = useMemo(() =>
     product
-      ? { name: product.name, description: product.description || '', price: String(product.price), unit: product.unit || 'un', stock: String(product.stock ?? 0) }
-      : { name: '', description: '', price: '', unit: 'un', stock: '' },
+      ? { name: product.name, description: product.description || '', price: String(product.price), unit: product.unit || 'un', stock: String(product.stock ?? 0), provider_id: product.provider_id || '' }
+      : { name: '', description: '', price: '', unit: 'un', stock: '', provider_id: '' },
   [product])
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues,
   })
@@ -38,10 +42,11 @@ function ProductFormDialog({ open, onClose, product = null }) {
   }, [defaultValues, reset])
 
   const onSubmit = async (data) => {
+    const payload = { ...data, provider_id: data.provider_id || null }
     if (isEdit) {
-      await updateProduct.mutateAsync({ id: product.id, ...data })
+      await updateProduct.mutateAsync({ id: product.id, ...payload })
     } else {
-      await createProduct.mutateAsync(data)
+      await createProduct.mutateAsync(payload)
     }
     reset()
     onClose()
@@ -78,6 +83,24 @@ function ProductFormDialog({ open, onClose, product = null }) {
             <Label>Stock inicial</Label>
             <Input type="number" step="1" min="0" placeholder="0" {...register('stock')} />
             {errors.stock && <p className="text-xs text-red-500">{errors.stock.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Proveedor</Label>
+            <Controller
+              name="provider_id"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar proveedor" /></SelectTrigger>
+                  <SelectContent>
+                    {providers.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <p className="text-xs text-gray-400">A quién le comprás este producto.</p>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => { reset(); onClose() }}>Cancelar</Button>
@@ -187,6 +210,9 @@ export default function ProductsPage() {
                     {Number(product.stock ?? 0).toFixed(2)}
                   </span>
                 </div>
+                {product.provider?.name && (
+                  <p className="mt-1 text-xs text-gray-400">Proveedor: {product.provider.name}</p>
+                )}
               </CardContent>
             </Card>
           ))}
