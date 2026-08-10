@@ -119,7 +119,13 @@ export default function InvoiceDetailPage() {
       const result = await afipService.validateCae(
         invoice.cae,
         invoice.cae_vencimiento,
-        invoice.emisor_cuit
+        invoice.emisor_cuit,
+        {
+          tipoComprobante: invoice.tipo_comprobante,
+          puntoDeVenta: invoice.punto_de_venta,
+          numeroComprobante: invoice.numero_comprobante,
+          invoiceId: invoice.id,
+        }
       )
       setAfipResult(result)
     } finally {

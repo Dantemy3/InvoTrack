@@ -1,7 +1,9 @@
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Trash2, Loader2, Globe } from 'lucide-react'
+import { Plus, Trash2, Loader2, Globe, BadgeCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from '@/components/ui/toast'
+import { useEmitCae } from '../hooks/useEmitCae'
 import {
   invoiceSchema,
   TAX_CONDITION_VALUES,
@@ -33,7 +35,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const navigate = useNavigate()
 
   const {
-    register, handleSubmit, control, watch, setValue, setError,
+    register, handleSubmit, control, watch, getValues, setValue, setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(invoiceSchema),
@@ -70,6 +72,9 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
   const config = getComprobanteConfig(tipoComprobante)
   const tiposPermitidos = getTiposPermitidosPorEmisor(emisorCondicionIva)
+
+  const { toast } = useToast()
+  const emitCae = useEmitCae()
 
   const totals = calculateInvoiceTotals(items)
   const superaUmbral = totals.total_amount >= UMBRAL_CF_ARS
@@ -118,6 +123,42 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const receptorObligatorio = config.requiereReceptorCUIT ||
     config.requiereReceptorRazonSocial ||
     config.requiereReceptorCondicionIVA
+
+  // Solicita el CAE a ARCA (WSFEv1 homologación) y completa los campos.
+  // Solo aplica a comprobantes que requieren CAE emitidos (flujo "cobrar").
+  const handleEmitCae = async () => {
+    const values = getValues()
+
+    if (!values.emisor_cuit) {
+      toast({ title: 'Falta el CUIT del emisor', description: 'Completá el CUIT del emisor antes de pedir el CAE.', variant: 'error' })
+      return
+    }
+    if (!values.punto_de_venta || !values.numero_comprobante) {
+      toast({ title: 'Faltan datos de numeración', description: 'Punto de venta y número de comprobante son obligatorios.', variant: 'error' })
+      return
+    }
+    const total = Number(values.total_amount)
+    if (!total || total <= 0) {
+      toast({ title: 'Total inválido', description: 'El total del comprobante debe ser mayor a 0.', variant: 'error' })
+      return
+    }
+
+    try {
+      const result = await emitCae.mutateAsync({ invoice: values })
+      if (result?.cae) {
+        setValue('cae', result.cae)
+        setValue('cae_vencimiento', result.caeVencimiento ?? '')
+        toast({
+          title: 'CAE obtenido',
+          description: `CAE ${result.cae} válido hasta ${result.caeVencimiento ?? '-'}. Completá el guardado de la factura.`,
+          variant: 'success',
+        })
+      }
+    } catch (err) {
+      // El toast de error lo dispara el propio hook (useEmitCae)
+      console.error('Error al solicitar CAE:', err.message)
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -215,6 +256,29 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               <Label>Vencimiento CAE <span className="text-red-500">*</span></Label>
               <Input type="date" {...register('cae_vencimiento')} />
               {errors.cae_vencimiento && <p className="text-xs text-red-500">{errors.cae_vencimiento.message}</p>}
+            </div>
+          )}
+
+          {config.requiereCAE && invoiceType === 'receivable' && (
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={emitCae.isPending || isLoading}
+                onClick={handleEmitCae}
+              >
+                {emitCae.isPending
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <BadgeCheck className="h-4 w-4 text-emerald-500" />}
+                {emitCae.isPending ? 'Solicitando CAE…' : 'Solicitar CAE en ARCA (homologación)'}
+              </Button>
+              <p className="text-xs text-gray-400">
+                Pide el CAE a ARCA con los datos del comprobante y completa los campos automáticamente.
+              </p>
+              {emitCae.isError && (
+                <p className="text-xs text-red-500">{emitCae.error.message}</p>
+              )}
             </div>
           )}
 

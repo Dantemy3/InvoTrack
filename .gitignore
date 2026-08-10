@@ -4,6 +4,17 @@ node_modules
 .env.local
 .env.*.local
 
+# AFIP/ARCA: credenciales y certificados (nunca comitear)
+certificados/
+*.key
+*.pem
+
+# AFIP/ARCA: caché de Ticket de Acceso (contiene token/sign, nunca comitear)
+scripts/arca/.wsaa-token-cache.json
+
+# AFIP/ARCA: intentos de emisión pendientes (idempotencia de CAE)
+scripts/arca/.cae-intents.json
+
 # Logs
 logs
 *.log
