@@ -5,8 +5,6 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useMonthlyChart, useInvoices } from '@/features/invoices/hooks/useInvoices'
@@ -57,7 +55,7 @@ export default function ReportsPage() {
   const [flowType, setFlowType] = useState('all')
   const [exporting, setExporting] = useState(false)
   const { company } = useCompany()
-  const { data: rawData, isLoading } = useMonthlyChart(parseInt(period))
+  const { data: rawData } = useMonthlyChart(parseInt(period))
   const { data: allInvoices } = useInvoices({ pageSize: 500 })
   const chartData = processMonthlyData(rawData)
   const currencyGroups = groupByCurrency(allInvoices)
@@ -80,10 +78,11 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// análisis</p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">Reportes</h1>
           <p className="text-sm text-gray-500 mt-0.5">Análisis financiero de tu empresa</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -184,19 +183,19 @@ export default function ReportsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e3d8c4" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6f614c' }} axisLine={false} tickLine={false} />
                   <YAxis
-                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: '#6f614c' }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
                   />
                   <Tooltip
                     formatter={(v) => [formatCurrency(v), 'Ingresos']}
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #f1f5f9', fontSize: '13px' }}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e3d8c4', fontSize: '13px', background: '#fffdf9', color: '#241d15' }}
                   />
-                  <Bar dataKey="total" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="total" fill="#e5693e" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -212,13 +211,13 @@ export default function ReportsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #f1f5f9', fontSize: '13px' }} />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Line type="monotone" dataKey="paid" stroke="#10b981" strokeWidth={2} name="Pagadas" dot={false} />
-                  <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pendientes" dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e3d8c4" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6f614c' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12, fill: '#6f614c' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e3d8c4', fontSize: '13px', background: '#fffdf9', color: '#241d15' }} />
+                  <Legend wrapperStyle={{ fontSize: '12px', color: '#6f614c' }} />
+                  <Line type="monotone" dataKey="paid" stroke="#678c54" strokeWidth={2} name="Pagadas" dot={false} />
+                  <Line type="monotone" dataKey="pending" stroke="#d8941f" strokeWidth={2} name="Pendientes" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>

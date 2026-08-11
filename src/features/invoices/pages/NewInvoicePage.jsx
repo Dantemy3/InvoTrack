@@ -1,11 +1,10 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ScanLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import InvoiceForm from '../components/InvoiceForm'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
-import { useCompany } from '@/features/companies/context/CompanyContext'
 
 // Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.
 // Cubre todos los campos del formulario.
@@ -235,13 +234,14 @@ export default function NewInvoicePage() {
   const hasOcrPreview = Boolean(ocrPreview && !isEditMode)
 
   return (
-    <div className={hasOcrPreview ? 'p-6 max-w-7xl mx-auto space-y-6' : 'p-6 max-w-4xl mx-auto space-y-6'}>
+    <div className={hasOcrPreview ? 'max-w-7xl mx-auto space-y-6' : 'max-w-4xl mx-auto space-y-6'}>
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// comprobante fiscal</p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">
             {isEditMode ? 'Editar factura' : 'Nueva factura'}
           </h1>
           <p className="text-sm text-gray-500">
@@ -253,8 +253,8 @@ export default function NewInvoicePage() {
       </div>
 
       {ocrData && !isEditMode && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
-          <span>✨</span>
+        <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3 text-sm text-blue-400">
+          <ScanLine className="h-4 w-4 flex-shrink-0" />
           <span>
             <strong>Datos pre-cargados desde OCR.</strong> Revisá y corregí los campos antes de guardar.
             Los campos con baja confianza pueden necesitar corrección manual.

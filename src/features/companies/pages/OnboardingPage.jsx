@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { TrendingUp, Loader2, Building2 } from 'lucide-react'
+import { Zap, Loader2, Building2 } from 'lucide-react'
 import { cuitSchema } from '@/features/auth/schemas/authSchemas'
 import { companyService } from '@/features/companies/services/companyService'
 import { useCompany } from '@/features/companies/context/CompanyContext'
@@ -70,25 +70,31 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <div className="absolute inset-0 grid-bg opacity-60" />
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-96 w-[42rem] rounded-full bg-violet-500/20 blur-3xl" />
+      <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
+      <div className="w-full max-w-lg relative">
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+          <div className="inline-flex items-center gap-3 mb-2">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-[0_0_24px_rgba(233,106,74,0.35)]">
+              <Zap className="h-5 w-5 text-white" fill="currentColor" />
             </div>
-            <span className="text-2xl font-bold text-gray-900">InvoTrack</span>
+            <div className="text-left leading-tight">
+              <span className="block font-display text-2xl font-bold text-gray-900 tracking-tight">InvoTrack</span>
+              <span className="block font-mono text-[10px] uppercase tracking-[0.24em] text-blue-400/80">control financiero</span>
+            </div>
           </div>
           <p className="text-gray-500 text-sm">Gestión de facturas para PyMEs</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-panel rounded-2xl border border-gray-100 p-8 shadow-2xl shadow-black/40 scan-frame">
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-blue-600" />
+            <div className="h-10 w-10 rounded-xl bg-blue-500/10 ring-1 ring-inset ring-blue-500/30 flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-blue-400" />
             </div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Creá tu empresa</h1>
@@ -97,7 +103,7 @@ export default function OnboardingPage() {
           </div>
 
           {serverError && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+            <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-500">
               {serverError}
             </div>
           )}

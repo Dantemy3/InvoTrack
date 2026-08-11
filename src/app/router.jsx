@@ -27,8 +27,14 @@ const OcrPage = lazy(() => import('@/features/ocr/pages/OcrPage'))
 
 // Spinner de carga que se muestra mientras una página lazy se está descargando.
 const PageLoader = () => (
-  <div className="flex items-center justify-center h-full min-h-[400px]">
-    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+  <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-3">
+    <div className="relative">
+      <Loader2 className="h-7 w-7 animate-spin text-blue-400" />
+      <div className="absolute inset-0 rounded-full shadow-[0_0_20px_rgba(233,106,74,0.4)]" />
+    </div>
+    <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-gray-500 animate-pulse">
+      inicializando tu espacio
+    </span>
   </div>
 )
 
@@ -89,10 +95,14 @@ export const router = createBrowserRouter([
   {
     path: '*',
     element: (
-      <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
-        <p className="text-6xl font-bold text-gray-200">404</p>
-        <p className="mt-2">Página no encontrada</p>
-        <a href="/dashboard" className="mt-4 text-blue-600 hover:underline text-sm">
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-blue-400 mb-3">error // señal perdida</p>
+        <p className="font-display text-8xl font-bold aurora-text">404</p>
+        <p className="mt-3 text-gray-400">Página no encontrada en la consola</p>
+        <a
+          href="/dashboard"
+          className="mt-6 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold shadow-[0_0_24px_rgba(233,106,74,0.3)] hover:brightness-110 transition-all"
+        >
           Volver al dashboard
         </a>
       </div>

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/features/auth/context/AuthContext'
 import { authService } from '@/features/auth/services/authService'
 import { useToast } from '@/components/ui/toast'
@@ -52,9 +51,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// preferencias</p>
+        <h1 className="text-2xl font-bold text-gray-900 mt-1">Configuración</h1>
         <p className="text-sm text-gray-500 mt-0.5">Administrá tu cuenta y preferencias</p>
       </div>
 

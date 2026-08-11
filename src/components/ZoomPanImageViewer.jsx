@@ -96,11 +96,11 @@ export default function ZoomPanImageViewer({
   return (
     <div
       className={cn(
-        'flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-gray-50',
+        'flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-gray-100/50',
         className
       )}
     >
-      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-white border-b border-gray-100">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-panel border-b border-gray-100">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Move className="h-3.5 w-3.5" />
           <span>Arrastrá para mover · rueda del mouse para zoom</span>

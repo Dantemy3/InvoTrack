@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreHorizontal, Eye, Edit, Trash2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -71,7 +70,7 @@ export default function InvoiceTable({ invoices = [], isLoading }) {
               </td>
               <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.fecha_emision)}</td>
               <td className="py-3.5 px-4 text-gray-500">{formatDate(invoice.fecha_vencimiento)}</td>
-              <td className="py-3.5 px-4 text-right font-semibold text-gray-900">
+              <td className="py-3.5 px-4 text-right money font-semibold text-gray-900">
                 {formatCurrency(invoice.total_amount)}
               </td>
               <td className="py-3.5 px-4">

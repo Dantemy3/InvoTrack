@@ -30,8 +30,10 @@ function DropZone({ onFile, disabled }) {
   return (
     <div
       className={cn(
-        'border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer',
-        dragging ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50',
+        'relative border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer scan-frame',
+        dragging
+          ? 'border-blue-400 bg-blue-500/10 shadow-[0_0_30px_rgba(233,106,74,0.15)]'
+          : 'border-gray-300 hover:border-blue-400/60 hover:bg-blue-500/5 hover:shadow-[0_0_24px_rgba(233,106,74,0.08)]',
         disabled && 'opacity-50 pointer-events-none'
       )}
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
@@ -47,13 +49,14 @@ function DropZone({ onFile, disabled }) {
         onChange={(e) => e.target.files[0] && onFile(e.target.files[0])}
       />
       <div className="flex flex-col items-center gap-3">
-        <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-          <Upload className="h-7 w-7 text-blue-500" />
+        <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 ring-1 ring-inset ring-blue-500/30 flex items-center justify-center">
+          <Upload className="h-7 w-7 text-blue-400" />
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(233,106,74,0.8)] animate-pulse" />
         </div>
         <div>
           <p className="font-semibold text-gray-700">Arrastrá tu factura aquí</p>
-          <p className="text-sm text-gray-400 mt-1">o hacé click para seleccionar</p>
-          <p className="text-xs text-gray-300 mt-2">JPG, PNG, PDF — máx. 10MB</p>
+          <p className="text-sm text-gray-500 mt-1">o hacé click para seleccionar</p>
+          <p className="font-mono text-xs text-gray-500 mt-2">JPG, PNG, PDF — máx. 10MB</p>
         </div>
       </div>
     </div>
@@ -67,7 +70,7 @@ export default function OcrPage() {
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
-  const [provider, setProvider] = useState('gpt4v')
+  const [provider] = useState('gpt4v')
 
   const handleFile = (f) => {
     setFile(f)
@@ -103,9 +106,10 @@ export default function OcrPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Escanear factura</h1>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// captura inteligente</p>
+        <h1 className="text-2xl font-bold text-gray-900 mt-1">Escanear factura</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           Subí una imagen y extraemos los datos automáticamente
         </p>
@@ -134,11 +138,11 @@ export default function OcrPage() {
               )}
 
               {file && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <FileImage className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                <div className="flex items-center gap-3 p-3 bg-ink/5 ring-1 ring-inset ring-ink/10 rounded-lg">
+                  <FileImage className="h-5 w-5 text-blue-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
-                    <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
                   </div>
                   <Button
                     type="button"
@@ -171,7 +175,7 @@ export default function OcrPage() {
               </Button>
 
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg text-red-600 text-sm">
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 ring-1 ring-inset ring-red-500/30 rounded-lg text-red-500 text-sm">
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
                   {error}
                 </div>
@@ -183,10 +187,15 @@ export default function OcrPage() {
         {/* Results */}
         <div>
           {!result ? (
-            <Card className="h-full">
-              <CardContent className="flex flex-col items-center justify-center h-full py-16 text-gray-300">
-                <ScanLine className="h-12 w-12 mb-3" />
-                <p className="text-sm">Los datos extraídos aparecerán aquí</p>
+            <Card className="h-full scan-frame">
+              <CardContent className="flex flex-col items-center justify-center h-full py-16 text-gray-500">
+                <div className="relative h-20 w-20 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border border-blue-500/30" />
+                  <div className="absolute inset-2 rounded-full border border-dashed border-violet-500/40" />
+                  <ScanLine className="h-9 w-9 text-blue-400/70" />
+                </div>
+                <p className="text-sm mt-4">Los datos extraídos aparecerán aquí</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-gray-600 mt-1.5">esperando documento</p>
               </CardContent>
             </Card>
           ) : (
@@ -215,7 +224,10 @@ export default function OcrPage() {
                     <div key={label} className="flex items-center justify-between text-sm">
                       <span className="text-gray-500 w-32 flex-shrink-0">{label}</span>
                       <div className="flex items-center gap-2 flex-1 justify-end">
-                        <span className="font-medium text-gray-900 text-right truncate max-w-[140px]">{value || '-'}</span>
+                        <span className={cn(
+                          'font-medium text-right truncate max-w-[140px]',
+                          label === 'CAE' ? 'money text-amber-500' : 'text-gray-900'
+                        )}>{value || '-'}</span>
                         <ConfidenceBadge score={result.normalized.confidence[key] ?? 0.1} />
                       </div>
                     </div>
@@ -295,8 +307,8 @@ export default function OcrPage() {
                       <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Ítems detectados ({result.normalized.items.length})</p>
                       <div className="space-y-1.5">
                         {result.normalized.items.map((item, i) => (
-                          <div key={i} className="text-xs bg-gray-50 rounded-lg p-2">
-                            <p className="font-medium text-gray-800 truncate">{item.descripcion}</p>
+                          <div key={i} className="text-xs bg-gray-100/60 rounded-lg p-2">
+                            <p className="font-medium text-gray-700 truncate">{item.descripcion}</p>
                             <p className="text-gray-500 mt-0.5">
                               {item.cantidad} × {formatCurrency(item.precio_unitario)} · IVA {item.alicuota_iva}%
                               {item.subtotal_neto ? ` = ${formatCurrency(item.subtotal_neto)}` : ''}

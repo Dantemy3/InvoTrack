@@ -101,10 +101,11 @@ export default function ClientsPage() {
   const clients = data?.data || []
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// clientes</p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">Clientes</h1>
           <p className="text-sm text-gray-500 mt-0.5">{data?.count || 0} clientes registrados</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>

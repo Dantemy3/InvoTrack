@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Loader2, TrendingUp, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Zap, CheckCircle } from 'lucide-react'
 import { registerSchema } from '../schemas/authSchemas'
 import { authService } from '../services/authService'
 import { Button } from '@/components/ui/button'
@@ -115,21 +115,30 @@ export default function RegisterPage() {
   // Success state — show confirmation message
   if (registered) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+      <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-60" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-96 w-[42rem] rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="w-full max-w-md relative">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 mb-2">
-              <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
+            <div className="inline-flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-[0_0_24px_rgba(233,106,74,0.35)]">
+                <Zap className="h-5 w-5 text-white" fill="currentColor" />
               </div>
-              <span className="text-2xl font-bold text-gray-900">InvoTrack</span>
+              <div className="text-left leading-tight">
+                <span className="block font-display text-2xl font-bold text-gray-900 tracking-tight">InvoTrack</span>
+                <span className="block font-mono text-[10px] uppercase tracking-[0.24em] text-blue-400/80">control financiero</span>
+              </div>
             </div>
             <p className="text-gray-500 text-sm">Gestión de facturas para PyMEs</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+          <div className="bg-panel rounded-2xl border border-gray-100 p-8 text-center shadow-2xl shadow-black/40 scan-frame">
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-12 w-12 text-emerald-500" />
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-emerald-500/40 blur-xl" />
+                <CheckCircle className="h-14 w-14 text-emerald-500 relative" />
+              </div>
             </div>
             <h1 className="text-xl font-semibold text-gray-900 mb-2">¡Cuenta creada!</h1>
             <p className="text-sm text-gray-500 mb-6">
@@ -140,7 +149,7 @@ export default function RegisterPage() {
             </p>
             <Link
               to="/login"
-              className="inline-block w-full text-center bg-blue-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+              className="inline-block w-full text-center bg-gradient-to-r from-blue-500 to-violet-500 text-white rounded-lg py-2.5 text-sm font-semibold hover:brightness-110 shadow-[0_4px_18px_rgba(233,106,74,0.28)] transition-all"
             >
               Ir a iniciar sesión
             </Link>
@@ -151,19 +160,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <div className="absolute inset-0 grid-bg opacity-60" />
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-96 w-[42rem] rounded-full bg-violet-500/20 blur-3xl" />
+      <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
+      <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+          <div className="inline-flex items-center gap-3 mb-2">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-[0_0_24px_rgba(233,106,74,0.35)]">
+              <Zap className="h-5 w-5 text-white" fill="currentColor" />
             </div>
-            <span className="text-2xl font-bold text-gray-900">InvoTrack</span>
+            <div className="text-left leading-tight">
+              <span className="block font-display text-2xl font-bold text-gray-900 tracking-tight">InvoTrack</span>
+              <span className="block font-mono text-[10px] uppercase tracking-[0.24em] text-blue-400/80">control financiero</span>
+            </div>
           </div>
           <p className="text-gray-500 text-sm">Gestión de facturas para PyMEs</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-panel rounded-2xl border border-gray-100 p-8 shadow-2xl shadow-black/40 scan-frame">
           <h1 className="text-xl font-semibold text-gray-900 mb-1">Crear cuenta</h1>
           <p className="text-sm text-gray-500 mb-6">Empezá a gestionar tus facturas hoy</p>
 
@@ -192,7 +207,7 @@ export default function RegisterPage() {
               <span className="w-full border-t border-gray-100" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-400">o con email</span>
+              <span className="bg-panel px-2 text-gray-500">o con email</span>
             </div>
           </div>
 

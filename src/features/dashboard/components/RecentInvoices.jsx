@@ -39,7 +39,7 @@ export default function RecentInvoices() {
                   <p className="text-xs text-gray-400">{inv.client?.name || inv.provider?.name || '-'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
+                  <p className="money text-sm font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
                   <p className="text-xs text-gray-400">{formatDate(inv.issue_date)}</p>
                 </div>
                 <InvoiceStatusBadge status={inv.status} />

@@ -108,10 +108,11 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// catálogo</p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">Productos</h1>
           <p className="text-sm text-gray-500 mt-0.5">{data?.count || 0} productos registrados</p>
         </div>
         <Button onClick={() => { setEditingProduct(null); setDialogOpen(true) }}>

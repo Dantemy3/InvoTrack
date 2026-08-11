@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const COLORS = {
-  paid: '#10b981',
-  pending: '#f59e0b',
-  overdue: '#ef4444',
-  draft: '#94a3b8',
-  cancelled: '#cbd5e1',
+  paid: '#678c54',
+  pending: '#d8941f',
+  overdue: '#c24b30',
+  draft: '#a3947a',
+  cancelled: '#cfc0a6',
 }
 
 const LABELS = {
@@ -67,13 +67,13 @@ export default function InvoiceStatusChart({ stats, isLoading }) {
             </Pie>
             <Tooltip
               formatter={(value, name) => [value, LABELS[name]]}
-              contentStyle={{ borderRadius: '12px', border: '1px solid #f1f5f9', fontSize: '13px' }}
+              contentStyle={{ borderRadius: '12px', border: '1px solid #e3d8c4', fontSize: '13px', background: '#fffdf9', color: '#241d15' }}
             />
             <Legend
               formatter={(value) => LABELS[value]}
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: '12px' }}
+              wrapperStyle={{ fontSize: '12px', color: '#6f614c' }}
             />
           </PieChart>
         </ResponsiveContainer>

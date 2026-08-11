@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import InvoiceStatusBadge from '../components/InvoiceStatusBadge'
 import { useInvoice, useUpdateInvoiceStatus } from '../hooks/useInvoices'
@@ -38,7 +37,7 @@ function PaymentForm({ invoiceId, totalAmount, totalPaid }) {
   const registerPayment = useRegisterPayment(invoiceId)
   const remaining = Math.max(0, totalAmount - totalPaid)
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       amount: remaining > 0 ? remaining : '',
@@ -172,7 +171,7 @@ export default function InvoiceDetailPage() {
   )
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -181,8 +180,9 @@ export default function InvoiceDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-gray-900">{invoiceNumber}</h1>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// comprobante</p>
+            <div className="flex items-center gap-3 flex-wrap mt-1">
+              <h1 className="text-2xl font-bold text-gray-900 money">{invoiceNumber}</h1>
               <InvoiceStatusBadge status={invoice.status} />
               <Badge variant="outline" className="text-xs">
                 {invoice.type === 'receivable' ? 'Cobrar' : 'Pagar'}
@@ -320,7 +320,7 @@ export default function InvoiceDetailPage() {
                   <Separator className="w-52 my-1" />
                   <div className="flex gap-8">
                     <span className="font-bold text-gray-900">Total</span>
-                    <span className="font-bold text-gray-900 w-32 text-right text-base">
+                    <span className="money font-bold text-gray-900 w-32 text-right text-base">
                       {formatCurrency(invoice.total_amount)}
                     </span>
                   </div>
@@ -331,7 +331,7 @@ export default function InvoiceDetailPage() {
             <Card>
               <CardHeader><CardTitle>Importe total</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(invoice.total_amount)}</p>
+                <p className="money text-2xl font-bold text-gray-900">{formatCurrency(invoice.total_amount)}</p>
               </CardContent>
             </Card>
           )}
@@ -344,17 +344,17 @@ export default function InvoiceDetailPage() {
             <CardContent className="space-y-4">
               {/* Resumen de saldo */}
               <div className="grid grid-cols-3 gap-3 text-sm">
-                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <div className="bg-ink/5 ring-1 ring-inset ring-ink/10 rounded-lg p-3 text-center">
                   <p className="text-gray-500 text-xs mb-1">Total factura</p>
-                  <p className="font-bold text-gray-900">{formatCurrency(invoice.total_amount)}</p>
+                  <p className="money font-bold text-gray-900">{formatCurrency(invoice.total_amount)}</p>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3 text-center">
+                <div className="bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/25 rounded-lg p-3 text-center">
                   <p className="text-gray-500 text-xs mb-1">Pagado</p>
-                  <p className="font-bold text-green-700">{formatCurrency(totalPaid)}</p>
+                  <p className="money font-bold text-emerald-500">{formatCurrency(totalPaid)}</p>
                 </div>
-                <div className={`rounded-lg p-3 text-center ${totalPending > 0 ? 'bg-amber-50' : 'bg-green-50'}`}>
+                <div className={`rounded-lg p-3 text-center ring-1 ring-inset ${totalPending > 0 ? 'bg-amber-500/10 ring-amber-500/25' : 'bg-emerald-500/10 ring-emerald-500/25'}`}>
                   <p className="text-gray-500 text-xs mb-1">Pendiente</p>
-                  <p className={`font-bold ${totalPending > 0 ? 'text-amber-700' : 'text-green-700'}`}>
+                  <p className={`money font-bold ${totalPending > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
                     {formatCurrency(totalPending)}
                   </p>
                 </div>
@@ -369,7 +369,7 @@ export default function InvoiceDetailPage() {
                   {payments.map((p) => (
                     <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{formatCurrency(p.amount)}</p>
+                        <p className="money text-sm font-medium text-gray-900">{formatCurrency(p.amount)}</p>
                         <p className="text-xs text-gray-500">
                           {PAYMENT_METHOD_LABELS[p.payment_method] ?? p.payment_method} · {formatDate(p.payment_date)}
                         </p>
@@ -454,9 +454,9 @@ export default function InvoiceDetailPage() {
               {invoice.cae && (
                 <>
                   <Separator />
-                  <div>
-                    <p className="text-gray-500">CAE</p>
-                    <p className="font-medium font-mono text-xs">{invoice.cae}</p>
+                  <div className="relative rounded-lg bg-ink/[0.03] ring-1 ring-inset ring-amber-500/30 p-3 scan-frame">
+                    <p className="text-gray-500 text-xs">CAE</p>
+                    <p className="money text-amber-500 font-semibold mt-0.5">{invoice.cae}</p>
                   </div>
                   {invoice.cae_vencimiento && (
                     <div>
@@ -492,8 +492,8 @@ export default function InvoiceDetailPage() {
                 {/* Resultado de la última validación */}
                 {afipResult && (
                   <div className={cn(
-                    'rounded-lg p-3 text-sm',
-                    afipResult.isValid ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                    'rounded-lg p-3 text-sm ring-1 ring-inset',
+                    afipResult.isValid ? 'bg-emerald-500/10 text-emerald-500 ring-emerald-500/30' : 'bg-red-500/10 text-red-500 ring-red-500/30'
                   )}>
                     <div className="flex items-center gap-2 font-medium mb-1">
                       {afipResult.isValid

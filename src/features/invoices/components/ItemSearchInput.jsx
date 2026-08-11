@@ -108,7 +108,7 @@ export default function ItemSearchInput({
 
       {showSuggestions && (
         <ul
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-100 bg-panel-2 py-1 shadow-2xl shadow-black/50 ring-1 ring-ink/10"
           role="listbox"
         >
           {suggestions.map((item, index) => (

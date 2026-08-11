@@ -6,10 +6,10 @@ const IconPlay = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>
 )
 const IconStar = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="#BA7517"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="#D8941F"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
 )
 const IconCheck = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#557244" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
 )
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ export default function LandingPage() {
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <rect x="2" y="2" width="14" height="14" rx="2" stroke="white" strokeWidth="1.4"/>
               <path d="M5 6h8M5 9h6M5 12h4" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-              <circle cx="14" cy="4" r="3" fill="#1D9E75"/>
+              <circle cx="14" cy="4" r="3" fill="#E5693E"/>
               <path d="M12.7 4l.9.9 1.5-1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
@@ -67,9 +67,9 @@ export default function LandingPage() {
           </div>
           <div className="lp-hero-proof">
             <div className="lp-avatars">
-              <div className="lp-avatar" style={{ background: '#185FA5' }}>DM</div>
-              <div className="lp-avatar" style={{ background: '#1D9E75' }}>CP</div>
-              <div className="lp-avatar" style={{ background: '#993C1D' }}>RP</div>
+              <div className="lp-avatar" style={{ background: '#E5693E' }}>DM</div>
+              <div className="lp-avatar" style={{ background: '#678C54' }}>CP</div>
+              <div className="lp-avatar" style={{ background: '#D8941F' }}>RP</div>
             </div>
             <p className="lp-proof-text"><strong>PyMEs argentinas</strong> ya usan InvoTrack</p>
           </div>
@@ -93,7 +93,7 @@ export default function LandingPage() {
             <div className="lp-invoice-row lp-invoice-total"><span>Total</span><span>$260.150</span></div>
             <hr className="lp-invoice-divider" />
             <div className="lp-invoice-row">
-              <span style={{ fontSize: '10px', color: '#888780' }}>CAE: 74123456789012 · Venc: 22/06/2025</span>
+              <span style={{ fontSize: '10px', color: '#96846A' }}>CAE: 74123456789012 · Venc: 22/06/2025</span>
             </div>
           </div>
           <div className="lp-extracted-badge">
@@ -140,9 +140,9 @@ export default function LandingPage() {
       {/* HOW IT WORKS */}
       <section id="como-funciona" className="lp-how-section">
         <div className="lp-how-inner">
-          <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Cómo funciona</p>
-          <h2 className="lp-section-title" style={{ color: 'white' }}>Tres pasos. Sin complicaciones.</h2>
-          <p className="lp-section-sub" style={{ color: 'rgba(255,255,255,0.65)', marginBottom: '3rem' }}>
+          <p className="lp-section-label">Cómo funciona</p>
+          <h2 className="lp-section-title">Tres pasos. Sin complicaciones.</h2>
+          <p className="lp-section-sub" style={{ marginBottom: '3rem' }}>
             Sin conocimientos contables. Sin configuración compleja. Empezás en minutos.
           </p>
           <div className="lp-steps-row">
@@ -180,8 +180,8 @@ export default function LandingPage() {
         <div className="lp-testimonial-author">
           <div className="lp-author-avatar">RP</div>
           <div>
-            <p style={{ fontWeight: 600, fontSize: 14, color: '#042C53' }}>Roberto P.</p>
-            <p style={{ fontSize: 13, color: '#888780' }}>Empresa de repuestos Iveco, Buenos Aires</p>
+            <p style={{ fontWeight: 600, fontSize: 14, color: '#241D15' }}>Roberto P.</p>
+            <p style={{ fontSize: 13, color: '#5C4F3D' }}>Empresa de repuestos Iveco, Buenos Aires</p>
           </div>
         </div>
       </section>
@@ -208,9 +208,9 @@ export default function LandingPage() {
           <div className="lp-roles-visual">
             <div className="lp-roles-vis-header">
               <div className="lp-vis-dots">
-                <div className="lp-vis-dot" style={{ background: '#E24B4A' }} />
-                <div className="lp-vis-dot" style={{ background: '#EF9F27' }} />
-                <div className="lp-vis-dot" style={{ background: '#1D9E75' }} />
+                <div className="lp-vis-dot" style={{ background: '#C24B30' }} />
+                <div className="lp-vis-dot" style={{ background: '#D8941F' }} />
+                <div className="lp-vis-dot" style={{ background: '#678C54' }} />
               </div>
               <span className="lp-vis-title">Gestión de usuarios — Empresa</span>
             </div>
@@ -264,7 +264,7 @@ export default function LandingPage() {
 
       {/* CTA FINAL */}
       <section className="lp-cta-section">
-        <p className="lp-section-label" style={{ color: '#B5D4F4' }}>Empezá hoy</p>
+        <p className="lp-section-label">Empezá hoy</p>
         <h2 className="lp-cta-title">Escaneá. Registrá. Controlá.</h2>
         <p className="lp-cta-sub">Registrate gratis y en minutos tenés tu primera factura cargada. Sin tarjeta de crédito.</p>
         <div className="lp-cta-actions">
@@ -326,12 +326,12 @@ const ExportIcon = ({ color }) => (
 )
 
 const FEATURES = [
-  { title: 'Escaneo OCR con IA', desc: 'Sacás foto y la app extrae emisor, receptor, CUIT, montos, IVA y CAE. Compatible con PDF, JPG y PNG.', iconBg: '#E1F5EE', iconColor: '#0F6E56', Icon: ScanIcon },
-  { title: 'Dashboard financiero', desc: 'Resultado neto, dinero cobrado, gastos del mes y evolución de ingresos en un panel actualizado en tiempo real.', iconBg: '#E6F1FB', iconColor: '#185FA5', Icon: DashIcon },
-  { title: 'Alertas de vencimiento', desc: 'Te avisamos antes de que venza una factura para que nunca pierdas un cobro ni una deuda. Notificaciones por email.', iconBg: '#FAECE7', iconColor: '#993C1D', Icon: BellIcon },
-  { title: 'Gestión de roles', desc: 'Administrador, contador y visualizador. Cada usuario ve y hace solo lo que le corresponde.', iconBg: '#EEEDFE', iconColor: '#534AB7', Icon: UsersIcon },
-  { title: 'Pagos parciales', desc: 'Registrá pagos en cuotas. El estado de la factura se actualiza automáticamente según lo cobrado.', iconBg: '#FAEEDA', iconColor: '#BA7517', Icon: PaymentIcon },
-  { title: 'Exportación a CSV', desc: 'Descargá reportes de ingresos y gastos por período para compartir con tu contador sin intermediarios.', iconBg: '#EAF3DE', iconColor: '#3B6D11', Icon: ExportIcon },
+  { title: 'Escaneo OCR con IA', desc: 'Sacás foto y la app extrae emisor, receptor, CUIT, montos, IVA y CAE. Compatible con PDF, JPG y PNG.', iconBg: '#EFF4EA', iconColor: '#557244', Icon: ScanIcon },
+  { title: 'Dashboard financiero', desc: 'Resultado neto, dinero cobrado, gastos del mes y evolución de ingresos en un panel actualizado en tiempo real.', iconBg: '#FDEAE3', iconColor: '#D95328', Icon: DashIcon },
+  { title: 'Alertas de vencimiento', desc: 'Te avisamos antes de que venza una factura para que nunca pierdas un cobro ni una deuda. Notificaciones por email.', iconBg: '#F7D7D0', iconColor: '#A93E26', Icon: BellIcon },
+  { title: 'Gestión de roles', desc: 'Administrador, contador y visualizador. Cada usuario ve y hace solo lo que le corresponde.', iconBg: '#F5EDE1', iconColor: '#97640D', Icon: UsersIcon },
+  { title: 'Pagos parciales', desc: 'Registrá pagos en cuotas. El estado de la factura se actualiza automáticamente según lo cobrado.', iconBg: '#FBF3DC', iconColor: '#B87A15', Icon: PaymentIcon },
+  { title: 'Exportación a CSV', desc: 'Descargá reportes de ingresos y gastos por período para compartir con tu contador sin intermediarios.', iconBg: '#DFEAD4', iconColor: '#557244', Icon: ExportIcon },
 ]
 
 const STEPS = [
@@ -348,15 +348,15 @@ const METRICS = [
 ]
 
 const ROLES = [
-  { name: 'Administrador', desc: 'Acceso total: facturas, usuarios, reportes y configuración.', color: '#185FA5' },
-  { name: 'Contador', desc: 'Puede cargar y editar facturas, registrar pagos y exportar datos.', color: '#0F6E56' },
-  { name: 'Visualizador', desc: 'Solo lectura. Consulta facturas y reportes sin modificar nada.', color: '#888780' },
+  { name: 'Administrador', desc: 'Acceso total: facturas, usuarios, reportes y configuración.', color: '#D95328' },
+  { name: 'Contador', desc: 'Puede cargar y editar facturas, registrar pagos y exportar datos.', color: '#557244' },
+  { name: 'Visualizador', desc: 'Solo lectura. Consulta facturas y reportes sin modificar nada.', color: '#6F614C' },
 ]
 
 const ROLE_USERS = [
-  { name: 'Dante Martínez', email: 'dante@empresa.com', initials: 'DM', color: '#185FA5', role: 'Admin', badgeBg: '#E6F1FB', badgeColor: '#0C447C' },
-  { name: 'Ciro Perazzo', email: 'ciro@empresa.com', initials: 'CP', color: '#0F6E56', role: 'Contador', badgeBg: '#E1F5EE', badgeColor: '#085041' },
-  { name: 'María González', email: 'maria@empresa.com', initials: 'MG', color: '#888780', role: 'Visualizador', badgeBg: '#F1EFE8', badgeColor: '#444441' },
+  { name: 'Dante Martínez', email: 'dante@empresa.com', initials: 'DM', color: '#D95328', role: 'Admin', badgeBg: '#FDEAE3', badgeColor: '#A93E26' },
+  { name: 'Ciro Perazzo', email: 'ciro@empresa.com', initials: 'CP', color: '#557244', role: 'Contador', badgeBg: '#EFF4EA', badgeColor: '#445A36' },
+  { name: 'María González', email: 'maria@empresa.com', initials: 'MG', color: '#6F614C', role: 'Visualizador', badgeBg: '#F5EDE1', badgeColor: '#5C4F3D' },
 ]
 
 const PLANS = [

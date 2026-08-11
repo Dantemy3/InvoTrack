@@ -42,7 +42,7 @@ export default function ConfidenceScore({ score, showLabel = true, size = 'sm' }
             <span className={cn('text-xs font-semibold', textColors[level.color])}>{level.label}</span>
             <span className={cn('text-xs font-bold', textColors[level.color])}>{pct}%</span>
           </div>
-          <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-ink/10 rounded-full overflow-hidden">
             <div
               className={cn('h-full rounded-full transition-all', barColors[level.color])}
               style={{ width: `${pct}%` }}

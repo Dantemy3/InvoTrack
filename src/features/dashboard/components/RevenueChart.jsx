@@ -27,14 +27,14 @@ function processChartData(rawData = []) {
 
   return Object.values(months)
     .sort((a, b) => a._date - b._date)
-    .map(({ _date, ...rest }) => rest)
+    .map((m) => ({ month: m.month, ingresos: m.ingresos, gastos: m.gastos }))
 }
 
 // Tooltip personalizado del gráfico de área que muestra ingresos y gastos formateados.
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-sm min-w-[160px]">
+    <div className="bg-panel-2 border border-gray-100 rounded-xl shadow-2xl shadow-black/40 p-3 text-sm min-w-[160px]">
       <p className="font-semibold text-gray-700 mb-2">{label}</p>
       {payload.map((p) => (
         <div key={p.name} className="flex items-center justify-between gap-4">
@@ -80,23 +80,23 @@ export default function RevenueChart({ data, isLoading }) {
           <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="gradIngresos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#10b981" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                <stop offset="5%"  stopColor="#678c54" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#678c54" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradGastos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#ef4444" stopOpacity={0.12} />
-                <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                <stop offset="5%"  stopColor="#c24b30" stopOpacity={0.16} />
+                <stop offset="95%" stopColor="#c24b30" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e3d8c4" />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 12, fill: '#94a3b8' }}
+              tick={{ fontSize: 12, fill: '#6f614c' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: '#94a3b8' }}
+              tick={{ fontSize: 12, fill: '#6f614c' }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
@@ -105,20 +105,20 @@ export default function RevenueChart({ data, isLoading }) {
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
+              wrapperStyle={{ fontSize: '12px', paddingTop: '12px', color: '#6f614c' }}
               formatter={(v) => v === 'ingresos' ? 'Ingresos cobrados' : 'Gastos'}
             />
             <Area
               type="monotone"
               dataKey="ingresos"
-              stroke="#10b981"
+              stroke="#678c54"
               strokeWidth={2}
               fill="url(#gradIngresos)"
             />
             <Area
               type="monotone"
               dataKey="gastos"
-              stroke="#ef4444"
+              stroke="#c24b30"
               strokeWidth={2}
               fill="url(#gradGastos)"
             />

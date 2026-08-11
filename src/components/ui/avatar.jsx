@@ -25,7 +25,7 @@ function AvatarImage({ className, ...props }) {
 function AvatarFallback({ className, ...props }) {
   return (
     <AvatarPrimitive.Fallback
-      className={cn('flex h-full w-full items-center justify-center rounded-full bg-blue-100 text-blue-700 text-sm font-semibold', className)}
+      className={cn('flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-500/25 to-violet-500/25 text-cyan-300 text-sm font-semibold', className)}
       {...props}
     />
   )

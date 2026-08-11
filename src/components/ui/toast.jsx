@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, useCallback } from 'react'
+import { useState, createContext, useContext, useCallback } from 'react'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -36,7 +36,7 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             className={cn(
-              'flex items-start gap-3 rounded-xl border bg-white p-4 shadow-lg',
+              'flex items-start gap-3 rounded-xl border bg-panel-2 p-4 shadow-2xl shadow-black/50 ring-1 ring-ink/10',
               t.variant === 'error' && 'border-red-100',
               t.variant === 'success' && 'border-emerald-100',
               t.variant === 'warning' && 'border-amber-100',

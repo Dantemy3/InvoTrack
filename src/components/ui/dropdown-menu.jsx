@@ -1,5 +1,5 @@
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
-import { Check, ChevronRight, Circle } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const DropdownMenu = DropdownMenuPrimitive.Root
@@ -26,7 +26,7 @@ function DropdownMenuSubTrigger({ className, inset, children, ...props }) {
 function DropdownMenuSubContent({ className, ...props }) {
   return (
     <DropdownMenuPrimitive.SubContent
-      className={cn('z-50 min-w-[8rem] overflow-hidden rounded-lg border border-gray-100 bg-white p-1 text-gray-900 shadow-lg', className)}
+      className={cn('z-50 min-w-[8rem] overflow-hidden rounded-lg border border-gray-100 bg-panel-2 p-1 text-gray-900 shadow-2xl shadow-black/50', className)}
       {...props}
     />
   )
@@ -39,7 +39,7 @@ function DropdownMenuContent({ className, sideOffset = 4, ...props }) {
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          'z-50 min-w-[8rem] overflow-hidden rounded-lg border border-gray-100 bg-white p-1 text-gray-900 shadow-lg',
+          'z-50 min-w-[8rem] overflow-hidden rounded-lg border border-gray-100 bg-panel-2 p-1 text-gray-900 shadow-2xl shadow-black/50',
           className
         )}
         {...props}

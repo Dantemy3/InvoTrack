@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, TrendingUp, CheckCircle, XCircle } from 'lucide-react'
+import { Loader2, Zap, CheckCircle, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 /**
@@ -70,21 +70,30 @@ export default function AuthCallbackPage() {
   }, [navigate])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <div className="absolute inset-0 grid-bg opacity-60" />
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-96 w-[42rem] rounded-full bg-violet-500/20 blur-3xl" />
+      <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
+      <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+          <div className="inline-flex items-center gap-3 mb-2">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-[0_0_24px_rgba(233,106,74,0.35)]">
+              <Zap className="h-5 w-5 text-white" fill="currentColor" />
             </div>
-            <span className="text-2xl font-bold text-gray-900">InvoTrack</span>
+            <div className="text-left leading-tight">
+              <span className="block font-display text-2xl font-bold text-gray-900 tracking-tight">InvoTrack</span>
+              <span className="block font-mono text-[10px] uppercase tracking-[0.24em] text-blue-400/80">control financiero</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+        <div className="bg-panel rounded-2xl border border-gray-100 p-8 text-center shadow-2xl shadow-black/40 scan-frame">
           {status === 'loading' && (
             <>
-              <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
+              <div className="relative w-fit mx-auto mb-4">
+                <div className="absolute inset-0 rounded-full bg-blue-500/40 blur-xl" />
+                <Loader2 className="h-12 w-12 animate-spin text-blue-400 relative" />
+              </div>
               <h1 className="text-xl font-semibold text-gray-900 mb-2">Confirmando tu cuenta...</h1>
               <p className="text-sm text-gray-500">Esperá un momento mientras verificamos tu email.</p>
             </>
@@ -92,7 +101,10 @@ export default function AuthCallbackPage() {
 
           {status === 'success' && (
             <>
-              <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+              <div className="relative w-fit mx-auto mb-4">
+                <div className="absolute inset-0 rounded-full bg-emerald-500/40 blur-xl" />
+                <CheckCircle className="h-12 w-12 text-emerald-500 relative" />
+              </div>
               <h1 className="text-xl font-semibold text-gray-900 mb-2">¡Email confirmado!</h1>
               <p className="text-sm text-gray-500">Tu cuenta está activa. Te redirigimos para crear tu empresa...</p>
             </>
@@ -105,7 +117,7 @@ export default function AuthCallbackPage() {
               <p className="text-sm text-gray-500 mb-6">{errorMsg}</p>
               <a
                 href="/login"
-                className="inline-block w-full text-center bg-blue-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="inline-block w-full text-center bg-gradient-to-r from-blue-500 to-violet-500 text-white rounded-lg py-2.5 text-sm font-semibold hover:brightness-110 shadow-[0_4px_18px_rgba(233,106,74,0.28)] transition-all"
               >
                 Ir al login
               </a>

@@ -4,15 +4,15 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
+        default: 'bg-gradient-to-r from-blue-500 to-violet-500 text-white hover:brightness-110 shadow-[0_4px_18px_rgba(233,106,74,0.28)]',
         destructive: 'bg-red-500 text-white hover:bg-red-600 shadow-sm',
-        outline: 'border border-gray-200 bg-white hover:bg-gray-50 hover:text-gray-900 shadow-sm',
-        secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
-        ghost: 'hover:bg-gray-100 hover:text-gray-900',
+        outline: 'border border-gray-200 bg-transparent text-gray-700 hover:bg-ink/5 hover:text-gray-900 shadow-sm',
+        secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900',
+        ghost: 'hover:bg-ink/5 hover:text-gray-900',
         link: 'text-blue-600 underline-offset-4 hover:underline',
         success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
       },

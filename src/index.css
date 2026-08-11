@@ -1,63 +1,265 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-    --success: 142.1 76.2% 36.3%;
-    --success-foreground: 355.7 100% 97.3%;
-    --warning: 32.1 94.6% 43.7%;
-    --warning-foreground: 210 40% 98%;
-  }
+@theme {
+  /* ---- Identidad InvoTrack "Atardecer cálido" ----
+     Papel marfil cálido + tinta marrón profunda + duotono
+     coral→ámbar (atardecer) como acento + verde salvia como
+     secundario. Cálido, cómodo a la vista, nada de tech/futurista. */
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Superficies */
+  --color-ink: #faf6ef;
+  --color-panel: #fffdf9;
+  --color-panel-2: #f5ede1;
+  --color-line: #e9dfce;
+  --color-black: #2a211a;
+
+  /* Escala de texto (gris remapeado a tinta cálida, AA 4.5:1 en texto normal) */
+  --color-gray-50: #fbf7f0;
+  --color-gray-100: #f0e9dc;
+  --color-gray-200: #e3d8c4;
+  --color-gray-300: #cfc0a6;
+  --color-gray-400: #96846a;
+  --color-gray-500: #6f614c;
+  --color-gray-600: #5c4f3d;
+  --color-gray-700: #4a3f2f;
+  --color-gray-800: #352c20;
+  --color-gray-900: #241d15;
+
+  /* Azul → coral/terracota (acento principal) */
+  --color-blue-50: #fdeae3;
+  --color-blue-100: #fbdccf;
+  --color-blue-200: #f8c4a8;
+  --color-blue-300: #f2a37b;
+  --color-blue-400: #ec8454;
+  --color-blue-500: #e5693e;
+  --color-blue-600: #d95328;
+  --color-blue-700: #b54320;
+  --color-blue-800: #8f371f;
+  --color-blue-900: #6e2c1d;
+
+  /* Violeta → dorado/ámbar (segundo tono del duotono) */
+  --color-violet-50: #fdf3d8;
+  --color-violet-100: #fbe8b8;
+  --color-violet-200: #f7d889;
+  --color-violet-300: #f2c35a;
+  --color-violet-400: #ebae36;
+  --color-violet-500: #e0a02e;
+  --color-violet-600: #c0800f;
+  --color-violet-700: #97640d;
+  --color-violet-800: #6e4a0e;
+  --color-violet-900: #573a0e;
+
+  /* Cian → salmón/durazno */
+  --color-cyan-50: #fdebe7;
+  --color-cyan-100: #fbd8d1;
+  --color-cyan-200: #f5b3a6;
+  --color-cyan-300: #e0643a;
+  --color-cyan-400: #ec8454;
+  --color-cyan-500: #e5693e;
+  --color-cyan-600: #d95328;
+
+  /* Slate → beige/tan */
+  --color-slate-50: #fbf7f0;
+  --color-slate-100: #f0e9dc;
+  --color-slate-200: #e3d8c4;
+  --color-slate-300: #cfc0a6;
+  --color-slate-400: #96846a;
+  --color-slate-500: #6f614c;
+  --color-slate-600: #5c4f3d;
+  --color-slate-700: #4a3f2f;
+  --color-slate-800: #352c20;
+  --color-slate-900: #241d15;
+
+  /* Éxito (verde salvia) */
+  --color-emerald-50: #eff4ea;
+  --color-emerald-100: #dfead4;
+  --color-emerald-200: #c2d6b3;
+  --color-emerald-300: #9fbc8b;
+  --color-emerald-400: #7fa66b;
+  --color-emerald-500: #678c54;
+  --color-emerald-600: #557244;
+  --color-emerald-700: #445a36;
+  --color-emerald-800: #37482d;
+
+  /* Advertencia (dorado) */
+  --color-amber-50: #fbf3dc;
+  --color-amber-100: #f8e9c0;
+  --color-amber-200: #f2d68d;
+  --color-amber-300: #ebc059;
+  --color-amber-400: #e3a93a;
+  --color-amber-500: #d8941f;
+  --color-amber-600: #b87a15;
+  --color-amber-700: #945f10;
+  --color-amber-800: #754b0e;
+
+  /* Peligro (terracota) */
+  --color-red-50: #fbeae6;
+  --color-red-100: #f7d7d0;
+  --color-red-200: #eeb0a3;
+  --color-red-300: #e38570;
+  --color-red-400: #d95f45;
+  --color-red-500: #c24b30;
+  --color-red-600: #a93e26;
+  --color-red-700: #8c331f;
+  --color-red-800: #6e2a1c;
+  --color-red-900: #572319;
+}
+
+/* Variables shadcn en modo claro cálido */
+:root {
+  --background: #faf6ef;
+  --foreground: #2a211a;
+  --card: #fffdf9;
+  --card-foreground: #2a211a;
+  --popover: #fffdf9;
+  --popover-foreground: #2a211a;
+  --primary: #d95328;
+  --primary-foreground: #fffaf5;
+  --secondary: #f0e9dc;
+  --secondary-foreground: #3d3324;
+  --muted: #f0e9dc;
+  --muted-foreground: #6f614c;
+  --accent: #fdeae3;
+  --accent-foreground: #b54320;
+  --destructive: #c24b30;
+  --destructive-foreground: #ffffff;
+  --border: #e9dfce;
+  --input: #e3d8c4;
+  --ring: #d95328;
+  --radius: 0.625rem;
+  --success: #678c54;
+  --success-foreground: #f4f9f0;
+  --warning: #d8941f;
+  --warning-foreground: #3a2c08;
+  color-scheme: light;
 }
 
 @layer base {
   * {
     border-color: hsl(var(--border));
   }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    background-color: hsl(var(--background));
+    background-color: #faf6ef;
+    background-image:
+      radial-gradient(60rem 60rem at 112% -12%, rgba(233, 106, 74, 0.10), transparent 62%),
+      radial-gradient(52rem 52rem at -18% 112%, rgba(233, 166, 42, 0.10), transparent 62%),
+      radial-gradient(40rem 40rem at 55% 130%, rgba(122, 158, 126, 0.06), transparent 60%);
+    background-attachment: fixed;
     color: hsl(var(--foreground));
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
+    font-size: 14px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: rgba(217, 83, 40, 0.20);
+    color: #2a211a;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #e3d8c4;
+    border-radius: 999px;
+    border: 2px solid #faf6ef;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #d0c2a9;
+  }
+}
+
+/* ---------- Firma visual: halo atardecer suave ---------- */
+
+@utility scan-frame {
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 18px 50px rgba(62, 45, 24, 0.10);
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(90deg, transparent, rgba(233, 106, 74, 0.55), rgba(233, 166, 42, 0.55), transparent);
+  }
+}
+
+@keyframes invotrack-glow {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+@utility scan-active {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(90% 60% at 50% 0%, rgba(233, 106, 74, 0.10), transparent 60%),
+      radial-gradient(90% 80% at 50% 100%, rgba(233, 166, 42, 0.08), transparent 60%);
+    animation: invotrack-glow 7s ease-in-out infinite;
+  }
+}
+
+@utility aurora-text {
+  background: linear-gradient(94deg, #e5693e 0%, #e0843a 42%, #e3a93a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility glass {
+  background: rgba(255, 253, 249, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(200, 178, 140, 0.35);
+}
+
+@utility grid-bg {
+  background-image:
+    linear-gradient(rgba(120, 95, 61, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 95, 61, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Texto de dinero: mono + tabular. El color lo define cada elemento. */
+@utility money {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-active::after {
+    animation: none;
+    opacity: 1;
   }
 }
