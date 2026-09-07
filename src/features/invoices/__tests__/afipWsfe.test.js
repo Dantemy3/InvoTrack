@@ -11,6 +11,7 @@ import {
   buildFeCAEReq,
   buildDetalle,
   parseCaeResponse,
+  parseFeCompUltimoAutorizado,
 } from '../../../../supabase/functions/_shared/afipWsfe.js'
 
 // ── Mapeos AFIP ────────────────────────────────────────────────────────────
@@ -216,6 +217,13 @@ const CAE_ERROR_XML = `<?xml version="1.0" encoding="utf-8"?>
 </FECAESolicitarResponse>
 </soap:Body></soap:Envelope>`
 
+const ULTIMO_AUTORIZADO_XML = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body><FECompUltimoAutorizadoResponse xmlns="http://ar.gov.afip.dif.FEV1/">
+<FECompUltimoAutorizadoResult><PtoVta>1</PtoVta><CbteTipo>6</CbteTipo><CbteNro>3</CbteNro></FECompUltimoAutorizadoResult>
+</FECompUltimoAutorizadoResponse>
+</soap:Body></soap:Envelope>`
+
 describe('parseCaeResponse (WSFEv1)', () => {
   it('extrae CAE, vencimiento e indicador de resultado aprobado', () => {
     const parsed = parseCaeResponse(CAE_OK_XML)
@@ -233,5 +241,21 @@ describe('parseCaeResponse (WSFEv1)', () => {
     expect(parsed.errores.length).toBe(1)
     expect(parsed.errores[0].code).toBe('10016')
     expect(parsed.errores[0].msg).toContain('punto de venta')
+  })
+})
+
+describe('parseFeCompUltimoAutorizado (WSFEv1)', () => {
+  it('extrae el último número autorizado', () => {
+    const parsed = parseFeCompUltimoAutorizado(ULTIMO_AUTORIZADO_XML)
+    expect(parsed.errores).toEqual([])
+    expect(parsed.cbteNro).toBe(3)
+  })
+
+  it('sin emisiones previas devuelve cbteNro 0 (siguiente = 1)', () => {
+    const parsed = parseFeCompUltimoAutorizado(
+      '<FECompUltimoAutorizadoResult><PtoVta>1</PtoVta><CbteTipo>6</CbteTipo></FECompUltimoAutorizadoResult>'
+    )
+    expect(parsed.errores).toEqual([])
+    expect(parsed.cbteNro).toBe(0)
   })
 })
