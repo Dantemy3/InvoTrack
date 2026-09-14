@@ -251,17 +251,35 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       toast({ title: 'Faltan datos de numeración', description: 'Punto de venta y número de comprobante son obligatorios.', variant: 'error' })
       return
     }
-    const total = Number(values.total_amount)
+
+    // Calcular los totales desde los ítems (igual que handleFormSubmit) porque
+    // total_amount/iva_* del form quedan en 0 hasta persistir la factura.
+    const itemsParaCae = config.permiteItems ? values.items : []
+    const enriched = config.permiteItems ? calculateInvoiceTotals(itemsParaCae) : { ...values, items: [] }
+
+    const total = Number(enriched.total_amount)
     if (!total || total <= 0) {
       toast({ title: 'Total inválido', description: 'El total del comprobante debe ser mayor a 0.', variant: 'error' })
       return
     }
 
     try {
-      const result = await emitCae.mutateAsync({ invoice: values })
+      // Auto-numeración: se envía 0 para que ARCA devuelva el próximo número
+      // vía FECompUltimoAutorizado. Un número arbitrario (ej. 10) ARCA lo
+      // rechaza con el error 10016 si no es el siguiente en la secuencia.
+      const invoiceParaArca = { ...values, ...enriched, numero_comprobante: 0 }
+      const result = await emitCae.mutateAsync({ invoice: invoiceParaArca })
       if (result?.cae) {
         setValue('cae', result.cae)
         setValue('cae_vencimiento', result.caeVencimiento ?? '')
+        if (result.numeroComprobante || result.cbteDesde) {
+          setValue('numero_comprobante', Number(result.numeroComprobante ?? result.cbteDesde))
+        }
+        setValue('neto_gravado', enriched.neto_gravado ?? 0)
+        setValue('iva_105', enriched.iva_105 ?? 0)
+        setValue('iva_21', enriched.iva_21 ?? 0)
+        setValue('iva_27', enriched.iva_27 ?? 0)
+        setValue('total_amount', enriched.total_amount ?? 0)
         toast({
           title: 'CAE obtenido',
           description: `CAE ${result.cae} válido hasta ${result.caeVencimiento ?? '-'}. Completá el guardado de la factura.`,
