@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Package, Users, Truck, BarChart3,
-  Bell, Settings, Menu, X, LogOut, Zap
+  Bell, Settings, Menu, X, LogOut, Zap, Search
 } from 'lucide-react'
 import { authService } from '@/features/auth/services/authService'
 import { useAuth } from '@/features/auth/context/AuthContext'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
+import CommandPalette from '@/components/CommandPalette'
 
 const navGroups = [
   {
@@ -51,7 +52,21 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const unreadCount = useUnreadAlertsCount()
+
+  // Atajo global Ctrl+K / Cmd+K para abrir la paleta de comandos
+  const handleGlobalKeyDown = useCallback((e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault()
+      setPaletteOpen((prev) => !prev)
+    }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleGlobalKeyDown)
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [handleGlobalKeyDown])
 
   const handleSignOut = async () => {
     try {
@@ -194,7 +209,29 @@ export default function AppLayout() {
           </div>
 
           <div className="flex-1" />
-          <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-cyan-300" onClick={() => navigate('/alerts')}>
+
+          {/* Botón de búsqueda / command palette */}
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3 h-8 rounded-lg border border-gray-200 bg-gray-100/60 text-sm text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            aria-label="Abrir paleta de comandos"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span className="text-xs">Buscar…</span>
+            <kbd className="ml-1 inline-flex items-center rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-gray-400">
+              Ctrl+K
+            </kbd>
+          </button>
+          {/* Botón icono para mobile */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden text-gray-400 hover:text-gray-700"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Abrir paleta de comandos"
+          >
+            <Search className="h-4 w-4" />
+          </Button>          <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-cyan-300" onClick={() => navigate('/alerts')}>
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute top-1 right-1 h-4 min-w-4 px-0.5 rounded-full bg-gradient-to-r from-red-500 to-red-400 text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(229,72,77,0.6)]">
@@ -214,6 +251,9 @@ export default function AppLayout() {
           </div>
         </main>
       </div>
+
+      {/* Command Palette — global, disponible en toda la app autenticada */}
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )
 }

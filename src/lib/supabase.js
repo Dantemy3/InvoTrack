@@ -18,8 +18,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * @type {import('@supabase/supabase-js').SupabaseClient}
  */
 export const supabase = createClient(
-  supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder-key',
+  supabaseUrl ?? 'https://bahuflaajjdqdyestjcj.supabase.co',
+  supabaseAnonKey ?? 'sb_publishable_9G1ou_BNcLlXqYa03P5Lew_ArLgUh8u',
   {
     auth: {
       autoRefreshToken: true,
