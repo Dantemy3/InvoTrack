@@ -63,7 +63,13 @@ function SelectContent({ className, children, position = 'popper', ...props }) {
       >
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
-          className={cn('p-1', position === 'popper' && 'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]')}
+          className={cn(
+            'p-1',
+            // Solo el ancho sigue al trigger. Fijar el alto al del trigger
+            // dejaba el listado con una sola fila, así que con 20+ tipos de
+            // comprobante había que scrollear de a una.
+            position === 'popper' && 'w-full min-w-[var(--radix-select-trigger-width)]'
+          )}
         >
           {children}
         </SelectPrimitive.Viewport>

@@ -162,22 +162,32 @@ export const invoiceSchema = z.object({
   const config = getComprobanteConfig(tipo)
   const emisor = data.emisor_condicion_iva
 
+  // El flujo decide quién es el emisor. En 'receivable' somos nosotros y las
+  // reglas de emisión aplican; en 'payable' el emisor es el proveedor, así que
+  // limitar los tipos por SU condición fiscal daría falsos errores: un
+  // proveedor Monotributista puede bien facturarnos una Factura A.
+  // En ese caso lo que limita el tipo de comprobante es nuestra propia
+  // condición, que valida el formulario al elegir el tipo.
+  const nostrosSomosElEmisor = data.type !== 'payable'
+
   // ── 1. Tipos permitidos según condición del emisor ──────────────────────
-  if (emisor === 'MO' || emisor === 'EX') {
-    if (!config.disponibleParaMOEX) {
+  if (nostrosSomosElEmisor) {
+    if (emisor === 'MO' || emisor === 'EX') {
+      if (!config.disponibleParaMOEX) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['tipo_comprobante'],
+          message: `Un emisor ${emisor === 'MO' ? 'Monotributista' : 'Exento'} no puede emitir ${tipo}`,
+        })
+      }
+    }
+    if (emisor === 'RI' && !config.disponibleParaRI) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['tipo_comprobante'],
-        message: `Un emisor ${emisor === 'MO' ? 'Monotributista' : 'Exento'} no puede emitir ${tipo}`,
+        message: `Un Responsable Inscripto no puede emitir ${tipo}`,
       })
     }
-  }
-  if (emisor === 'RI' && !config.disponibleParaRI) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['tipo_comprobante'],
-      message: `Un Responsable Inscripto no puede emitir ${tipo}`,
-    })
   }
 
   // ── 2. Emisor ───────────────────────────────────────────────────────────

@@ -9,6 +9,34 @@ import { supabase } from '@/lib/supabase'
  *
  * Requirements: 15.4
  */
+async function leerErrorEdge(error) {
+  const fallback = error?.message ?? 'Error al comunicarse con ARCA'
+  const context = error?.context
+  if (!context || typeof context.text !== 'function') return fallback
+
+  let text
+  try {
+    text = await context.text()
+  } catch {
+    return fallback
+  }
+  if (!text) return fallback
+
+  let body
+  try {
+    body = JSON.parse(text)
+  } catch {
+    return text.slice(0, 500)
+  }
+
+  if (typeof body?.error === 'string' && body.error) return body.error
+  const detalles = [...(body?.errores ?? []), ...(body?.observaciones ?? [])]
+    .filter((d) => d?.msg)
+    .map((d) => `[${d.code}] ${d.msg}`)
+    .join(' | ')
+  return detalles || text.slice(0, 500)
+}
+
 export const afipService = {
   /**
    * Valida un CAE contra la API de AFIP.
@@ -95,13 +123,14 @@ export const afipService = {
       body: { action, invoice },
     })
 
-    if (error) {
-      const afipError = data?.error ?? error.message ?? 'Error al comunicarse con ARCA'
-      throw new Error(afipError)
-    }
+    if (error) throw new Error(await leerErrorEdge(error))
     if (data?.error) throw new Error(data.error)
     if (data?.errores?.length) {
       throw new Error(data.errores.map((e) => `[${e.code}] ${e.msg}`).join(' | '))
+    }
+    if (data?.ok === false) {
+      const detalles = (data?.observaciones ?? []).map((o) => `[${o.code}] ${o.msg}`).join(' | ')
+      throw new Error(detalles || `ARCA rechazó el comprobante (resultado ${data?.resultado ?? 'R'})`)
     }
     return data
   },

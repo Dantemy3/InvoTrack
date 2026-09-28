@@ -1,15 +1,20 @@
+import { useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { ArrowLeft, ScanLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import ZoomPanImageViewer from '@/components/ZoomPanImageViewer'
 import InvoiceForm from '../components/InvoiceForm'
+import InvoiceFlowPicker from '../components/InvoiceFlowPicker'
 import { useCreateInvoice, useUpdateInvoice, useInvoice } from '../hooks/useInvoices'
 import { useCompany } from '@/features/companies/context/CompanyContext'
 import { useClients } from '@/features/clients/hooks/useClients'
+import { useProviders } from '@/features/providers/hooks/useProviders'
+import { flowFormDefaults, FLOW_PAYABLE } from '../lib/invoiceParties'
+
 // Mapea los datos normalizados del OCR al formato de defaultValues del InvoiceForm.
 // Cubre todos los campos del formulario.
-function mapOcrToFormValues(ocr) {
+function mapOcrToFormValues(ocr, company) {
   if (!ocr) return undefined
 
   // Detectar tipo de comprobante desde invoice_type del OCR
@@ -51,26 +56,27 @@ function mapOcrToFormValues(ocr) {
       }))
     : [{ descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }]
 
+  // Un comprobante escaneado es, por definición, uno que NOS emitieron:
+  // el emisor es el proveedor y el receptor somos nosotros.
   return {
     tipo_comprobante,
-    type: 'receivable', // default — el usuario puede cambiarlo
-    punto_de_venta,
-    numero_comprobante,
+    ...flowFormDefaults(FLOW_PAYABLE, company, {
+      punto_de_venta,
+      numero_comprobante,
+      receptor_condicion_iva: company?.tax_condition ?? 'RI',
+    }),
     fecha_emision: ocr.issue_date ?? new Date().toISOString().split('T')[0],
     fecha_vencimiento: ocr.due_date ?? '',
     condicion_pago: ocr.condicion_pago ?? 'contado',
     moneda: 'ARS',
     tipo_cambio: 1,
-    // Emisor (vendedor en la factura)
+    pais_destino: null,
+    // Emisor: el proveedor que emitió el comprobante escaneado
     emisor_cuit: ocr.seller_cuit ?? '',
     emisor_razon_social: ocr.seller_name ?? '',
     emisor_condicion_iva: 'RI',
     emisor_domicilio: ocr.seller_address ?? '',
-    // Receptor (comprador en la factura)
-    receptor_cuit: ocr.buyer_cuit ?? '',
-    receptor_razon_social: ocr.buyer_name ?? '',
-    receptor_condicion_iva: 'RI',
-    receptor_domicilio: ocr.buyer_address ?? '',
+    receptor_id_impositivo: null,
     // Totales
     neto_gravado: ocr.subtotal ?? 0,
     neto_no_gravado: 0,
@@ -127,14 +133,30 @@ export default function NewInvoicePage() {
   const createInvoice = useCreateInvoice()
   const updateInvoice = useUpdateInvoice()
 
-  // Clientes de la empresa: el receptor de una factura debe ser uno de ellos.
+  // La empresa activa: de acá salen los datos del emisor (o del receptor).
   const { company } = useCompany()
+
+  // Contrapartes: cliente en las facturas que emitimos, proveedor en las que
+  // nos emitieron. Ambas se completan al elegirlas y se pueden crear en el acto.
   const { data: clientsData } = useClients({ companyId: company?.id })
   const clients = clientsData?.data || []
+  const { data: providersData } = useProviders({ companyId: company?.id })
+  const providers = providersData?.data || []
 
   // Paso 1c — Cargar factura existente solo en modo edición
   // Si no hay id (modo creación), el hook recibe null y no hace ninguna petición.
   const { data: existingInvoice, isLoading: isLoadingInvoice } = useInvoice(isEditMode ? id : null)
+
+  // Paso 1d — Flujo elegido: "Yo emito" (receivable) o "Me emitieron" (payable).
+  // En edición sale de la factura y en OCR ya viene implícito (es un
+  // comprobante que nos emitieron). En alta limpia arranca sin elegir para
+  // mostrar el paso 1 antes del formulario.
+  const [flow, setFlow] = useState(undefined)
+  const flowActual = isEditMode
+    ? existingInvoice?.type ?? 'receivable'
+    : flow ?? (ocrData ? FLOW_PAYABLE : undefined)
+
+  const mostrarPaso1 = !isEditMode && !ocrData && !flowActual
 
   // isLoading es true mientras cualquiera de las dos mutaciones está en curso;
   // se pasa al formulario para deshabilitar el botón de envío y mostrar el spinner.
@@ -157,9 +179,10 @@ export default function NewInvoicePage() {
     navigate('/invoices')
   }
 
-  // ── Paso 1d — Calcular defaultValues ────────────────────────────────────────
-  // Prioridad de datos iniciales: edición > OCR > formulario vacío.
-  // Retorna los defaultValues del formulario con prioridad: edición > OCR > vacío.
+  // ── Paso 1e — Calcular defaultValues ────────────────────────────────────────
+  // Prioridad de datos iniciales: edición > OCR > ficha de la empresa.
+  // El flujo determina qué campos se autocompletan con los datos de la empresa:
+  // al emitir, el emisor somos nosotros; al recibir, el receptor.
   const getDefaultValues = () => {
     if (isEditMode && existingInvoice) {
       return {
@@ -206,9 +229,25 @@ export default function NewInvoicePage() {
     }
 
     // Si vienen datos de OCR, mapearlos al formulario
-    if (ocrData) return mapOcrToFormValues(ocrData)
+    if (ocrData) return mapOcrToFormValues(ocrData, company)
 
-    return undefined
+    // Alta limpia: nuestra parte sale de la ficha de la empresa y la
+    // contraparte arranca vacía para que se elija de la lista.
+    return {
+      tipo_comprobante: 'Factura B',
+      punto_de_venta: company?.default_sale_point ?? 1,
+      numero_comprobante: 1,
+      fecha_emision: new Date().toISOString().split('T')[0],
+      fecha_vencimiento: '',
+      condicion_pago: 'contado',
+      moneda: 'ARS',
+      tipo_cambio: 1,
+      receptor_condicion_iva: 'RI',
+      neto_gravado: 0, neto_no_gravado: 0, exento: 0,
+      iva_105: 0, iva_21: 0, iva_27: 0, otros_tributos: 0, total_amount: 0,
+      items: [{ descripcion: '', cantidad: 1, unidad: '', precio_unitario: 0, alicuota_iva: 21 }],
+      ...flowFormDefaults(flowActual ?? 'receivable', company),
+    }
   }
 
   // Mostrar skeleton mientras carga la factura en modo edición
@@ -239,6 +278,25 @@ export default function NewInvoicePage() {
 
   const hasOcrPreview = Boolean(ocrPreview && !isEditMode)
 
+  // ── Paso 1: elegir el flujo antes de tocar cualquier dato ────────────────────
+  if (mostrarPaso1) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// comprobante fiscal</p>
+            <h1 className="text-2xl font-bold text-gray-900 mt-1">Nueva factura</h1>
+          </div>
+        </div>
+
+        <InvoiceFlowPicker onSelect={setFlow} />
+      </div>
+    )
+  }
+
   return (
     <div className={hasOcrPreview ? 'max-w-7xl mx-auto space-y-6' : 'max-w-4xl mx-auto space-y-6'}>
       <div className="flex items-center gap-3">
@@ -253,17 +311,24 @@ export default function NewInvoicePage() {
           <p className="text-sm text-gray-500">
             {isEditMode
               ? 'Modificá los datos del comprobante fiscal'
-              : 'Completá los datos del comprobante fiscal'}
+              : flowActual === FLOW_PAYABLE
+                ? 'Factura que te emitieron — el proveedor es el emisor'
+                : 'Factura que emitís vos — vos sos el emisor'}
           </p>
         </div>
+        {!isEditMode && !ocrData && (
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setFlow(undefined)}>
+            Cambiar tipo
+          </Button>
+        )}
       </div>
 
       {ocrData && !isEditMode && (
         <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3 text-sm text-blue-400">
           <ScanLine className="h-4 w-4 flex-shrink-0" />
           <span>
-            <strong>Datos pre-cargados desde OCR.</strong> Revisá y corregí los campos antes de guardar.
-            Los campos con baja confianza pueden necesitar corrección manual.
+            <strong>Datos pre-cargados desde OCR.</strong> Es una factura que te emitieron:
+            el emisor es el proveedor y vos sos el receptor. Revisá y corregí antes de guardar.
           </span>
         </div>
       )}
@@ -286,6 +351,9 @@ export default function NewInvoicePage() {
             onSubmit={handleSubmit}
             isLoading={isLoading}
             clients={clients}
+            providers={providers}
+            company={company}
+            onFlowChange={isEditMode ? undefined : setFlow}
           />
         </div>
       </div>

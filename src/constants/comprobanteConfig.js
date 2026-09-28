@@ -233,3 +233,22 @@ export function getTiposPermitidosPorEmisor(emisorCondicion) {
   }
   return TIPOS_COMPROBANTE
 }
+
+/**
+ * Tipos de comprobante que la empresa puede RECIBIR de un proveedor,
+ * según su propia condición impositiva. Es la inversa de emitir: lo que
+ * limita es quién recibe, no quién emite.
+ *
+ * Un Monotributista solo puede recibir Factura C (los proveedores están
+ * obligados a facturarles así). El resto de las condiciones puede recibir
+ * cualquier comprobante fiscal, incluso los que no podría emitir.
+ *
+ * @param {string | null | undefined} propiaCondicion — condición de quien recibe
+ * @returns {string[]}
+ */
+export function getTiposRecibibles(propiaCondicion) {
+  if (propiaCondicion === 'MO') {
+    return TIPOS_COMPROBANTE.filter((t) => getComprobanteConfig(t).disponibleParaMOEX)
+  }
+  return TIPOS_COMPROBANTE
+}

@@ -38,6 +38,13 @@
  */
 
 /**
+ * Kind of issuer a company is registered as. Drives the fiscal profile form:
+ * - `empresa`: sociedad, requires a full fiscal address
+ * - `persona_humana`: monotributista / consumidor final, shorter profile
+ * @typedef {'empresa' | 'persona_humana'} EntityType
+ */
+
+/**
  * Payment terms for an invoice.
  * @typedef {'contado' | 'cuenta_corriente'} CondicionPago
  */
@@ -57,9 +64,18 @@
  * @property {string}          id             - UUID primary key
  * @property {string}          name           - Company display name
  * @property {string|null}     cuit           - Argentine tax ID (XX-XXXXXXXX-X)
- * @property {string|null}     address        - Physical address
+ * @property {string|null}     address        - Fiscal address, single line (composed from the parts below)
  * @property {TaxCondition|null} tax_condition - IVA condition
  * @property {string|null}     logo_url       - URL to company logo in Supabase Storage
+ * @property {EntityType}      entity_type    - 'empresa' | 'persona_humana'
+ * @property {string|null}     activity       - Main activity per ARCA nomenclature
+ * @property {string|null}     street         - Fiscal address street
+ * @property {string|null}     street_number  - Fiscal address street number
+ * @property {string|null}     city           - Fiscal address locality
+ * @property {string|null}     province       - Fiscal address province
+ * @property {string|null}     phone          - Contact phone
+ * @property {string|null}     email          - Contact email
+ * @property {number|null}     default_sale_point - Default ARCA point of sale for own numbering
  * @property {string}          owner_id       - UUID of the owning auth.users record
  * @property {string}          created_at     - ISO 8601 timestamp
  * @property {string}          updated_at     - ISO 8601 timestamp

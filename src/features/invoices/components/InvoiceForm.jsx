@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { Plus, Trash2, Loader2, Globe, BadgeCheck } from 'lucide-react'
+import { Plus, Trash2, Loader2, Globe, BadgeCheck, UserPlus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/toast'
 import { useEmitCae } from '../hooks/useEmitCae'
@@ -10,7 +11,22 @@ import {
   TAX_CONDITION_VALUES,
   CONDICIONES_PAGO, PAISES_EXPORTACION, UMBRAL_CF_ARS,
 } from '../schemas/invoiceSchemas'
-import { getComprobanteConfig, getTiposPermitidosPorEmisor } from '@/constants/comprobanteConfig'
+import {
+  FLOW_PAYABLE,
+  getFlowOption,
+  isReceivable,
+  getTiposPermitidosParaFlujo,
+  counterpartyRole,
+  counterpartyFormFields,
+  ownPartyFormFields,
+  emptyPartyFormFields,
+  flowFormDefaults,
+  counterpartyPlaceholder,
+} from '../lib/invoiceParties'
+import CompanyPartyPanel from './CompanyPartyPanel'
+import InvoiceFlowPicker from './InvoiceFlowPicker'
+import QuickCreatePartyDialog from './QuickCreatePartyDialog'
+import { getComprobanteConfig } from '@/constants/comprobanteConfig'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,6 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, calculateInvoiceTotals } from '@/lib/utils'
 import { IVA_RATES, SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/lib/constants'
+import { TAX_CONDITION_LABELS } from '@/features/companies/schemas/companySchemas'
 import ItemSearchInput from './ItemSearchInput'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { DEMO_CATALOG_ITEMS } from '../data/demoCatalogItems'
@@ -36,15 +53,15 @@ function Kbd({ children }) {
   )
 }
 
-const TAX_CONDITION_LABELS = {
-  RI: 'Responsable Inscripto',
-  MO: 'Monotributista',
-  EX: 'Exento',
-  CF: 'Consumidor Final',
-  RS: 'Responsable Sustituto',
-}
-
-export default function InvoiceForm({ defaultValues, onSubmit, isLoading, clients = [], providers = [] }) {
+export default function InvoiceForm({
+  defaultValues,
+  onSubmit,
+  isLoading,
+  clients = [],
+  providers = [],
+  company = null,
+  onFlowChange,
+}) {
   const navigate = useNavigate()
 
   const {
@@ -54,7 +71,6 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     resolver: zodResolver(invoiceSchema),
     defaultValues: defaultValues ?? {
       tipo_comprobante: 'Factura B',
-      type: 'receivable',
       punto_de_venta: 1,
       numero_comprobante: 1,
       fecha_emision: new Date().toISOString().split('T')[0],
@@ -62,29 +78,38 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       condicion_pago: 'contado',
       moneda: 'ARS',
       tipo_cambio: 1,
-      emisor_condicion_iva: 'RI',
       receptor_condicion_iva: 'RI',
-      consumidor_final_anonimo: false,
       neto_gravado: 0, neto_no_gravado: 0, exento: 0,
       iva_105: 0, iva_21: 0, iva_27: 0, otros_tributos: 0, total_amount: 0,
       items: [defaultItem],
+      // Emisión por defecto: emisor = empresa, receptor = cliente.
+      ...flowFormDefaults('receivable', company),
     },
   })
+
 
   const { fields, append, remove, replace } = useFieldArray({ control, name: 'items' })
 
   const { data: productsData } = useProducts()
   const products = productsData?.data ?? []
 
+  // Alta rápida de la contraparte (cliente o proveedor) desde la propia factura.
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+
   const items               = watch('items') ?? []
   const moneda              = watch('moneda') ?? 'ARS'
   const tipoComprobante     = watch('tipo_comprobante') ?? 'Factura B'
   const invoiceType         = watch('type') ?? 'receivable'
-  const emisorCondicionIva  = watch('emisor_condicion_iva') ?? 'RI'
+  const esEmitida           = isReceivable(invoiceType)
+  const esRecibida          = invoiceType === FLOW_PAYABLE
   const esAnonimo           = watch('consumidor_final_anonimo') ?? false
 
+  const flow = getFlowOption(invoiceType)
   const config = getComprobanteConfig(tipoComprobante)
-  const tiposPermitidos = getTiposPermitidosPorEmisor(emisorCondicionIva)
+
+  // Los tipos permitidos dependen de nuestra propia condición fiscal, no de la
+  // de la contraparte: cambia al recibir (un Exento recibe A aunque no la emita).
+  const tiposPermitidos = getTiposPermitidosParaFlujo(invoiceType, company?.tax_condition)
 
   const { toast } = useToast()
   const emitCae = useEmitCae()
@@ -92,13 +117,56 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   const totals = calculateInvoiceTotals(items)
   const superaUmbral = totals.total_amount >= UMBRAL_CF_ARS
 
-  const handleEmisorCondicionChange = (val) => {
-    setValue('emisor_condicion_iva', val)
-    const permitidos = getTiposPermitidosPorEmisor(val)
-    if (!permitidos.includes(tipoComprobante)) {
-      setValue('tipo_comprobante', permitidos[0])
-    }
+  /**
+   * Cambia el flujo (emisión ↔ recepción) y reasigna las partes del
+   * comprobante: nuestra empresa pasa a ser emisor o receptor según corresponda
+   * y la contraparte arranca vacía para que se elija de la lista.
+   */
+  const handleFlowChange = (next) => {
+    if (next === invoiceType) return
+    setValue('type', next)
+
+    // Nuestra parte siempre es la empresa; la otra se limpia.
+    for (const [field, value] of Object.entries(ownPartyFormFields(next, company))) setValue(field, value)
+    for (const [field, value] of Object.entries(emptyPartyFormFields(counterpartyRole(next)))) setValue(field, value)
+    setValue('client_id', null)
+    setValue('provider_id', null)
+    setValue('consumidor_final_anonimo', false)
+
+    // El tipo de comprobante puede quedar fuera de los permitidos tras el cambio.
+    const permitidos = getTiposPermitidosParaFlujo(next, company?.tax_condition)
+    if (!permitidos.includes(tipoComprobante)) setValue('tipo_comprobante', permitidos[0])
+
+    onFlowChange?.(next)
   }
+
+  /**
+   * Seleccionar un cliente (receptor) o un proveedor (emisor) completa los
+   * datos de esa parte y la vincula a la factura.
+   *
+   * @param {'client'|'provider'} kind
+   * @param {string} contactId
+   */
+  /**
+   * Selecciona una contraparte y completa sus datos fiscales.
+   * `contact` es opcional: si se pasa el registro directo no hace falta que
+   * esté en la lista (recién creado, la caché todavía no lo tiene).
+   */
+  const handleContactSelect = (kind, contactId, contacto = null) => {
+    const esCliente = kind === 'client'
+    const list = esCliente ? clients : providers
+
+    if (esCliente) setValue('client_id', contactId)
+    else setValue('provider_id', contactId)
+
+    const contact = contacto ?? list.find((c) => c.id === contactId)
+    for (const [field, value] of Object.entries(counterpartyFormFields(invoiceType, contact))) {
+      setValue(field, value)
+    }
+
+    if (esCliente) setValue('consumidor_final_anonimo', false)
+  }
+
 
   const handleFormSubmit = (data) => {
     const itemsNormalizados = config.permiteItems
@@ -140,6 +208,8 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
   // Autocompleta el formulario con datos demo válidos (solo dev).
   // Atajo: Alt+R. Pensado para agilizar las pruebas manuales de la app.
+  // Respeta el flujo: la contraparte es la que se rellena con datos demo,
+  // nuestra empresa conserva los datos reales de la ficha.
   const fillDemoData = () => {
     const today = new Date().toISOString().split('T')[0]
     const datePlus = (days) => {
@@ -159,28 +229,30 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       setValue('tipo_cambio', 1050)
       setValue('pais_destino', 'US')
       setValue('receptor_id_impositivo', 'US-EIN-123456789')
-      setValue('receptor_razon_social', 'Foreign Corp LLC')
-      setValue('receptor_domicilio', '123 Main St, New York')
     } else {
       setValue('moneda', 'ARS')
       setValue('tipo_cambio', 1)
+    }
+
+    if (esRecibida) {
+      // Somos el receptor y el emisor es el proveedor.
+      setValue('emisor_cuit', '30-71234567-8')
+      setValue('emisor_razon_social', 'Proveedor Demo S.R.L.')
+      setValue('emisor_domicilio', 'Av. Córdoba 1234, CABA')
+    } else {
       setValue('receptor_cuit', '20-33445566-7')
       setValue('receptor_razon_social', 'Cliente Demo S.R.L.')
       setValue('receptor_domicilio', 'Av. Santa Fe 5678, CABA')
     }
+    if (!config.esExportacion) setValue('receptor_condicion_iva', 'RI')
+    setValue('consumidor_final_anonimo', true)
 
-    setValue('emisor_cuit', '30-71234567-8')
-    setValue('emisor_razon_social', 'InvoTrack Demo S.A.')
-    setValue('emisor_domicilio', 'Av. Corrientes 1234, CABA')
-    setValue('receptor_condicion_iva', 'RI')
-    setValue('consumidor_final_anonimo', false)
-
-    setValue('cae', config.requiereCAE ? '74123456789012' : '')
-    setValue('cae_vencimiento', config.requiereVencimientoCAE ? datePlus(30) : '')
+    setValue('cae', '')
+    setValue('cae_vencimiento', '')
     setValue('notes', 'Formulario autocompletado con datos demo (Alt+R)')
 
     if (config.permiteItems) {
-      const itemsDemo = invoiceType === 'receivable' && products.length > 0
+      const itemsDemo = esEmitida && products.length > 0
         ? products.slice(0, 3).map((p) => ({
             descripcion: p.name,
             cantidad: 1,
@@ -196,7 +268,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
 
     toast({
       title: 'Formulario autocompletado',
-      description: 'Se cargaron datos demo. Revisá y guardá.',
+      description: 'Se cargaron datos demo. El CAE queda vacío: pedilo a ARCA o tipealo. Revisá y guardá.',
       variant: 'success',
     })
   }
@@ -224,18 +296,18 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
     config.requiereReceptorRazonSocial ||
     config.requiereReceptorCondicionIVA
 
-  // Seleccionar un cliente de la lista completa los datos del receptor
-  // (razón social, CUIT, domicilio, condición IVA) y lo vincula a la factura.
-  const handleClientSelect = (clientId) => {
-    const client = clients.find((c) => c.id === clientId)
-    setValue('client_id', clientId)
-    if (client) {
-      setValue('receptor_razon_social', client.name ?? '')
-      setValue('receptor_cuit', client.cuit ?? '')
-      setValue('receptor_domicilio', client.address ?? '')
-      setValue('receptor_condicion_iva', client.tax_condition ?? '')
-    }
-    setValue('consumidor_final_anonimo', false)
+  // El emisor es obligatorio (CUIT + razón social) en casi todos los
+  // comprobantes, así que también aplica cuando el emisor es el proveedor.
+  const emisorObligatorio = config.requiereEmisorCUIT || config.requiereEmisorRazonSocial
+
+  const contraparte = esRecibida ? providers : clients
+  const contraparteKind = esRecibida ? 'provider' : 'client'
+  const contraparteVacia = contraparte.length === 0
+
+  /** Alta rápida: el registro creado se selecciona y completa los campos. */
+  const handleQuickCreated = (record) => {
+    if (!record?.id) return
+    handleContactSelect(contraparteKind, record.id, record)
   }
 
   // Solicita el CAE a ARCA (WSFEv1 homologación) y completa los campos.
@@ -282,9 +354,16 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         setValue('total_amount', enriched.total_amount ?? 0)
         toast({
           title: 'CAE obtenido',
-          description: `CAE ${result.cae} válido hasta ${result.caeVencimiento ?? '-'}. Completá el guardado de la factura.`,
+          description: `CAE ${result.cae} válido hasta ${result.caeVencimiento ?? '-'}. Guardando la factura…`,
           variant: 'success',
         })
+        handleSubmit(handleFormSubmit, () => {
+          toast({
+            title: 'CAE obtenido, la factura no se guardó',
+            description: 'Te faltan campos obligatorios. Completalos y guardá de nuevo.',
+            variant: 'warning',
+          })
+        })()
       }
     } catch (err) {
       // El toast de error lo dispara el propio hook (useEmitCae)
@@ -295,7 +374,24 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
 
-      {/* ── Tipo y flujo ─────────────────────────────────────────────────── */}
+      {/* ── Flujo: ¿yo emito o me emitieron? ────────────────────────────── */}
+      {/* Es lo primero que se ve porque define quién es el emisor, quién el
+          receptor y qué datos se autocompletan. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tipo de factura</CardTitle>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {esEmitida
+              ? 'Factura que emitís vos y querés cobrar.'
+              : 'Factura que te emitió un proveedor y tenés que pagar.'}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <InvoiceFlowPicker value={invoiceType} onSelect={handleFlowChange} compact />
+        </CardContent>
+      </Card>
+
+      {/* ── Tipo y numeración ────────────────────────────────────────────── */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tipo de comprobante</CardTitle>
@@ -319,19 +415,9 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               </Select>
             )} />
             {errors.tipo_comprobante && <p className="text-xs text-red-500">{errors.tipo_comprobante.message}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Flujo <span className="text-red-500">*</span></Label>
-            <Controller name="type" control={control} render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="receivable">Cobrar (ingreso)</SelectItem>
-                  <SelectItem value="payable">Pagar (gasto)</SelectItem>
-                </SelectContent>
-              </Select>
-            )} />
+            <p className="text-xs text-gray-400">
+              Permitidos para {esEmitida ? 'emitir' : 'recibir'} con tu condición fiscal.
+            </p>
           </div>
 
           {config.permiteCondicionPago && (
@@ -399,7 +485,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
             </div>
           )}
 
-          {config.requiereCAE && invoiceType === 'receivable' && (
+          {config.requiereCAE && esEmitida && (
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
               <Button
                 type="button"
@@ -470,50 +556,92 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
       </Card>
 
       {/* ── Emisor ───────────────────────────────────────────────────────── */}
+      {/* Al emitir, el emisor somos nosotros: sale de la ficha de la empresa y
+          no se edita acá. Al recibir, el emisor es el proveedor. */}
       <Card>
-        <CardHeader><CardTitle>Datos del emisor</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>
-              Razón social
-              {config.requiereEmisorRazonSocial && <span className="text-red-500"> *</span>}
-            </Label>
-            <Input placeholder="Empresa S.A." {...register('emisor_razon_social')} />
-            {errors.emisor_razon_social && <p className="text-xs text-red-500">{errors.emisor_razon_social.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              CUIT
-              {config.requiereEmisorCUIT && <span className="text-red-500"> *</span>}
-            </Label>
-            <Input placeholder="20-12345678-9" {...register('emisor_cuit')} />
-            {errors.emisor_cuit && <p className="text-xs text-red-500">{errors.emisor_cuit.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Condición IVA
-              {config.requiereEmisorCondicionIVA && <span className="text-red-500"> *</span>}
-            </Label>
-            <Controller name="emisor_condicion_iva" control={control} render={({ field }) => (
-              <Select onValueChange={(val) => { field.onChange(val); handleEmisorCondicionChange(val) }} value={field.value ?? ''}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>
-                  {TAX_CONDITION_VALUES.map((v) => (
-                    <SelectItem key={v} value={v}>{TAX_CONDITION_LABELS[v]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )} />
-            {errors.emisor_condicion_iva && <p className="text-xs text-red-500">{errors.emisor_condicion_iva.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Domicilio
-              {config.requiereEmisorDomicilio && <span className="text-red-500"> *</span>}
-            </Label>
-            <Input placeholder="Av. Corrientes 1234, CABA" {...register('emisor_domicilio')} />
-            {errors.emisor_domicilio && <p className="text-xs text-red-500">{errors.emisor_domicilio.message}</p>}
-          </div>
+        <CardHeader>
+          <CardTitle>
+            {esEmitida ? 'Datos del emisor' : `Datos del emisor — ${flow?.counterpartyNoun}`}
+          </CardTitle>
+          {esRecibida && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Son los datos de quien te emitió la factura, no los tuyos.
+            </p>
+          )}
+        </CardHeader>
+        <CardContent>
+          {esEmitida ? (
+            <CompanyPartyPanel company={company} role="emisor" />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {!config.esExportacion && (
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>
+                    Proveedor (emisor)
+                    {emisorObligatorio && <span className="text-red-500"> *</span>}
+                  </Label>
+                  <Controller name="provider_id" control={control} render={({ field }) => (
+                    <Select
+                      onValueChange={(id) => { field.onChange(id); handleContactSelect('provider', id) }}
+                      value={field.value ?? ''}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={counterpartyPlaceholder('payable')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {providers.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )} />
+                  <p className="text-xs text-gray-400">
+                    Al elegirlo se completan razón social, CUIT, condición IVA y domicilio.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>
+                  Razón social
+                  {config.requiereEmisorRazonSocial && <span className="text-red-500"> *</span>}
+                </Label>
+                <Input placeholder="Proveedor S.A." {...register('emisor_razon_social')} />
+                {errors.emisor_razon_social && <p className="text-xs text-red-500">{errors.emisor_razon_social.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label>
+                  CUIT
+                  {config.requiereEmisorCUIT && <span className="text-red-500"> *</span>}
+                </Label>
+                <Input placeholder="30-12345678-9" {...register('emisor_cuit')} />
+                {errors.emisor_cuit && <p className="text-xs text-red-500">{errors.emisor_cuit.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label>
+                  Condición IVA
+                  {config.requiereEmisorCondicionIVA && <span className="text-red-500"> *</span>}
+                </Label>
+                <Controller name="emisor_condicion_iva" control={control} render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                    <SelectContent>
+                      {TAX_CONDITION_VALUES.map((v) => (
+                        <SelectItem key={v} value={v}>{TAX_CONDITION_LABELS[v]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )} />
+                {errors.emisor_condicion_iva && <p className="text-xs text-red-500">{errors.emisor_condicion_iva.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label>
+                  Domicilio
+                  {config.requiereEmisorDomicilio && <span className="text-red-500"> *</span>}
+                </Label>
+                <Input placeholder="Av. Córdoba 1234, CABA" {...register('emisor_domicilio')} />
+                {errors.emisor_domicilio && <p className="text-xs text-red-500">{errors.emisor_domicilio.message}</p>}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -522,33 +650,45 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         <Card>
           <CardHeader>
             <CardTitle>
-              {config.esExportacion ? 'Destinatario (Exportación)' : 'Datos del receptor'}
+              {esRecibida
+                ? 'Datos del receptor'
+                : config.esExportacion ? 'Destinatario (Exportación)' : 'Datos del receptor'}
             </CardTitle>
-            {receptorObligatorio && (
-              <p className="text-xs text-amber-600 mt-0.5">
-                Para {tipoComprobante} el receptor debe estar identificado según las reglas fiscales.
-              </p>
-            )}
-            {config.permiteConsumidorFinalAnonimo && !superaUmbral && (
+            {esRecibida ? (
               <p className="text-xs text-gray-400 mt-0.5">
-                Opcional para totales menores a {formatCurrency(UMBRAL_CF_ARS)}.
+                Vos sos el receptor de esta factura: los datos salen de tu ficha de empresa.
               </p>
-            )}
-            {config.permiteConsumidorFinalAnonimo && superaUmbral && (
-              <p className="text-xs text-amber-600 mt-0.5">
-                El total supera {formatCurrency(UMBRAL_CF_ARS)} — ARCA exige identificar al receptor.
-              </p>
-            )}
-            {config.esTicket && !receptorObligatorio && (
-              <p className="text-xs text-gray-400 mt-0.5">
-                Todos los datos del receptor son opcionales para este tipo de comprobante.
-              </p>
+            ) : (
+              <>
+                {receptorObligatorio && (
+                  <p className="text-xs text-amber-600 mt-0.5">
+                    Para {tipoComprobante} el receptor debe estar identificado según las reglas fiscales.
+                  </p>
+                )}
+                {config.permiteConsumidorFinalAnonimo && !superaUmbral && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Opcional para totales menores a {formatCurrency(UMBRAL_CF_ARS)}.
+                  </p>
+                )}
+                {config.permiteConsumidorFinalAnonimo && superaUmbral && (
+                  <p className="text-xs text-amber-600 mt-0.5">
+                    El total supera {formatCurrency(UMBRAL_CF_ARS)} — ARCA exige identificar al receptor.
+                  </p>
+                )}
+                {config.esTicket && !receptorObligatorio && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Todos los datos del receptor son opcionales para este tipo de comprobante.
+                  </p>
+                )}
+              </>
             )}
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+            {esRecibida && <CompanyPartyPanel company={company} role="receptor" />}
+
             {/* El receptor es un cliente de la lista — al seleccionarlo se completan sus datos */}
-            {clients.length > 0 && !config.esExportacion && (
+            {!esRecibida && !config.esExportacion && (
               <div className="sm:col-span-2 space-y-1.5">
                 <Label>
                   Cliente (receptor)
@@ -556,22 +696,48 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
                 </Label>
                 <Controller name="client_id" control={control} render={({ field }) => (
                   <Select
-                    onValueChange={(clientId) => { field.onChange(clientId); handleClientSelect(clientId) }}
+                    onValueChange={(clientId) => { field.onChange(clientId); handleContactSelect('client', clientId) }}
                     value={field.value ?? ''}
                   >
-                    <SelectTrigger><SelectValue placeholder="Seleccionar cliente de la lista" /></SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={contraparteVacia
+                          ? 'Todavía no tenés clientes cargados'
+                          : counterpartyPlaceholder('receivable')}
+                      />
+                    </SelectTrigger>
+                    {clients.length > 0 && (
+                      <SelectContent>
+                        {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    )}
                   </Select>
                 )} />
                 <p className="text-xs text-gray-400">
-                  El receptor debe ser un cliente de la lista. Al elegirlo se completan sus datos automáticamente.
+                  {contraparteVacia
+                    ? 'No tenés clientes todavía. Creá el primero y se guarda con sus datos fiscales.'
+                    : 'Al elegirlo se completan razón social, CUIT, condición IVA y domicilio.'}
                 </p>
               </div>
             )}
 
-            {config.permiteConsumidorFinalAnonimo && !superaUmbral && (
+            {/* Alta rápida de la contraparte — siempre disponible */}
+            <div className="sm:col-span-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setQuickCreateOpen(true)}
+              >
+                <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                Crear {flow?.counterpartyNoun}
+              </Button>
+              <p className="text-xs text-gray-400 mt-1">
+                Se guarda con sus datos fiscales y queda vinculado a esta factura.
+              </p>
+            </div>
+
+            {esEmitida && config.permiteConsumidorFinalAnonimo && !superaUmbral && (
               <div className="sm:col-span-2 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                 <input
                   type="checkbox"
@@ -586,7 +752,7 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
               </div>
             )}
 
-            {(!esAnonimo || superaUmbral || receptorObligatorio) && (
+            {(!esRecibida && (!esAnonimo || superaUmbral || receptorObligatorio)) && (
               <>
                 {(config.esExportacion || config.requiereReceptorCUIT || !config.requiereReceptorCUIT) && (
                   <div className="space-y-1.5">
@@ -614,30 +780,17 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
                   {errors.receptor_razon_social && <p className="text-xs text-red-500">{errors.receptor_razon_social.message}</p>}
                 </div>
 
-              <div className="space-y-1.5">
-                <Label>Domicilio</Label>
-                <Input placeholder={config.esExportacion ? '123 Main St, New York' : 'Av. Santa Fe 5678, CABA'} {...register('receptor_domicilio')} />
-              </div>
-            </>
-          )}
+                <div className="space-y-1.5">
+                  <Label>Domicilio</Label>
+                  <Input placeholder={config.esExportacion ? '123 Main St, New York' : 'Av. Santa Fe 5678, CABA'} {...register('receptor_domicilio')} />
+                </div>
+              </>
+            )}
 
-          {/* Vínculo con proveedor (solo para compras/pagar) */}
-          {providers.length > 0 && !config.esExportacion && (
-            <div className="space-y-1.5">
-              <Label>Vincular proveedor</Label>
-              <Controller name="provider_id" control={control} render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar proveedor" /></SelectTrigger>
-                  <SelectContent>
-                    {providers.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )} />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       )}
+
 
       {/* ── Ítems ────────────────────────────────────────────────────────── */}
       {config.permiteItems ? (
@@ -814,10 +967,19 @@ export default function InvoiceForm({ defaultValues, onSubmit, isLoading, client
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Guardar factura
+          {esEmitida ? 'Guardar factura' : 'Guardar factura recibida'}
           <Kbd>{modKey}+↵</Kbd>
         </Button>
       </div>
+
+      {/* Alta de la contraparte sin salir de la factura */}
+      <QuickCreatePartyDialog
+        kind={contraparteKind}
+        companyId={company?.id}
+        open={quickCreateOpen}
+        onOpenChange={setQuickCreateOpen}
+        onCreated={handleQuickCreated}
+      />
 
     </form>
   )

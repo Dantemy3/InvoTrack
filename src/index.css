@@ -14,6 +14,14 @@
   /* Violeta → sustituido por azul corporativo para eliminar los purpuras */
   --color-violet-500: #185FA5; /* --lp-navy-mid  (era #8b5cf6) */
   --color-violet-400: #378ADD; /* --lp-blue      (era #a78bfa) */
+
+  /* ── Tokens de superficie ──────────────────────────────────────────────
+     Los usan Card, SelectContent, DropdownMenu, Toast y Tabs. Sin definirlos
+     acá, Tailwind no genera ninguna regla (bg-panel-2) y los paneles flotantes
+     quedan transparentes: se ve el contenido de atrás a través de las opciones.
+     ──────────────────────────────────────────────────────────────────── */
+  --color-panel:   #ffffff;  /* superficie base: tarjetas */
+  --color-panel-2: #ffffff;  /* superficie elevada: popovers, dropdowns, toasts */
 }
 
 @layer base {
@@ -93,6 +101,10 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    /* Superficies en modo oscuro (mismos tokens que @theme) */
+    --color-panel:   #0f172a;
+    --color-panel-2: #1e293b;
   }
 }
 

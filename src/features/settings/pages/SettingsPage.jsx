@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Loader2, User, Building2, Shield } from 'lucide-react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Link } from 'react-router-dom'
+import { Loader2, User, Building2, Shield, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,10 +10,26 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useAuth } from '@/features/auth/context/AuthContext'
 import { authService } from '@/features/auth/services/authService'
+import { useCompany } from '@/features/companies/context/CompanyContext'
+import { useUpdateCompany } from '@/features/companies/hooks/useUpdateCompany'
+import CompanyProfileForm from '@/features/companies/components/CompanyProfileForm'
+import {
+  companyFiscalSchema,
+  buildCompanyPayload,
+  fiscalValuesFromCompany,
+  ENTITY_TYPE_VALUES,
+} from '@/features/companies/schemas/companySchemas'
+import { missingCompanyProfileFields } from '@/features/companies/lib/companyParty'
 import { useToast } from '@/components/ui/toast'
+
+const ENTITY_TYPE_LABELS = {
+  empresa: 'Empresa',
+  persona_humana: 'Persona humana',
+}
 
 export default function SettingsPage() {
   const { user } = useAuth()
+  const { company } = useCompany()
   const { toast } = useToast()
   const [passwordLoading, setPasswordLoading] = useState(false)
 
@@ -23,6 +41,34 @@ export default function SettingsPage() {
   })
 
   const { register: regPassword, handleSubmit: handlePassword, reset: resetPassword } = useForm()
+
+  // ── Ficha fiscal de la empresa ──────────────────────────────────────────────
+  // Mismo schema que el onboarding: si el alta está completa, acá se mantiene.
+  const updateCompany = useUpdateCompany(company?.id)
+  const {
+    register: regCompany,
+    handleSubmit: handleCompany,
+    watch: watchCompany,
+    getValues: getCompanyValues,
+    setValue: setCompanyValue,
+    reset: resetCompany,
+    formState: { errors: companyErrors, isSubmitting: companySubmitting },
+  } = useForm({
+    resolver: zodResolver(companyFiscalSchema),
+    mode: 'onTouched',
+    defaultValues: fiscalValuesFromCompany(company),
+  })
+
+  const entityType = watchCompany('entity_type')
+  const faltantes = missingCompanyProfileFields(company)
+
+  const onCompanySubmit = handleCompany(async (data) => {
+    try {
+      await updateCompany.mutateAsync({ id: company?.id, ...buildCompanyPayload(data) })
+    } catch (err) {
+      console.error('Error al guardar la empresa:', err.message)
+    }
+  })
 
   const onProfileSubmit = async (data) => {
     try {
@@ -50,12 +96,21 @@ export default function SettingsPage() {
     }
   }
 
+  // Cambiar el tipo de emisor ajusta la condición fiscal a una válida.
+  const handleEntityChange = (value) => {
+    setCompanyValue('entity_type', value, { shouldValidate: true })
+    const actual = getCompanyValues('tax_condition')
+    if (value === 'persona_humana' && actual !== 'MO' && actual !== 'CF') {
+      setCompanyValue('tax_condition', 'MO', { shouldValidate: true })
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-400/80">// preferencias</p>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Configuración</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Administrá tu cuenta y preferencias</p>
+        <p className="text-sm text-gray-500 mt-0.5">Administrá tu cuenta y los datos de tu empresa</p>
       </div>
 
       <Tabs defaultValue="profile">
@@ -92,31 +147,77 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="company">
-          <Card>
-            <CardHeader>
-              <CardTitle>Datos de la empresa</CardTitle>
-              <CardDescription>Información fiscal y comercial</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Razón social</Label>
-                <Input placeholder="Mi Empresa S.A." />
+          <div className="space-y-4">
+            {faltantes.length > 0 && (
+              <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-sm text-amber-700">
+                <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  Te falta completar: <strong>{faltantes.join(', ')}</strong>.
+                  Sin esos datos no se puede emitir un comprobante válido.
+                </span>
               </div>
-              <div className="space-y-1.5">
-                <Label>CUIT</Label>
-                <Input placeholder="30-12345678-9" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Dirección fiscal</Label>
-                <Input placeholder="Av. Corrientes 1234, CABA" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Condición IVA</Label>
-                <Input placeholder="Responsable Inscripto" />
-              </div>
-              <Button>Guardar empresa</Button>
-            </CardContent>
-          </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Datos de la empresa</CardTitle>
+                <CardDescription>
+                  Se autocompletan como emisor en las facturas que emitas y como
+                  receptor en las que te hagan.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={onCompanySubmit} className="space-y-6">
+
+                  <div className="space-y-1.5">
+                    <Label>Tipo de emisor</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {ENTITY_TYPE_VALUES.map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => handleEntityChange(value)}
+                          className={`rounded-lg border px-3 py-2 text-sm text-left transition-colors ${
+                            entityType === value
+                              ? 'border-blue-500 bg-blue-500/10 text-blue-600 font-medium'
+                              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {ENTITY_TYPE_LABELS[value]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <CompanyProfileForm
+                    register={regCompany}
+                    errors={companyErrors}
+                    entityType={entityType}
+                  />
+
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => resetCompany(fiscalValuesFromCompany(company))}
+                    >
+                      Descartar cambios
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={companySubmitting || updateCompany.isPending}>
+                      {companySubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Guardar empresa
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <p className="text-xs text-gray-400">
+              ¿Necesitás cambiar de empresa? Usá el selector de la barra superior.{' '}
+              <Link to="/invoices/new" className="text-blue-500 hover:underline">Crear una factura</Link>{' '}
+              para ver los datos autocompletados.
+            </p>
+          </div>
         </TabsContent>
 
         <TabsContent value="security">

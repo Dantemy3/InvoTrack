@@ -42,6 +42,15 @@
  * @property {string|null} address
  * @property {string|null} tax_condition
  * @property {string|null} logo_url
+ * @property {string} entity_type
+ * @property {string|null} activity
+ * @property {string|null} street
+ * @property {string|null} street_number
+ * @property {string|null} city
+ * @property {string|null} province
+ * @property {string|null} phone
+ * @property {string|null} email
+ * @property {number|null} default_sale_point
  * @property {string|null} owner_id
  * @property {string} created_at
  * @property {string} updated_at
