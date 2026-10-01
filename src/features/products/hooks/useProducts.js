@@ -15,10 +15,11 @@ export function useProducts(filters = {}) {
 }
 
 export function useProduct(id) {
+  const { company } = useCompany()
   return useQuery({
-    queryKey: [QUERY_KEYS.PRODUCT, id],
-    queryFn: () => productService.getById(id),
-    enabled: !!id,
+    queryKey: [QUERY_KEYS.PRODUCT, company?.id, id],
+    queryFn: () => productService.getById(id, company.id),
+    enabled: Boolean(id && company?.id),
   })
 }
 
@@ -39,11 +40,12 @@ export function useCreateProduct() {
 }
 
 export function useUpdateProduct() {
+  const { company } = useCompany()
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: ({ id, ...data }) => productService.update(id, data),
+    mutationFn: ({ id, ...data }) => productService.update(id, data, company.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PRODUCTS] })
       toast({ title: 'Producto actualizado', variant: 'success' })
@@ -53,11 +55,12 @@ export function useUpdateProduct() {
 }
 
 export function useDeleteProduct() {
+  const { company } = useCompany()
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: productService.delete,
+    mutationFn: (id) => productService.delete(id, company.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PRODUCTS] })
       toast({ title: 'Producto eliminado', variant: 'success' })

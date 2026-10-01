@@ -1,6 +1,8 @@
 node_modules
 # Environment variables (never commit secrets)
 .env
+.env.example.local
+server/.env
 .env.local
 .env.*.local
 
