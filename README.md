@@ -82,7 +82,9 @@ módulos todavía consulta Supabase desde el frontend.
 ### Arranque local
 
 1. En la raíz, ejecutar `npm install` y copiar `.env.example` a `.env` con
-   `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+   `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`. Usar la URL base del proyecto
+   (`https://<proyecto>.supabase.co`), sin `/rest/v1`, y la clave publicable o
+   `anon` del mismo proyecto.
 2. Ejecutar `npm install` dentro de `server/`. Copiar `server/.env.example` a
    `server/.env` y completar `SUPABASE_URL` y `SUPABASE_ANON_KEY` con los valores
    del mismo proyecto de Supabase.
@@ -92,6 +94,10 @@ módulos todavía consulta Supabase desde el frontend.
 4. En una terminal ejecutar `npm run dev:api` y en otra `npm run dev`.
    La API escucha en `http://localhost:3001`; Vite redirige `/api` a ese puerto.
 5. Comprobar `http://localhost:3001/api/v1/health` (devuelve `ok: true`).
+
+Para el registro con Google, habilitar Google en Supabase Authentication y
+agregar `http://localhost:5173/dashboard` a las Redirect URLs permitidas.
+Reiniciar Vite después de cambiar `.env`.
 
 En producción, configurar `VITE_API_URL` con la URL pública de la API terminada
 en `/api/v1`, o dirigir `/api` al servidor Express desde el proxy de despliegue.

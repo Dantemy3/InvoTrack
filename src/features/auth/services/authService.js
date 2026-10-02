@@ -119,6 +119,13 @@ export const authService = {
     return data
   },
 
+  async clearPendingCompanyProfile() {
+    const { error } = await supabase.auth.updateUser({
+      data: { company_profile: null },
+    })
+    if (error) throw error
+  },
+
   /**
    * Fetch the profile row for the current user.
    */

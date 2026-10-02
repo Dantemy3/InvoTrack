@@ -25,16 +25,18 @@ function Field({ label, required, error, hint, children, className }) {
 /**
  * Ficha fiscal de la empresa. Es presentacional: recibe los bindings de
  * react-hook-form del padre, así la usan tanto el onboarding como
- * Configuración → Empresa sin duplicar los campos.
+ * Configuración → Empresa y registro sin duplicar los campos.
  *
  * @param {object} props
  * @param {Function} props.register — `register` de react-hook-form
  * @param {object}   props.errors  — `formState.errors`
  * @param {string}   props.entityType — 'empresa' | 'persona_humana'
+ * @param {string}   props.namePrefix — ruta del objeto fiscal en formularios anidados
  */
-export default function CompanyProfileForm({ register, errors, entityType = 'empresa' }) {
+export default function CompanyProfileForm({ register, errors = {}, entityType = 'empresa', namePrefix = '' }) {
   const esEmpresa = entityType === 'empresa'
   const condiciones = esEmpresa ? COMPANY_TAX_CONDITIONS : PERSONA_HUMANA_TAX_CONDITIONS
+  const field = (name) => namePrefix ? `${namePrefix}.${name}` : name
 
   return (
     <div className="space-y-6">
@@ -49,7 +51,7 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
         >
           <Input
             placeholder={esEmpresa ? 'Mi Empresa S.A.' : 'Juan Pérez'}
-            {...register('name')}
+            {...register(field('name'))}
           />
         </Field>
 
@@ -59,11 +61,11 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
           error={errors.cuit?.message}
           hint="Es el que va a figurar como emisor en tus facturas."
         >
-          <Input placeholder="30-12345678-9" {...register('cuit')} />
+          <Input placeholder="30-12345678-9" {...register(field('cuit'))} />
         </Field>
 
         <Field label="Condición fiscal" required error={errors.tax_condition?.message}>
-          <select className={SELECT_CLASS} {...register('tax_condition')}>
+          <select className={SELECT_CLASS} {...register(field('tax_condition'))}>
             {condiciones.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
             ))}
@@ -78,7 +80,7 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
           error={errors.activity?.message}
           hint="Se imprime en el comprobante. Buscá tu código en la nomenclatura de ARCA."
         >
-          <Input placeholder="620100 - Programación informática" {...register('activity')} />
+          <Input placeholder="620100 - Programación informática" {...register(field('activity'))} />
         </Field>
       )}
 
@@ -99,7 +101,7 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
             error={errors.street?.message}
             className="sm:col-span-4"
           >
-            <Input placeholder="Av. Corrientes" {...register('street')} />
+            <Input placeholder="Av. Corrientes" {...register(field('street'))} />
           </Field>
           <Field
             label="Número"
@@ -107,13 +109,13 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
             error={errors.street_number?.message}
             className="sm:col-span-2"
           >
-            <Input placeholder="1234" {...register('street_number')} />
+            <Input placeholder="1234" {...register(field('street_number'))} />
           </Field>
           <Field label="Localidad" required={esEmpresa} error={errors.city?.message} className="sm:col-span-3">
-            <Input placeholder="Ciudad Autónoma de Buenos Aires" {...register('city')} />
+            <Input placeholder="Ciudad Autónoma de Buenos Aires" {...register(field('city'))} />
           </Field>
           <Field label="Provincia" required={esEmpresa} error={errors.province?.message} className="sm:col-span-3">
-            <select className={SELECT_CLASS} {...register('province')}>
+            <select className={SELECT_CLASS} {...register(field('province'))}>
               <option value="">Seleccionar</option>
               {PROVINCIAS.map((p) => (
                 <option key={p} value={p}>{p}</option>
@@ -126,10 +128,10 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
       {/* ── Contacto y numeración ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Field label="Teléfono" error={errors.phone?.message}>
-          <Input placeholder="11-1234-5678" {...register('phone')} />
+          <Input placeholder="11-1234-5678" {...register(field('phone'))} />
         </Field>
         <Field label="Email de contacto" error={errors.email?.message}>
-          <Input type="email" placeholder="facturacion@miempresa.com" {...register('email')} />
+          <Input type="email" placeholder="facturacion@miempresa.com" {...register(field('email'))} />
         </Field>
         {esEmpresa && (
           <Field
@@ -137,7 +139,7 @@ export default function CompanyProfileForm({ register, errors, entityType = 'emp
             error={errors.default_sale_point?.message}
             hint="Se usa por defecto al emitir."
           >
-            <Input type="number" min={1} max={99999} {...register('default_sale_point')} />
+            <Input type="number" min={1} max={99999} {...register(field('default_sale_point'))} />
           </Field>
         )}
       </div>

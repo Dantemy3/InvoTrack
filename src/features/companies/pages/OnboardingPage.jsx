@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,6 +14,8 @@ import CompanyProfileForm from '@/features/companies/components/CompanyProfileFo
 import { companyService } from '@/features/companies/services/companyService'
 import { useCompany } from '@/features/companies/context/CompanyContext'
 import { useAuth } from '@/features/auth/context/AuthContext'
+import { authService } from '@/features/auth/services/authService'
+import { pendingCompanyFromUser } from '@/features/auth/lib/registrationCompany'
 import { Button } from '@/components/ui/button'
 
 const STEP_ENTITY = 1
@@ -33,12 +35,15 @@ export default function OnboardingPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { refetch } = useCompany()
+  const pendingCompany = useMemo(() => pendingCompanyFromUser(user), [user])
   const [serverError, setServerError] = useState(null)
+  const [creatingPending, setCreatingPending] = useState(Boolean(pendingCompany))
+  const startedPending = useRef(false)
 
   // Paso 1 vive fuera del form: es una decisión de navegación, no un campo
   // que el usuario pueda editar mientras escribe la ficha fiscal.
   const [step, setStep] = useState(STEP_ENTITY)
-  const [entityType, setEntityType] = useState('empresa')
+  const [entityType, setEntityType] = useState(pendingCompany?.entity_type ?? 'empresa')
 
   const {
     register,
@@ -50,20 +55,49 @@ export default function OnboardingPage() {
     resolver: zodResolver(companyFiscalSchema),
     mode: 'onTouched',
     defaultValues: {
-      entity_type: 'empresa',
-      name: '',
-      cuit: '',
-      tax_condition: 'RI',
-      activity: '',
-      street: '',
-      street_number: '',
-      city: '',
-      province: '',
-      phone: '',
-      email: '',
-      default_sale_point: 1,
+      entity_type: pendingCompany?.entity_type ?? 'empresa',
+      name: pendingCompany?.name ?? '',
+      cuit: pendingCompany?.cuit ?? '',
+      tax_condition: pendingCompany?.tax_condition ?? 'RI',
+      activity: pendingCompany?.activity ?? '',
+      street: pendingCompany?.street ?? '',
+      street_number: pendingCompany?.street_number ?? '',
+      city: pendingCompany?.city ?? '',
+      province: pendingCompany?.province ?? '',
+      phone: pendingCompany?.phone ?? '',
+      email: pendingCompany?.email ?? '',
+      default_sale_point: pendingCompany?.default_sale_point ?? 1,
     },
   })
+
+  // Si el email se confirmó después del registro, crear la empresa usando la
+  // ficha fiscal que Supabase Auth conservó para este usuario.
+  useEffect(() => {
+    if (!pendingCompany || !user?.id || startedPending.current) return
+    startedPending.current = true
+
+    const finishRegistration = async () => {
+      try {
+        const companies = await companyService.getAll(user.id)
+        if (!companies.some((company) => company.owner_id === user.id)) {
+          await companyService.create(pendingCompany, user.id)
+        }
+        const selected = await refetch()
+        if (!selected) throw new Error('La empresa se creó, pero no pudimos cargarla. Intentá de nuevo.')
+        try {
+          await authService.clearPendingCompanyProfile()
+        } catch (error) {
+          console.error('No se pudo limpiar la ficha fiscal temporal', error)
+        }
+        navigate('/dashboard', { replace: true })
+      } catch (error) {
+        setServerError(error?.message ?? 'No pudimos crear tu empresa. Revisá los datos e intentá de nuevo.')
+        setCreatingPending(false)
+      }
+    }
+
+    void finishRegistration()
+  }, [pendingCompany, user?.id, refetch, navigate])
 
   // Al cambiar el tipo de emisor se ajusta la condición fiscal por defecto,
   // porque una persona humana casi siempre es Monotributista o Consumidor Final.
@@ -87,20 +121,40 @@ export default function OnboardingPage() {
     }
     setServerError(null)
     try {
-      await companyService.create(buildCompanyPayload(data), user.id)
-      await refetch()
+      const companies = await companyService.getAll(user.id)
+      if (!companies.some((company) => company.owner_id === user.id)) {
+        await companyService.create(buildCompanyPayload(data), user.id)
+      }
+      const selected = await refetch()
+      if (!selected) throw new Error('La empresa se creó, pero no pudimos cargarla. Intentá de nuevo.')
+      if (pendingCompany) {
+        try {
+          await authService.clearPendingCompanyProfile()
+        } catch (error) {
+          console.error('No se pudo limpiar la ficha fiscal temporal', error)
+        }
+      }
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setServerError(err?.message ?? 'Ocurrió un error al crear la empresa. Intentá de nuevo.')
     }
   })
 
+  if (creatingPending) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <p className="text-sm text-gray-600">Estamos creando tu empresa...</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <div className="relative min-h-screen flex items-start justify-center px-4 py-8 overflow-x-hidden">
       <div className="absolute inset-0 grid-bg opacity-60" />
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-96 w-[42rem] rounded-full bg-violet-500/20 blur-3xl" />
       <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
-      <div className="w-full max-w-2xl relative">
+      <div className="w-full max-w-2xl relative my-auto">
 
         {/* Logo */}
         <div className="text-center mb-8">

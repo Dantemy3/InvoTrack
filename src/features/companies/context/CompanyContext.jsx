@@ -50,12 +50,14 @@ export function CompanyProvider({ children }) {
       } else {
         localStorage.removeItem(STORAGE_KEY)
       }
+      return selected
     } catch (err) {
       console.error('CompanyContext: error loading companies', err)
       loadedForUserId.current = userId
       setCompanies([])
       setCompany(null)
       setRole(null)
+      return null
     } finally {
       setLoading(false)
     }

@@ -2,9 +2,16 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Loader2, Zap, CheckCircle } from 'lucide-react'
-import { registerSchema } from '../schemas/authSchemas'
-import { authService } from '../services/authService'
+import { Eye, EyeOff, Loader2, Zap, CheckCircle, Building2, User } from 'lucide-react'
+import { registrationSchema } from '@/features/auth/schemas/registrationSchemas'
+import { registrationMetadata } from '@/features/auth/lib/registrationCompany'
+import { authService } from '@/features/auth/services/authService'
+import CompanyProfileForm from '@/features/companies/components/CompanyProfileForm'
+import {
+  ENTITY_TYPES,
+  COMPANY_TAX_CONDITIONS,
+  PERSONA_HUMANA_TAX_CONDITIONS,
+} from '@/features/companies/schemas/companySchemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,10 +23,10 @@ import { useToast } from '@/components/ui/toast'
 // El usuario entra a /register. Esta página maneja el registro con email y contraseña.
 //
 // Pasos del flujo:
-//  1. El usuario completa nombre, email, contraseña y confirmación.
-//  2. Zod valida el formulario (registerSchema) antes de enviar.
+//  1. El usuario completa los datos de acceso y la ficha fiscal de la empresa.
+//  2. Zod valida ambas partes antes de enviar.
 //  3. authService.signUpWithEmail() llama a supabase.auth.signUp().
-//  4. Supabase crea el usuario en su base de datos interna.
+//  4. Supabase conserva la ficha fiscal en la metadata mientras se confirma el email.
 //  5. Si está configurado el email de confirmación, Supabase lo envía.
 //  6. La página muestra la pantalla de "¡Cuenta creada!" para que el usuario
 //     vaya a confirmar su email o inicie sesión directamente.
@@ -54,29 +61,50 @@ export default function RegisterPage() {
   const [registered, setRegistered] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  // Paso 1a — Inicializar el formulario con validación Zod
-  // registerSchema valida: nombre (≥2 chars), email válido, contraseña (≥8 chars)
-  // y que confirmPassword coincida con password.
+  const [entityType, setEntityType] = useState('empresa')
+
   const {
     register,
     handleSubmit,
     getValues,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm({ resolver: zodResolver(registerSchema) })
+  } = useForm({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      company: {
+        entity_type: 'empresa',
+        tax_condition: 'RI',
+        default_sale_point: 1,
+        province: '',
+      },
+    },
+  })
+
+  const handleSelectEntity = (value) => {
+    setEntityType(value)
+    setValue('company.entity_type', value, { shouldValidate: true })
+    const conditions = value === 'empresa' ? COMPANY_TAX_CONDITIONS : PERSONA_HUMANA_TAX_CONDITIONS
+    if (!conditions.some(({ value: condition }) => condition === getValues('company.tax_condition'))) {
+      setValue('company.tax_condition', conditions[0].value, { shouldValidate: true })
+    }
+  }
 
   // Paso 1b — Registrar el usuario
   // Se llama solo cuando todos los campos pasan la validación de Zod.
   // authService.signUpWithEmail() llama a supabase.auth.signUp() con el email,
-  // contraseña y full_name como metadata del perfil.
+  // contraseña y ficha fiscal como metadata temporal del perfil.
   // Si tiene éxito: setRegistered(true) muestra la pantalla de confirmación.
   // Si falla (ej: email ya registrado): mostramos el error via toast.
   // Nota: Supabase por diseño de seguridad puede devolver éxito aunque el email
   // ya exista — por eso también manejamos ese caso en el catch.
   const onSubmit = async (data) => {
     try {
-      await authService.signUpWithEmail(data.email, data.password, {
-        full_name: data.fullName,
-      })
+      await authService.signUpWithEmail(
+        data.account.email,
+        data.account.password,
+        registrationMetadata(data)
+      )
       setRegistered(true)
     } catch (err) {
       const msg = err?.message ?? ''
@@ -143,9 +171,9 @@ export default function RegisterPage() {
             <h1 className="text-xl font-semibold text-gray-900 mb-2">¡Cuenta creada!</h1>
             <p className="text-sm text-gray-500 mb-6">
               Tu cuenta fue creada con el email{' '}
-              <span className="font-medium text-gray-700">{getValues('email')}</span>.
+              <span className="font-medium text-gray-700">{getValues('account.email')}</span>.
               Si recibís un email de confirmación, hacé clic en el enlace para activar tu cuenta.
-              Si no, podés iniciar sesión directamente.
+              Al iniciar sesión terminaremos de crear tu empresa con los datos que cargaste.
             </p>
             <Link
               to="/login"
@@ -160,11 +188,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <div className="relative min-h-screen flex items-start justify-center px-4 py-8 overflow-x-hidden">
       <div className="absolute inset-0 grid-bg opacity-60" />
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-96 w-[42rem] rounded-full bg-violet-500/20 blur-3xl" />
       <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
-      <div className="w-full max-w-md relative">
+      <div className="w-full max-w-2xl relative my-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-2">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-[0_0_24px_rgba(233,106,74,0.35)]">
@@ -180,7 +208,7 @@ export default function RegisterPage() {
 
         <div className="bg-panel rounded-2xl border border-gray-100 p-8 shadow-2xl shadow-black/40 scan-frame">
           <h1 className="text-xl font-semibold text-gray-900 mb-1">Crear cuenta</h1>
-          <p className="text-sm text-gray-500 mb-6">Empezá a gestionar tus facturas hoy</p>
+          <p className="text-sm text-gray-500 mb-6">Creá tu acceso y cargá los datos fiscales que aparecerán en tus facturas.</p>
 
           <Button
             type="button"
@@ -201,6 +229,7 @@ export default function RegisterPage() {
             )}
             Registrarse con Google
           </Button>
+          <p className="text-xs text-gray-500 mb-4">Con Google completarás la ficha fiscal después de iniciar sesión.</p>
 
           <div className="relative mb-4">
             <div className="absolute inset-0 flex items-center">
@@ -214,14 +243,14 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="fullName">Nombre completo</Label>
-              <Input id="fullName" placeholder="Juan García" {...register('fullName')} />
-              {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
+              <Input id="fullName" placeholder="Juan García" {...register('account.fullName')} />
+              {errors.account?.fullName && <p className="text-xs text-red-500">{errors.account.fullName.message}</p>}
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="tu@empresa.com" {...register('email')} />
-              {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+              <Input id="email" type="email" placeholder="tu@empresa.com" {...register('account.email')} />
+              {errors.account?.email && <p className="text-xs text-red-500">{errors.account.email.message}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -231,7 +260,7 @@ export default function RegisterPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Mínimo 8 caracteres"
-                  {...register('password')}
+                  {...register('account.password')}
                 />
                 <button
                   type="button"
@@ -242,7 +271,7 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+              {errors.account?.password && <p className="text-xs text-red-500">{errors.account.password.message}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -251,16 +280,50 @@ export default function RegisterPage() {
                 id="confirmPassword"
                 type="password"
                 placeholder="Repetí tu contraseña"
-                {...register('confirmPassword')}
+                {...register('account.confirmPassword')}
               />
-              {errors.confirmPassword && (
-                <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
+              {errors.account?.confirmPassword && (
+                <p className="text-xs text-red-500">{errors.account.confirmPassword.message}</p>
               )}
+            </div>
+
+            <div className="border-t border-gray-100 pt-6 space-y-5">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Datos de tu empresa</h2>
+                <p className="text-sm text-gray-500">Es la misma ficha que podrás editar en Configuración → Empresa.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ENTITY_TYPES.map(({ value, label, description }) => {
+                  const Icon = value === 'empresa' ? Building2 : User
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleSelectEntity(value)}
+                      aria-pressed={entityType === value}
+                      className={`text-left p-4 rounded-xl border transition-colors ${entityType === value
+                        ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/40'
+                        : 'border-gray-200 hover:border-gray-300'}`}
+                    >
+                      <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                        <Icon className="h-4 w-4 text-blue-500" />{label}
+                      </span>
+                      <span className="block mt-1 text-xs text-gray-500">{description}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <CompanyProfileForm
+                register={register}
+                errors={errors.company}
+                entityType={entityType}
+                namePrefix="company"
+              />
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Crear cuenta
+              Crear cuenta y guardar datos de empresa
             </Button>
           </form>
 
