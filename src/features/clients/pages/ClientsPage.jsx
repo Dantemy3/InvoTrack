@@ -15,10 +15,10 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { clientSchema } from '../schemas/clientSchemas'
-import { useClients, useCreateClient, useDeleteClient } from '../hooks/useClients'
+import { clientSchema } from '@/features/clients/schemas/clientSchemas'
+import { useClients, useCreateClient, useDeleteClient } from '@/features/clients/hooks/useClients'
 import { getInitials } from '@/lib/utils'
-import { TAX_CONDITIONS } from '@/lib/constants'
+import { COMPANY_TAX_CONDITIONS } from '@/features/companies/schemas/companySchemas'
 
 // Dialogo de creación de cliente con formulario validado por Zod.
 function ClientFormDialog({ open, onClose }) {
@@ -29,9 +29,13 @@ function ClientFormDialog({ open, onClose }) {
 
     // Crea el cliente, cierra el dialog y resetea el formulario al completar.
     const onSubmit = async (data) => {
-    await createClient.mutateAsync(data)
-    reset()
-    onClose()
+    try {
+      await createClient.mutateAsync(data)
+      reset()
+      onClose()
+    } catch {
+      // El hook muestra el error; conservar los datos para volver a intentar.
+    }
   }
 
   return (
@@ -55,6 +59,7 @@ function ClientFormDialog({ open, onClose }) {
             <div className="space-y-1.5">
               <Label>Email</Label>
               <Input type="email" placeholder="contacto@empresa.com" {...register('email')} />
+              {errors.email && <p role="alert" className="text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Teléfono</Label>
@@ -70,13 +75,14 @@ function ClientFormDialog({ open, onClose }) {
                 <Select onValueChange={field.onChange} value={field.value || ''}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
-                    {Object.values(TAX_CONDITIONS).map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    {COMPANY_TAX_CONDITIONS.map(({ value, label }) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             />
+            {errors.tax_condition && <p role="alert" className="text-xs text-red-500">{errors.tax_condition.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Dirección</Label>
@@ -84,7 +90,7 @@ function ClientFormDialog({ open, onClose }) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>Guardar</Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Guardando…' : 'Guardar'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

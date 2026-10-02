@@ -11,5 +11,8 @@ export const productSchema = z.object({
     .number({ invalid_type_error: 'El stock debe ser un número' })
     .min(0, 'El stock no puede ser negativo')
     .default(0),
-  provider_id: z.string().uuid().optional().nullable(),
+  provider_id: z.preprocess(
+    (value) => value === '' ? null : value,
+    z.string().uuid('Seleccioná un proveedor válido').optional().nullable(),
+  ),
 })

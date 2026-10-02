@@ -13,19 +13,27 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import { useForm } from 'react-hook-form'
-import { useProviders, useCreateProvider, useDeleteProvider } from '../hooks/useProviders'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { providerSchema } from '@/features/providers/schemas/providerSchemas'
+import { useProviders, useCreateProvider, useDeleteProvider } from '@/features/providers/hooks/useProviders'
 import { getInitials } from '@/lib/utils'
 
 // Dialog de creación de proveedor con formulario básico.
 function ProviderFormDialog({ open, onClose }) {
   const createProvider = useCreateProvider()
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm()
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(providerSchema),
+  })
 
     // Crea el proveedor, cierra el dialog y resetea el formulario al completar.
     const onSubmit = async (data) => {
-    await createProvider.mutateAsync(data)
-    reset()
-    onClose()
+    try {
+      await createProvider.mutateAsync(data)
+      reset()
+      onClose()
+    } catch {
+      // El hook muestra el error; conservar los datos para volver a intentar.
+    }
   }
 
   return (
@@ -37,16 +45,19 @@ function ProviderFormDialog({ open, onClose }) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Nombre *</Label>
-            <Input placeholder="Proveedor S.A." {...register('name', { required: true })} />
+            <Input placeholder="Proveedor S.A." {...register('name')} />
+            {errors.name && <p role="alert" className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>CUIT</Label>
             <Input placeholder="20-12345678-9" {...register('cuit')} />
+            {errors.cuit && <p role="alert" className="text-xs text-red-500">{errors.cuit.message}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Email</Label>
               <Input type="email" {...register('email')} />
+              {errors.email && <p role="alert" className="text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Teléfono</Label>
@@ -59,7 +70,7 @@ function ProviderFormDialog({ open, onClose }) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>Guardar</Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Guardando…' : 'Guardar'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

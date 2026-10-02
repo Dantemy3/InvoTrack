@@ -14,8 +14,8 @@ import { Label } from '@/components/ui/label'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { productSchema } from '../schemas/productSchemas'
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../hooks/useProducts'
+import { productSchema } from '@/features/products/schemas/productSchemas'
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/features/products/hooks/useProducts'
 import { useProviders } from '@/features/providers/hooks/useProviders'
 import { formatCurrency } from '@/lib/utils'
 
@@ -43,13 +43,17 @@ function ProductFormDialog({ open, onClose, product = null }) {
 
   const onSubmit = async (data) => {
     const payload = { ...data, provider_id: data.provider_id || null }
-    if (isEdit) {
-      await updateProduct.mutateAsync({ id: product.id, ...payload })
-    } else {
-      await createProduct.mutateAsync(payload)
+    try {
+      if (isEdit) {
+        await updateProduct.mutateAsync({ id: product.id, ...payload })
+      } else {
+        await createProduct.mutateAsync(payload)
+      }
+      reset()
+      onClose()
+    } catch {
+      // El hook muestra el error; conservar el formulario para volver a intentar.
     }
-    reset()
-    onClose()
   }
 
   return (
@@ -100,6 +104,7 @@ function ProductFormDialog({ open, onClose, product = null }) {
                 </Select>
               )}
             />
+            {errors.provider_id && <p role="alert" className="text-xs text-red-500">{errors.provider_id.message}</p>}
             <p className="text-xs text-gray-400">A quién le comprás este producto.</p>
           </div>
           <DialogFooter>

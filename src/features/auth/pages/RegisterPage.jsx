@@ -6,6 +6,7 @@ import { Eye, EyeOff, Loader2, Zap, CheckCircle, Building2, User } from 'lucide-
 import { registrationSchema } from '@/features/auth/schemas/registrationSchemas'
 import { registrationMetadata } from '@/features/auth/lib/registrationCompany'
 import { authService } from '@/features/auth/services/authService'
+import ResendConfirmation from '@/features/auth/components/ResendConfirmation'
 import CompanyProfileForm from '@/features/companies/components/CompanyProfileForm'
 import {
   ENTITY_TYPES,
@@ -59,6 +60,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   // registered controla si mostrar el formulario o la pantalla de "¡Cuenta creada!".
   const [registered, setRegistered] = useState(false)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
   const [entityType, setEntityType] = useState('empresa')
@@ -100,11 +102,12 @@ export default function RegisterPage() {
   // ya exista — por eso también manejamos ese caso en el catch.
   const onSubmit = async (data) => {
     try {
-      await authService.signUpWithEmail(
+      const result = await authService.signUpWithEmail(
         data.account.email,
         data.account.password,
         registrationMetadata(data)
       )
+      setNeedsConfirmation(!result.session)
       setRegistered(true)
     } catch (err) {
       const msg = err?.message ?? ''
@@ -168,13 +171,18 @@ export default function RegisterPage() {
                 <CheckCircle className="h-14 w-14 text-emerald-500 relative" />
               </div>
             </div>
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">¡Cuenta creada!</h1>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">{needsConfirmation ? 'Confirmá tu email' : '¡Cuenta creada!'}</h1>
             <p className="text-sm text-gray-500 mb-6">
-              Tu cuenta fue creada con el email{' '}
+              {needsConfirmation ? 'Recibimos la solicitud para el email ' : 'Tu cuenta fue creada con el email '}
               <span className="font-medium text-gray-700">{getValues('account.email')}</span>.
-              Si recibís un email de confirmación, hacé clic en el enlace para activar tu cuenta.
+              {needsConfirmation && ' Revisá tu bandeja de entrada y spam. Necesitás confirmar el correo antes de iniciar sesión. Si ya tenías una cuenta, intentá ingresar con tus credenciales.'}
               Al iniciar sesión terminaremos de crear tu empresa con los datos que cargaste.
             </p>
+            {needsConfirmation && (
+              <div className="mb-4">
+                <ResendConfirmation email={getValues('account.email')} />
+              </div>
+            )}
             <Link
               to="/login"
               className="inline-block w-full text-center bg-gradient-to-r from-blue-500 to-violet-500 text-white rounded-lg py-2.5 text-sm font-semibold hover:brightness-110 shadow-[0_4px_18px_rgba(233,106,74,0.28)] transition-all"

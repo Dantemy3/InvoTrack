@@ -49,7 +49,10 @@ export const authService = {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: metadata },
+      options: {
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
     if (error) throw error
     return data
@@ -60,6 +63,16 @@ export const authService = {
    */
   async signUpWithEmail(email, password, metadata = {}) {
     return this.signUp(email, password, metadata)
+  },
+
+  async resendConfirmation(email) {
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) throw error
+    return data
   },
 
   /**

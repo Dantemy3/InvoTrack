@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Loader2, Zap } from 'lucide-react'
-import { loginSchema } from '../schemas/authSchemas'
-import { authService } from '../services/authService'
+import { loginSchema } from '@/features/auth/schemas/authSchemas'
+import { authService } from '@/features/auth/services/authService'
+import ResendConfirmation from '@/features/auth/components/ResendConfirmation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,7 +29,7 @@ function getAuthErrorMessage(err) {
   if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
     return 'Email o contraseña incorrectos.'
   }
-  if (msg.includes('Email not confirmed')) {
+  if (err?.code === 'email_not_confirmed' || msg.includes('Email not confirmed')) {
     return 'Debés confirmar tu email antes de iniciar sesión. Revisá tu bandeja de entrada.'
   }
   if (msg.includes('Too many requests') || msg.includes('rate limit')) {
@@ -49,6 +50,7 @@ export default function LoginPage() {
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [confirmationEmail, setConfirmationEmail] = useState('')
 
   // Paso 1a — Inicializar el formulario con validación Zod
   // loginSchema valida: email con formato válido y contraseña de al menos 6 caracteres.
@@ -67,10 +69,14 @@ export default function LoginPage() {
   // estado global (user, session). Luego redirigimos al dashboard.
   // Si falla: mostramos el error traducido al español via toast.
   const onSubmit = async (data) => {
+    setConfirmationEmail('')
     try {
       await authService.signInWithEmail(data.email, data.password)
       navigate('/dashboard')
     } catch (err) {
+      if (err?.code === 'email_not_confirmed' || err?.message?.includes('Email not confirmed')) {
+        setConfirmationEmail(data.email)
+      }
       toast({
         title: 'Error al iniciar sesión',
         description: getAuthErrorMessage(err),
@@ -198,6 +204,13 @@ export default function LoginPage() {
               Iniciar sesión
             </Button>
           </form>
+
+          {confirmationEmail && (
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-gray-500">Falta confirmar el correo de {confirmationEmail}. Revisá también spam o solicitá otro enlace.</p>
+              <ResendConfirmation key={confirmationEmail} email={confirmationEmail} />
+            </div>
+          )}
 
           <p className="text-center text-sm text-gray-500 mt-6">
             ¿No tenés cuenta?{' '}
